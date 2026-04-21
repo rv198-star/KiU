@@ -4,6 +4,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+import re
 
 import yaml
 
@@ -22,10 +23,66 @@ class BundleValidationTests(unittest.TestCase):
     def setUp(self) -> None:
         self.bundle_path = ROOT / "bundles" / "poor-charlies-almanack-v0.1"
 
+    def _load_yaml(self, path: Path) -> dict:
+        return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+
+    def _write_yaml(self, path: Path, doc: dict) -> None:
+        path.write_text(
+            yaml.safe_dump(doc, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
+        )
+
+    def _replace_skill_text(
+        self,
+        bundle_root: Path,
+        skill_id: str,
+        old: str,
+        new: str,
+    ) -> None:
+        skill_path = bundle_root / "skills" / skill_id / "SKILL.md"
+        content = skill_path.read_text(encoding="utf-8")
+        self.assertIn(old, content)
+        skill_path.write_text(content.replace(old, new, 1), encoding="utf-8")
+
+    def _collect_contract_symbols(self, bundle_root: Path) -> list[str]:
+        symbols: set[str] = set()
+        for skill_path in (bundle_root / "skills").glob("*/SKILL.md"):
+            content = skill_path.read_text(encoding="utf-8")
+            match = re.search(r"## Contract\s+```yaml\n(.*?)```", content, re.DOTALL)
+            self.assertIsNotNone(match, skill_path)
+            contract = yaml.safe_load(match.group(1)) or {}
+            trigger = contract.get("trigger", {})
+            boundary = contract.get("boundary", {})
+            for key in ("patterns", "exclusions"):
+                symbols.update(trigger.get(key, []))
+            for key in ("fails_when", "do_not_fire_when"):
+                symbols.update(boundary.get(key, []))
+        return sorted(symbols)
+
+    def _write_local_trigger_registry(self, bundle_root: Path) -> Path:
+        trigger_entries = [
+            {
+                "symbol": symbol,
+                "definition": f"{symbol} definition",
+                "positive_examples": [f"{symbol} positive"],
+                "negative_examples": [f"{symbol} negative"],
+            }
+            for symbol in self._collect_contract_symbols(bundle_root)
+        ]
+        registry_path = bundle_root / "triggers.yaml"
+        self._write_yaml(registry_path, {"triggers": trigger_entries})
+
+        automation_path = bundle_root / "automation.yaml"
+        automation_doc = self._load_yaml(automation_path)
+        automation_doc["trigger_registry"] = "triggers.yaml"
+        self._write_yaml(automation_path, automation_doc)
+        return registry_path
+
     def test_bundle_validates_without_errors(self) -> None:
         report = validate_bundle(self.bundle_path)
 
         self.assertEqual(report["errors"], [])
+        self.assertIn("warnings", report)
         self.assertEqual(report["manifest"]["bundle_version"], "0.1.0")
         self.assertEqual(len(report["skills"]), 5)
         self.assertEqual(
@@ -78,6 +135,27 @@ class BundleValidationTests(unittest.TestCase):
             self.assertGreaterEqual(skill["usage_trace_count"], 3)
             self.assertTrue(skill["all_eval_subsets_pass"])
 
+    def test_reference_bundle_reports_density_warnings(self) -> None:
+        report = validate_bundle(self.bundle_path)
+
+        self.assertTrue(report["warnings"])
+        self.assertTrue(
+            any(
+                warning.startswith(
+                    "circle-of-competence: rationale_below_density_threshold"
+                )
+                for warning in report["warnings"]
+            )
+        )
+        self.assertTrue(
+            any(
+                warning.startswith(
+                    "circle-of-competence: evidence_summary_missing_anchors"
+                )
+                for warning in report["warnings"]
+            )
+        )
+
     def test_validator_rejects_missing_source_anchor_layer(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_bundle = Path(tmp_dir) / "bundle"
@@ -121,6 +199,131 @@ class BundleValidationTests(unittest.TestCase):
                 any("graph_hash" in error for error in report["errors"])
             )
 
+    def test_validator_rejects_unknown_trigger_symbol(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_bundle = Path(tmp_dir) / "bundle"
+            shutil.copytree(self.bundle_path, tmp_bundle)
+
+            self._replace_skill_text(
+                tmp_bundle,
+                "circle-of-competence",
+                "user_considering_specific_investment",
+                "user_considering_unknown_meme_stock",
+            )
+
+            report = validate_bundle(tmp_bundle)
+
+            self.assertTrue(
+                any(
+                    "unknown_trigger_symbol user_considering_unknown_meme_stock"
+                    in error
+                    for error in report["errors"]
+                )
+            )
+
+    def test_validator_warns_when_trigger_registry_definition_is_incomplete(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_bundle = Path(tmp_dir) / "bundle"
+            shutil.copytree(self.bundle_path, tmp_bundle)
+
+            registry_path = self._write_local_trigger_registry(tmp_bundle)
+            registry_doc = self._load_yaml(registry_path)
+            registry_doc["triggers"][0]["definition"] = ""
+            self._write_yaml(registry_path, registry_doc)
+
+            report = validate_bundle(tmp_bundle)
+
+            self.assertEqual(report["errors"], [])
+            self.assertTrue(
+                any(
+                    "trigger_symbol_missing_definition" in warning
+                    for warning in report["warnings"]
+                )
+            )
+
+    def test_validator_rejects_published_without_revision_loop(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_bundle = Path(tmp_dir) / "bundle"
+            shutil.copytree(self.bundle_path, tmp_bundle)
+
+            manifest_path = tmp_bundle / "manifest.yaml"
+            manifest_doc = self._load_yaml(manifest_path)
+            manifest_doc["skills"][0]["skill_revision"] = 1
+            self._write_yaml(manifest_path, manifest_doc)
+
+            self._replace_skill_text(
+                tmp_bundle,
+                "circle-of-competence",
+                "skill_revision: 2",
+                "skill_revision: 1",
+            )
+
+            eval_path = (
+                tmp_bundle / "skills" / "circle-of-competence" / "eval" / "summary.yaml"
+            )
+            eval_doc = self._load_yaml(eval_path)
+            eval_doc["skill_revision"] = 1
+            self._write_yaml(eval_path, eval_doc)
+
+            revisions_path = (
+                tmp_bundle
+                / "skills"
+                / "circle-of-competence"
+                / "iterations"
+                / "revisions.yaml"
+            )
+            revisions_doc = self._load_yaml(revisions_path)
+            revisions_doc["current_revision"] = 1
+            revisions_doc["history"] = revisions_doc["history"][:1]
+            self._write_yaml(revisions_path, revisions_doc)
+
+            report = validate_bundle(tmp_bundle)
+
+            self.assertTrue(
+                any(
+                    "published skills must have gone through at least one revision cycle"
+                    in error
+                    for error in report["errors"]
+                )
+            )
+
+    def test_validator_rejects_unknown_relation_target(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_bundle = Path(tmp_dir) / "bundle"
+            shutil.copytree(self.bundle_path, tmp_bundle)
+
+            self._replace_skill_text(
+                tmp_bundle,
+                "circle-of-competence",
+                "  - bias-self-audit",
+                "  - unknown-skill",
+            )
+
+            report = validate_bundle(tmp_bundle)
+
+            self.assertTrue(
+                any(
+                    "unknown relation target unknown-skill" in error
+                    for error in report["errors"]
+                )
+            )
+
+    def test_validator_allows_external_relation_target(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_bundle = Path(tmp_dir) / "bundle"
+            shutil.copytree(self.bundle_path, tmp_bundle)
+
+            self._replace_skill_text(
+                tmp_bundle,
+                "circle-of-competence",
+                "  - bias-self-audit",
+                "  - external:reference-bundle/bias-self-audit",
+            )
+
+            report = validate_bundle(tmp_bundle)
+
+            self.assertEqual(report["errors"], [])
+
     def test_cli_reports_success_for_reference_bundle(self) -> None:
         result = subprocess.run(
             [
@@ -135,6 +338,10 @@ class BundleValidationTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("VALID", result.stdout)
+
+    def test_v03_foundation_includes_trigger_registry_assets(self) -> None:
+        self.assertTrue((ROOT / "shared_profiles" / "investing" / "triggers.yaml").exists())
+        self.assertTrue((ROOT / "schemas" / "trigger-registry.schema.yaml").exists())
 
     def test_release_has_usage_guide_with_design_rationale(self) -> None:
         usage_guide = ROOT / "docs" / "usage-guide.md"

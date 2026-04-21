@@ -1,5 +1,6 @@
 profile_version: kiu.pipeline-profile/v0.2
 source_bundle_id: poor-charlies-almanack-v0.1
+inherits: investing
 seed_node_types:
   - skill_principle
 max_candidates: 8

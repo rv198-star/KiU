@@ -1,0 +1,25 @@
+profile_version: kiu.domain-profile/v0.3
+domain: investing
+content_density:
+  rationale:
+    warning_min_chars: 240
+    min_anchor_refs: 2
+  evidence_summary:
+    min_anchor_refs: 1
+rationale_density:
+  warning_min_chars: 240
+  min_anchor_refs: 2
+published_min_eval_cases:
+  real_decisions: 20
+  synthetic_adversarial: 20
+  out_of_distribution: 10
+trigger_registry: shared_profiles/investing/triggers.yaml
+autonomous_refiner:
+  weights:
+    boundary_quality: 0.45
+    eval_aggregate: 0.35
+    cross_subset_stability: 0.20
+  targets:
+    overall_quality: 0.82
+    boundary_quality: 0.85
+    min_positive_delta: 0.03

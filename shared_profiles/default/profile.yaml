@@ -1,0 +1,25 @@
+profile_version: kiu.domain-profile/v0.3
+domain: default
+content_density:
+  rationale:
+    warning_min_chars: 180
+    min_anchor_refs: 1
+  evidence_summary:
+    min_anchor_refs: 1
+rationale_density:
+  warning_min_chars: 180
+  min_anchor_refs: 1
+published_min_eval_cases:
+  real_decisions: 5
+  synthetic_adversarial: 5
+  out_of_distribution: 2
+trigger_registry: shared_profiles/default/triggers.yaml
+autonomous_refiner:
+  weights:
+    boundary_quality: 0.45
+    eval_aggregate: 0.35
+    cross_subset_stability: 0.20
+  targets:
+    overall_quality: 0.80
+    boundary_quality: 0.82
+    min_positive_delta: 0.02

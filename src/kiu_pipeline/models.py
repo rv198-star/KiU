@@ -24,6 +24,7 @@ class SourceSkill:
 @dataclass
 class SourceBundle:
     root: Path
+    domain: str
     manifest: dict[str, Any]
     graph_doc: dict[str, Any]
     profile: dict[str, Any]

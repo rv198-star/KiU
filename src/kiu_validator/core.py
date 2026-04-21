@@ -32,13 +32,29 @@ REQUIRED_RELATIONS = (
 )
 ALLOWED_STATUSES = {"candidate", "under_evaluation", "published", "archived"}
 ANCHOR_REQUIRED_STATUSES = {"under_evaluation", "published"}
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_VALIDATION_PROFILE = {
+    "trigger_registry": "shared_profiles/default/triggers.yaml",
+    "content_density": {
+        "rationale": {
+            "warning_min_chars": 180,
+            "min_anchor_refs": 1,
+        },
+        "evidence_summary": {
+            "min_anchor_refs": 1,
+        },
+    }
+}
 
 
 def validate_bundle(bundle_path: str | Path) -> dict[str, Any]:
     root = Path(bundle_path)
     errors: list[str] = []
+    warnings: list[str] = []
 
     manifest = _load_yaml(root / "manifest.yaml", errors, "manifest")
+    profile = _resolve_validation_profile(root, warnings)
+    trigger_registry = _load_trigger_registry(root, profile, errors, warnings)
     graph_doc = {}
     graph_report = {"node_count": 0, "edge_count": 0, "community_count": 0}
     node_ids: set[str] = set()
@@ -81,6 +97,9 @@ def validate_bundle(bundle_path: str | Path) -> dict[str, Any]:
 
     skills: list[dict[str, Any]] = []
     skill_entries = manifest.get("skills", []) if manifest else []
+    known_skill_ids = {
+        entry["skill_id"] for entry in skill_entries if isinstance(entry.get("skill_id"), str)
+    }
     for entry in skill_entries:
         skills.append(
             _validate_skill(
@@ -88,12 +107,17 @@ def validate_bundle(bundle_path: str | Path) -> dict[str, Any]:
                 manifest=manifest,
                 skill_entry=entry,
                 errors=errors,
+                warnings=warnings,
                 node_ids=node_ids,
                 edge_ids=edge_ids,
                 community_ids=community_ids,
                 computed_graph_hash=computed_graph_hash,
+                known_skill_ids=known_skill_ids,
+                trigger_registry=trigger_registry,
+                profile=profile,
             )
         )
+    _detect_relation_cycles(skills, warnings)
 
     traces_root = root / "traces"
     evaluation_root = root / "evaluation"
@@ -119,6 +143,7 @@ def validate_bundle(bundle_path: str | Path) -> dict[str, Any]:
         "shared_assets": shared_assets,
         "skills": skills,
         "errors": errors,
+        "warnings": warnings,
     }
 
 
@@ -128,20 +153,26 @@ def _validate_skill(
     manifest: dict[str, Any],
     skill_entry: dict[str, Any],
     errors: list[str],
+    warnings: list[str],
     node_ids: set[str],
     edge_ids: set[str],
     community_ids: set[str],
     computed_graph_hash: str | None,
+    known_skill_ids: set[str],
+    trigger_registry: dict[str, dict[str, Any]],
+    profile: dict[str, Any],
 ) -> dict[str, Any]:
     skill_id = skill_entry.get("skill_id", "<missing-skill-id>")
     skill_dir = root / skill_entry.get("path", "")
     skill_errors: list[str] = []
+    skill_warnings: list[str] = []
 
     for relative_path in REQUIRED_SKILL_FILES:
         if not (skill_dir / relative_path).exists():
             skill_errors.append(f"{skill_id}: missing required file {relative_path}")
 
-    skill_doc = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+    skill_doc_path = skill_dir / "SKILL.md"
+    skill_doc = skill_doc_path.read_text(encoding="utf-8") if skill_doc_path.exists() else ""
     sections = _parse_sections(skill_doc)
     for section_name in REQUIRED_SKILL_SECTIONS:
         if section_name not in sections:
@@ -182,8 +213,19 @@ def _validate_skill(
     if status != skill_entry.get("status"):
         skill_errors.append(f"{skill_id}: status mismatch between SKILL.md and manifest")
 
-    _validate_contract(skill_id, contract, skill_errors)
-    _validate_relations(skill_id, relations, skill_errors)
+    _validate_contract(
+        skill_id,
+        contract,
+        skill_errors,
+        trigger_registry,
+    )
+    _validate_relations(
+        skill_id,
+        relations,
+        skill_errors,
+        known_skill_ids,
+    )
+    _validate_density(skill_id, sections, skill_warnings, profile)
 
     anchors = _load_yaml(skill_dir / "anchors.yaml", skill_errors, f"{skill_id}: anchors")
     _validate_anchors(
@@ -229,8 +271,14 @@ def _validate_skill(
         skill_errors.append(f"{skill_id}: published skill must reference at least 3 usage traces")
     if status == "published" and not all_eval_subsets_pass:
         skill_errors.append(f"{skill_id}: published skill must pass all evaluation subsets")
+    if status == "published" and not has_revision_loop:
+        skill_errors.append(
+            f"{skill_id}: published skills must have gone through at least one revision cycle "
+            f"(current revision={identity.get('skill_revision')}, history={revision_entry_count})"
+        )
 
     errors.extend(skill_errors)
+    warnings.extend(skill_warnings)
     return {
         "skill_id": skill_id,
         "status": status,
@@ -239,10 +287,16 @@ def _validate_skill(
         "has_revision_loop": has_revision_loop,
         "usage_trace_count": usage_trace_count,
         "all_eval_subsets_pass": all_eval_subsets_pass,
+        "relations": relations,
     }
 
 
-def _validate_contract(skill_id: str, contract: dict[str, Any], errors: list[str]) -> None:
+def _validate_contract(
+    skill_id: str,
+    contract: dict[str, Any],
+    errors: list[str],
+    trigger_registry: dict[str, dict[str, Any]],
+) -> None:
     for field in ("trigger", "intake", "judgment_schema", "boundary"):
         if field not in contract:
             errors.append(f"{skill_id}: Contract missing {field}")
@@ -261,8 +315,42 @@ def _validate_contract(skill_id: str, contract: dict[str, Any], errors: list[str
             f"{skill_id}: boundary.do_not_fire_when must contain at least one pattern"
         )
 
+    _validate_trigger_symbol_list(
+        skill_id,
+        "Contract.trigger.patterns",
+        trigger.get("patterns"),
+        errors,
+        trigger_registry,
+    )
+    _validate_trigger_symbol_list(
+        skill_id,
+        "Contract.trigger.exclusions",
+        trigger.get("exclusions"),
+        errors,
+        trigger_registry,
+    )
+    _validate_trigger_symbol_list(
+        skill_id,
+        "Contract.boundary.fails_when",
+        boundary.get("fails_when"),
+        errors,
+        trigger_registry,
+    )
+    _validate_trigger_symbol_list(
+        skill_id,
+        "Contract.boundary.do_not_fire_when",
+        boundary.get("do_not_fire_when"),
+        errors,
+        trigger_registry,
+    )
 
-def _validate_relations(skill_id: str, relations: dict[str, Any], errors: list[str]) -> None:
+
+def _validate_relations(
+    skill_id: str,
+    relations: dict[str, Any],
+    errors: list[str],
+    known_skill_ids: set[str],
+) -> None:
     keys = set(relations.keys())
     if keys != set(REQUIRED_RELATIONS):
         errors.append(
@@ -274,6 +362,19 @@ def _validate_relations(skill_id: str, relations: dict[str, Any], errors: list[s
             continue
         if not isinstance(value, list):
             errors.append(f"{skill_id}: relation {relation_name} must be a list")
+            continue
+        for target in value:
+            if not isinstance(target, str):
+                errors.append(
+                    f"{skill_id}: relation {relation_name} contains non-string target {target!r}"
+                )
+                continue
+            if target.startswith("external:"):
+                continue
+            if target not in known_skill_ids:
+                errors.append(
+                    f"{skill_id}: unknown relation target {target} in {relation_name}"
+                )
 
 
 def _validate_anchors(
@@ -376,6 +477,7 @@ def _validate_eval_summary(
         )
     )
 
+
 def _validate_revisions(
     skill_id: str,
     revisions: dict[str, Any],
@@ -403,6 +505,190 @@ def _validate_revisions(
 
     has_revision_loop = int(skill_revision or 0) > 1 and len(history) >= 2
     return len(history), has_revision_loop
+
+
+def _resolve_validation_profile(root: Path, warnings: list[str]) -> dict[str, Any]:
+    try:
+        resolved = _resolve_profile_from_files(root)
+    except Exception as exc:
+        warnings.append(f"bundle: profile_resolution_fallback ({exc})")
+        resolved = {}
+    return _normalize_validation_profile(resolved)
+
+
+def _normalize_validation_profile(profile: dict[str, Any]) -> dict[str, Any]:
+    normalized = _deep_merge(DEFAULT_VALIDATION_PROFILE, profile)
+    rationale_alias = normalized.get("rationale_density", {})
+    rationale_cfg = normalized.setdefault("content_density", {}).setdefault("rationale", {})
+    if "warning_min_chars" not in rationale_cfg and "warning_min_chars" in rationale_alias:
+        rationale_cfg["warning_min_chars"] = rationale_alias["warning_min_chars"]
+    if "min_anchor_refs" not in rationale_cfg and "min_anchor_refs" in rationale_alias:
+        rationale_cfg["min_anchor_refs"] = rationale_alias["min_anchor_refs"]
+    return normalized
+
+
+def _load_trigger_registry(
+    bundle_root: Path,
+    profile: dict[str, Any],
+    errors: list[str],
+    warnings: list[str],
+) -> dict[str, dict[str, Any]]:
+    registry_value = profile.get("trigger_registry")
+    if not registry_value:
+        errors.append("bundle: missing trigger_registry in resolved profile")
+        return {}
+
+    registry_path = _resolve_profile_path(bundle_root, registry_value)
+    registry_doc = _load_yaml(registry_path, errors, "trigger registry")
+    trigger_entries = registry_doc.get("triggers", [])
+    if not isinstance(trigger_entries, list):
+        errors.append("trigger registry: triggers must be a list")
+        return {}
+
+    registry: dict[str, dict[str, Any]] = {}
+    for entry in trigger_entries:
+        if not isinstance(entry, dict):
+            errors.append(f"trigger registry: invalid trigger entry {entry!r}")
+            continue
+        symbol = entry.get("symbol")
+        if not symbol or not isinstance(symbol, str):
+            errors.append("trigger registry: missing symbol")
+            continue
+        if symbol in registry:
+            errors.append(f"trigger registry: duplicate symbol {symbol}")
+            continue
+        registry[symbol] = entry
+        if not str(entry.get("definition", "")).strip():
+            warnings.append(f"trigger registry: trigger_symbol_missing_definition {symbol}")
+        if not entry.get("positive_examples"):
+            warnings.append(
+                f"trigger registry: trigger_symbol_missing_positive_examples {symbol}"
+            )
+        if not entry.get("negative_examples"):
+            warnings.append(
+                f"trigger registry: trigger_symbol_missing_negative_examples {symbol}"
+            )
+    return registry
+
+
+def _resolve_profile_path(bundle_root: Path, raw_path: str | Path) -> Path:
+    candidate = Path(raw_path)
+    if candidate.is_absolute():
+        return candidate
+
+    bundle_candidate = bundle_root / candidate
+    if bundle_candidate.exists():
+        return bundle_candidate
+
+    repo_candidate = REPO_ROOT / candidate
+    if repo_candidate.exists():
+        return repo_candidate
+
+    return bundle_candidate
+
+
+def _resolve_profile_from_files(bundle_root: Path) -> dict[str, Any]:
+    manifest = _load_yaml(bundle_root / "manifest.yaml", [], "manifest")
+    domain = manifest.get("domain")
+    if not domain:
+        raise ValueError(f"{bundle_root}: manifest missing required domain")
+
+    bundle_profile = _load_yaml(bundle_root / "automation.yaml", [], "automation")
+    inherits = bundle_profile.get("inherits", domain)
+    default_profile = _load_yaml(
+        REPO_ROOT / "shared_profiles" / "default" / "profile.yaml",
+        [],
+        "default profile",
+    )
+    domain_profile_path = REPO_ROOT / "shared_profiles" / inherits / "profile.yaml"
+    if not domain_profile_path.exists():
+        raise FileNotFoundError(
+            f"missing domain profile for {inherits}: {domain_profile_path}"
+        )
+    domain_profile = _load_yaml(domain_profile_path, [], f"{inherits} profile")
+    bundle_overrides = dict(bundle_profile)
+    bundle_overrides.pop("inherits", None)
+
+    resolved = _deep_merge(default_profile, domain_profile)
+    resolved = _deep_merge(resolved, bundle_overrides)
+    resolved["domain"] = domain
+    resolved["resolved_from"] = ["default", inherits, "bundle"]
+    return resolved
+
+
+def _validate_trigger_symbol_list(
+    skill_id: str,
+    field_name: str,
+    value: Any,
+    errors: list[str],
+    trigger_registry: dict[str, dict[str, Any]],
+) -> None:
+    if value is None:
+        return
+    if not isinstance(value, list):
+        errors.append(f"{skill_id}: {field_name} must be a list")
+        return
+    for symbol in value:
+        if not isinstance(symbol, str):
+            errors.append(f"{skill_id}: {field_name} contains non-string symbol {symbol!r}")
+            continue
+        if symbol not in trigger_registry:
+            errors.append(f"{skill_id}: unknown_trigger_symbol {symbol} in {field_name}")
+
+
+def _validate_density(
+    skill_id: str,
+    sections: dict[str, str],
+    warnings: list[str],
+    profile: dict[str, Any],
+) -> None:
+    rationale_cfg = profile.get("content_density", {}).get("rationale", {})
+    rationale_text = sections.get("Rationale", "")
+    rationale_chars = _dense_char_count(rationale_text)
+    rationale_anchor_refs = _count_anchor_refs(rationale_text)
+    warning_min_chars = int(rationale_cfg.get("warning_min_chars", 180))
+    min_anchor_refs = int(rationale_cfg.get("min_anchor_refs", 1))
+    if rationale_chars < warning_min_chars or rationale_anchor_refs < min_anchor_refs:
+        warnings.append(
+            f"{skill_id}: rationale_below_density_threshold "
+            f"(chars={rationale_chars}, min_chars={warning_min_chars}, "
+            f"anchor_refs={rationale_anchor_refs}, min_anchor_refs={min_anchor_refs})"
+        )
+
+    evidence_cfg = profile.get("content_density", {}).get("evidence_summary", {})
+    evidence_text = sections.get("Evidence Summary", "")
+    evidence_anchor_refs = _count_anchor_refs(evidence_text)
+    evidence_min_anchor_refs = int(evidence_cfg.get("min_anchor_refs", 1))
+    if evidence_anchor_refs < evidence_min_anchor_refs:
+        warnings.append(
+            f"{skill_id}: evidence_summary_missing_anchors "
+            f"(anchor_refs={evidence_anchor_refs}, min_anchor_refs={evidence_min_anchor_refs})"
+        )
+
+
+def _dense_char_count(text: str) -> int:
+    stripped = re.sub(r"\[\^(?:anchor|trace):[^\]]+\]", "", text)
+    stripped = re.sub(r"[`*_>#\-\[\]\(\)\s]+", "", stripped)
+    return len(stripped)
+
+
+def _count_anchor_refs(text: str) -> int:
+    return len(re.findall(r"\[\^(?:anchor|trace):[^\]]+\]", text))
+
+
+def _detect_relation_cycles(skills: list[dict[str, Any]], warnings: list[str]) -> None:
+    depends_on = {
+        skill["skill_id"]: set(skill.get("relations", {}).get("depends_on", []))
+        for skill in skills
+    }
+    for skill_id, targets in depends_on.items():
+        if skill_id in targets:
+            warnings.append(f"{skill_id}: relation_cycle_detected depends_on self")
+        for target in targets:
+            if target in depends_on and skill_id in depends_on[target] and skill_id < target:
+                warnings.append(
+                    f"relation_cycle_detected: depends_on {skill_id} <-> {target}"
+                )
 
 
 def _load_yaml(path: Path, errors: list[str], label: str) -> dict[str, Any]:
@@ -472,3 +758,13 @@ def _canonical_graph_hash(graph_doc: dict[str, Any]) -> str:
     canonical_doc.pop("graph_hash", None)
     encoded = json.dumps(canonical_doc, sort_keys=True, ensure_ascii=False).encode("utf-8")
     return "sha256:" + hashlib.sha256(encoded).hexdigest()
+
+
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    merged = dict(base)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _deep_merge(merged[key], value)
+        else:
+            merged[key] = value
+    return merged

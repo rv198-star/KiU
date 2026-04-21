@@ -42,6 +42,7 @@ def render_generated_run(
     workflow_root.mkdir(parents=True, exist_ok=True)
 
     _copy_shared_assets(source_bundle.root, bundle_root)
+    _copy_bundle_profile(source_bundle.root, bundle_root)
 
     rendered_seeds: list[CandidateSeed] = []
     workflow_only_seeds: list[CandidateSeed] = []
@@ -77,6 +78,7 @@ def render_generated_run(
         "skill_spec_version": SKILL_SPEC_VERSION,
         "relation_enum_version": RELATION_ENUM_VERSION,
         "language": source_bundle.manifest.get("language", "zh-CN"),
+        "domain": source_bundle.domain,
         "created_at": date.today().isoformat(),
         "generated_from": {
             "source_bundle_id": source_bundle.manifest["bundle_id"],
@@ -164,6 +166,12 @@ def materialize_refined_candidates(
 def _copy_shared_assets(source_root: Path, bundle_root: Path) -> None:
     for relative in ("graph", "traces", "evaluation", "sources"):
         shutil.copytree(source_root / relative, bundle_root / relative)
+
+
+def _copy_bundle_profile(source_root: Path, bundle_root: Path) -> None:
+    automation_path = source_root / "automation.yaml"
+    if automation_path.exists():
+        shutil.copy2(automation_path, bundle_root / "automation.yaml")
 
 
 def _render_skill_candidate(

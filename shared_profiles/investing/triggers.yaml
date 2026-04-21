@@ -1,0 +1,169 @@
+triggers:
+  - symbol: decision_is_low_stakes_or_reversible
+    definition: 用户面对的是低风险、可逆或可快速纠错的投资相关决策，不值得启动完整深度审查。
+    positive_examples:
+      - 先小仓位试一笔，错了也能当天撤出来。
+    negative_examples:
+      - 这笔决策会押上大部分家庭净资产。
+  - symbol: decision_is_too_low_stakes_to_warrant_full_audit
+    definition: 当前决策虽然与投资有关，但严重程度不足以值得启动完整 bias audit。
+    positive_examples:
+      - 只是调一调观察仓，不需要做整套偏差排查。
+    negative_examples:
+      - 我准备把核心仓位切到一个高波动标的上。
+  - symbol: input_lacks_a_concrete_objective_or_constraint_set
+    definition: 用户没有给出明确目标、约束或失败条件，导致 inversion 无法落地。
+    positive_examples:
+      - 就想成功一点，但还没想好具体要避免什么。
+    negative_examples:
+      - 目标是三年内把回撤控制在 15% 内并提高自由现金流收益率。
+  - symbol: liquidity_or_ruin_inputs_are_missing
+    definition: 用户没有提供流动性、回撤承受力或 ruin 条件，无法进行 margin-of-safety sizing。
+    positive_examples:
+      - 我很有信心，但没算过最坏情况下会不会被迫卖出。
+    negative_examples:
+      - 我已经列出了现金缓冲、保证金要求和最坏情境下的退出条件。
+  - symbol: no_next_best_benchmark_is_available
+    definition: 用户没有给出可比较的 next-best alternative，无法做 opportunity cost 判断。
+    positive_examples:
+      - 这个新点子听起来不错，但我还没想好替代方案是什么。
+    negative_examples:
+      - 现在的替代项是继续持有 Costco，而不是空仓等机会。
+  - symbol: no_switch_costs_or_benchmark_inputs_are_provided
+    definition: 用户没有提供切换成本、税负或当前最佳替代项信息，无法完成 capital switching 评估。
+    positive_examples:
+      - 我只知道想换仓，但没算税、摩擦和放弃的复利。
+    negative_examples:
+      - 我已经把税负、滑点和放弃现有持仓的收益都列出来了。
+  - symbol: user_about_to_commit_high_stakes_investment_decision
+    definition: 用户正在做高风险、难逆转或资金占比高的投资决策，适合先做 bias self audit。
+    positive_examples:
+      - 我准备把 40% 仓位加到这只股票上，今晚就下单。
+    negative_examples:
+      - 我只是想了解一下投资常见心理偏差有哪些。
+  - symbol: user_asking_if_understanding_is_deep_enough_to_act
+    definition: 用户明确在问自己的理解是否足以支持真实投资行动。
+    positive_examples:
+      - 我对这家公司研究到什么程度才算能下手？
+    negative_examples:
+      - 你先帮我概括一下这个行业是做什么的。
+  - symbol: user_asserts_high_conviction_without_downside_math
+    definition: 用户表达极高信心，但没有给出下行情景、风险边界或损失测算。
+    positive_examples:
+      - 我特别确定它会涨，但还没做过 downside case。
+    negative_examples:
+      - 我既写了高胜率逻辑，也写了三个 downside scenario。
+  - symbol: user_chooses_passive_index_fund
+    definition: 用户明确决定采用被动指数基金或宽基定投，这不属于主动能力圈判断。
+    positive_examples:
+      - 我就买标普 500 ETF 定投，不打算选股。
+    negative_examples:
+      - 我在比较两家半导体公司谁更值得集中下注。
+  - symbol: user_choosing_passive_index_fund
+    definition: 用户正在考虑是否走被动指数路线，通常应被 circle-of-competence 之类技能排除。
+    positive_examples:
+      - 我在想是不是直接买沪深 300 ETF 算了。
+    negative_examples:
+      - 我准备研究一家具体企业是否值得买入。
+  - symbol: user_compares_against_idle_cash_instead_of_next_best_alternative
+    definition: 用户把新想法只和空仓或现金比，而不是和当前最好的资本用途比。
+    positive_examples:
+      - 这笔钱放着也是放着，不如买这个新机会。
+    negative_examples:
+      - 我在比较新机会和现有最强持仓，谁的单位风险回报更高。
+  - symbol: user_comparing_new_investment_with_existing_capital_uses
+    definition: 用户在比较新投资与现有资本用途之间的取舍，适合触发机会成本技能。
+    positive_examples:
+      - 要不要卖掉部分 Costco 去买这个新标的？
+    negative_examples:
+      - 我只是想知道这家公司是做什么的。
+  - symbol: user_confuses_product_familiarity_with_business_understanding
+    definition: 用户把自己熟悉产品或品牌，误当成理解商业模式、竞争结构和风险边界。
+    positive_examples:
+      - 我天天用它家 App，所以这家公司我肯定懂。
+    negative_examples:
+      - 我已经拆了它的定价权、渠道结构和资本开支周期。
+  - symbol: user_considering_specific_investment
+    definition: 用户正在评估一个具体投资标的，并有真实决策意图。
+    positive_examples:
+      - 我在看腾讯现在要不要加仓。
+    negative_examples:
+      - 我想先系统学习一下股票投资基础。
+  - symbol: user_considering_switching_or_redeploying_position
+    definition: 用户在考虑换仓、减仓、再配置或把资本从 A 挪到 B。
+    positive_examples:
+      - 我想把一部分苹果仓位切去买 Costco。
+    negative_examples:
+      - 我只是想新开一个很小的观察仓。
+  - symbol: user_contemplating_concentrated_capital_allocation
+    definition: 用户考虑高集中度下注，需要 margin-of-safety sizing 约束。
+    positive_examples:
+      - 我想把组合里 30% 以上压到这一个想法上。
+    negative_examples:
+      - 我只是做一个 2% 的试探仓。
+  - symbol: user_deciding_position_size_for_investment
+    definition: 用户已基本接受投资方向，当前主要问题是仓位和暴露规模。
+    positive_examples:
+      - 标的基本想清楚了，问题是该配 5% 还是 20%。
+    negative_examples:
+      - 我连这个公司是不是值得研究都还没确定。
+  - symbol: user_describes_background_too_vaguely_to_test_depth
+    definition: 用户对自己的经验和能力圈描述过于模糊，无法检验理解深度。
+    positive_examples:
+      - 我平时也关注这个行业，所以应该算懂吧。
+    negative_examples:
+      - 我过去五年都在这个行业做供应链和财务分析。
+  - symbol: user_expressing_unusual_certainty_or_social_pressure
+    definition: 用户展现出异乎寻常的确定性，或明显受到圈层、身份、从众压力驱动。
+    positive_examples:
+      - 身边所有厉害的人都上了，我不上就落后了。
+    negative_examples:
+      - 我写了反方观点，也说明了为什么暂时不行动。
+  - symbol: user_missing_uncertainty_inputs
+    definition: 用户缺乏概率分布、误差范围或不确定性输入，无法做稳健 sizing。
+    positive_examples:
+      - 我只知道它便宜，但没想过波动范围和最坏情景。
+    negative_examples:
+      - 我列了 base/bear/bull 三种结果和对应仓位上限。
+  - symbol: user_outcome_is_already_decided
+    definition: 用户已经做出决定，只是在事后寻找论证，inversion 不再是主技能。
+    positive_examples:
+      - 我已经买了，帮我找些证明我没错的理由。
+    negative_examples:
+      - 我还没行动，想先看有哪些会把我带进坑里的路径。
+  - symbol: user_planning_a_high_stakes_action_path
+    definition: 用户正在为高风险行动规划步骤，适合先做 inversion/pre-mortem。
+    positive_examples:
+      - 我要开一笔杠杆仓位，先帮我倒推会怎么死。
+    negative_examples:
+      - 我只想查一下某个财务指标的定义。
+  - symbol: user_request_is_non_investing_decision
+    definition: 用户当前问题不是投资决策情境，相关 investing skill 应拒绝触发。
+    positive_examples:
+      - 帮我决定这周去不去旅游。
+    negative_examples:
+      - 帮我判断这笔资金该不该投到某家公司上。
+  - symbol: user_request_is_pure_fact_lookup
+    definition: 用户只是在做事实查询，而非请求决策辅助或判断框架。
+    positive_examples:
+      - 帮我查一下巴菲特什么时候买的可口可乐。
+    negative_examples:
+      - 帮我判断这个计划最容易失败的地方在哪。
+  - symbol: user_stuck_in_complex_success_planning
+    definition: 用户陷在复杂的正向规划里，反而更适合先做 inversion。
+    positive_examples:
+      - 我列了二十步成功方案，但还是不知道先做什么。
+    negative_examples:
+      - 我已经能清楚说出最糟失败链路和预防动作。
+  - symbol: user_treats_inversion_as_complete_strategy_without_followup
+    definition: 用户把 inversion 当作完整策略，而不继续补正向选择和执行约束。
+    positive_examples:
+      - 我只想列风险，不打算再决定具体怎么做。
+    negative_examples:
+      - 我先列失败路径，再反推出下一步执行动作。
+  - symbol: user_tries_to_use_bias_audit_as_domain_analysis
+    definition: 用户想把 bias self audit 当成行业/公司分析本身，而不是偏差纠偏步骤。
+    positive_examples:
+      - 先别分析公司，直接告诉我我有哪些心理偏差就够了。
+    negative_examples:
+      - 公司分析和偏差审计我都会做，但想先把情绪噪音剥离掉。

@@ -8,6 +8,7 @@ from typing import Any
 import yaml
 
 from .models import SourceBundle, SourceSkill
+from .profile_resolver import resolve_profile
 
 
 def load_source_bundle(
@@ -17,12 +18,10 @@ def load_source_bundle(
     root = Path(bundle_path)
     manifest = _load_yaml(root / "manifest.yaml")
     graph_doc = json.loads((root / manifest["graph"]["path"]).read_text(encoding="utf-8"))
-    profile_path = (
-        Path(profile_override)
-        if profile_override is not None
-        else root / "automation.yaml"
-    )
-    profile = _load_yaml(profile_path)
+    if profile_override is not None:
+        profile = _load_yaml(Path(profile_override))
+    else:
+        profile = resolve_profile(root)
     skills = {
         entry["skill_id"]: _load_skill(root, entry)
         for entry in manifest.get("skills", [])
@@ -30,6 +29,7 @@ def load_source_bundle(
     evaluation_cases = _load_evaluation_cases(root)
     return SourceBundle(
         root=root,
+        domain=manifest["domain"],
         manifest=manifest,
         graph_doc=graph_doc,
         profile=profile,
