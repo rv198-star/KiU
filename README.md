@@ -12,6 +12,12 @@ Start here:
 - [KiU v0.2 Candidate Pipeline](docs/kiu-v0.2-pipeline.md)
 - [Reference Bundle](bundles/poor-charlies-almanack-v0.1/manifest.yaml)
 
+Install locally:
+
+```bash
+python3 -m pip install -e .
+```
+
 Validate locally:
 
 ```bash

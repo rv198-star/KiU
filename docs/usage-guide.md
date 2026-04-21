@@ -10,6 +10,12 @@ KiU 目前包含两层内容：
 
 当前仓库内置的参考语料仍然是 *Poor Charlie's Almanack*。
 
+Install the repo into your current environment first:
+
+```bash
+python3 -m pip install -e .
+```
+
 Validate the bundle from the repo root:
 
 ```bash

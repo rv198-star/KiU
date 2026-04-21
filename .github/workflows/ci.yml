@@ -27,10 +27,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pyyaml
+          python -m pip install -e .
 
       - name: Run unit tests
         run: |
+          python -m unittest tests/test_packaging.py
           python -m unittest tests/test_profile_resolver.py
           python -m unittest tests/test_validator.py
           python -m unittest tests/test_pipeline.py
