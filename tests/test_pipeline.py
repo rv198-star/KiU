@@ -96,7 +96,7 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertEqual(report["errors"], [])
             self.assertEqual(report["summary"]["skill_candidates"], 5)
 
-    def test_build_candidates_cli_runs_autonomous_refiner_and_emits_terminal_state(self) -> None:
+    def test_build_candidates_cli_runs_refinement_scheduler_and_emits_terminal_state(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             output_root = Path(tmp_dir) / "generated"
             result = subprocess.run(

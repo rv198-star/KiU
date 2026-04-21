@@ -14,7 +14,7 @@ published_min_eval_cases:
   synthetic_adversarial: 5
   out_of_distribution: 2
 trigger_registry: shared_profiles/default/triggers.yaml
-autonomous_refiner:
+refinement_scheduler:
   weights:
     boundary_quality: 0.45
     eval_aggregate: 0.35

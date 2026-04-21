@@ -30,9 +30,9 @@ class RefinerConfigTests(unittest.TestCase):
     def setUp(self) -> None:
         self.bundle_path = ROOT / "bundles" / "poor-charlies-almanack-v0.1"
 
-    def test_load_source_bundle_reads_autonomous_refiner_profile(self) -> None:
+    def test_load_source_bundle_reads_refinement_scheduler_profile(self) -> None:
         bundle = load_source_bundle(self.bundle_path)
-        refiner = bundle.profile["autonomous_refiner"]
+        refiner = bundle.profile["refinement_scheduler"]
 
         self.assertTrue(refiner["enabled_by_default"])
         self.assertEqual(refiner["max_rounds"], 5)
@@ -62,11 +62,11 @@ class RefinerConfigTests(unittest.TestCase):
                         "disposition": "skill_candidate",
                     }
                 ],
-                "autonomous_refiner": {"enabled_by_default": True},
+                "refinement_scheduler": {"enabled_by_default": True},
             },
         )
 
-        self.assertEqual(metadata["loop_mode"], "autonomous_refiner")
+        self.assertEqual(metadata["loop_mode"], "refinement_scheduler")
         self.assertEqual(metadata["current_round"], 0)
         self.assertEqual(metadata["terminal_state"], "pending")
         self.assertEqual(metadata["human_gate"], "skipped")
@@ -238,7 +238,7 @@ class RefinerLoopTests(unittest.TestCase):
                 "recommended_execution_mode": "llm_agentic",
                 "disposition": "skill_candidate",
                 "drafting_mode": "deterministic",
-                "loop_mode": "autonomous_refiner",
+                "loop_mode": "refinement_scheduler",
                 "current_round": 0,
                 "terminal_state": "pending",
                 "human_gate": "skipped",
@@ -262,7 +262,7 @@ class RefinerLoopTests(unittest.TestCase):
         drafting_mode: str,
     ) -> tuple[Path, dict, object]:
         bundle = deepcopy(self.bundle)
-        config = bundle.profile["autonomous_refiner"]
+        config = bundle.profile["refinement_scheduler"]
         config["min_rounds"] = 1
         config["max_rounds"] = 1
         config["targets"] = {

@@ -6,6 +6,8 @@ from typing import Any
 
 import yaml
 
+from kiu_pipeline.profile_resolver import resolve_profile
+
 
 REQUIRED_SKILL_FILES = (
     "SKILL.md",
@@ -509,7 +511,7 @@ def _validate_revisions(
 
 def _resolve_validation_profile(root: Path, warnings: list[str]) -> dict[str, Any]:
     try:
-        resolved = _resolve_profile_from_files(root)
+        resolved = resolve_profile(root)
     except Exception as exc:
         warnings.append(f"bundle: profile_resolution_fallback ({exc})")
         resolved = {}
@@ -585,35 +587,6 @@ def _resolve_profile_path(bundle_root: Path, raw_path: str | Path) -> Path:
         return repo_candidate
 
     return bundle_candidate
-
-
-def _resolve_profile_from_files(bundle_root: Path) -> dict[str, Any]:
-    manifest = _load_yaml(bundle_root / "manifest.yaml", [], "manifest")
-    domain = manifest.get("domain")
-    if not domain:
-        raise ValueError(f"{bundle_root}: manifest missing required domain")
-
-    bundle_profile = _load_yaml(bundle_root / "automation.yaml", [], "automation")
-    inherits = bundle_profile.get("inherits", domain)
-    default_profile = _load_yaml(
-        REPO_ROOT / "shared_profiles" / "default" / "profile.yaml",
-        [],
-        "default profile",
-    )
-    domain_profile_path = REPO_ROOT / "shared_profiles" / inherits / "profile.yaml"
-    if not domain_profile_path.exists():
-        raise FileNotFoundError(
-            f"missing domain profile for {inherits}: {domain_profile_path}"
-        )
-    domain_profile = _load_yaml(domain_profile_path, [], f"{inherits} profile")
-    bundle_overrides = dict(bundle_profile)
-    bundle_overrides.pop("inherits", None)
-
-    resolved = _deep_merge(default_profile, domain_profile)
-    resolved = _deep_merge(resolved, bundle_overrides)
-    resolved["domain"] = domain
-    resolved["resolved_from"] = ["default", inherits, "bundle"]
-    return resolved
 
 
 def _validate_trigger_symbol_list(

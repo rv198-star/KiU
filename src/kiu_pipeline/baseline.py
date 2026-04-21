@@ -12,7 +12,7 @@ def build_candidate_baseline(
     nearest_skill_id: str,
 ) -> dict[str, Any]:
     weights = (
-        source_bundle.profile.get("autonomous_refiner", {}).get("weights")
+        source_bundle.profile.get("refinement_scheduler", {}).get("weights")
         or DEFAULT_WEIGHTS
     )
     nearest_skill = source_bundle.skills[nearest_skill_id]

@@ -38,7 +38,7 @@ seed_overrides:
   n_opportunity_principle:
     candidate_kind: general_agentic
     gold_match_hint: opportunity-cost-of-the-next-best-idea
-autonomous_refiner:
+refinement_scheduler:
   enabled_by_default: true
   min_rounds: 2
   max_rounds: 5

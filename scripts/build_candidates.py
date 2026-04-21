@@ -26,7 +26,7 @@ from kiu_pipeline.seed import mine_candidate_seeds
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Build KiU v0.2 candidates with autonomous refinement.",
+        description="Build KiU v0.2 candidates with refinement scheduling.",
     )
     parser.add_argument("--source-bundle", required=True, help="Path to the source bundle.")
     parser.add_argument("--output-root", required=True, help="Root directory for generated runs.")

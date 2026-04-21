@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
+import warnings
 
 import yaml
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SHARED_PROFILES_ROOT = REPO_ROOT / "shared_profiles"
+LEGACY_REFINER_KEY = "autonomous_refiner"
+REFINEMENT_SCHEDULER_KEY = "refinement_scheduler"
 
 
 def resolve_profile(bundle_path: str | Path) -> dict[str, Any]:
@@ -27,9 +30,11 @@ def resolve_profile(bundle_path: str | Path) -> dict[str, Any]:
 
     bundle_overrides = dict(bundle_profile)
     bundle_overrides.pop("inherits", None)
+    bundle_overrides = _normalize_profile_aliases(bundle_overrides)
 
     resolved = _deep_merge(default_profile, domain_profile)
     resolved = _deep_merge(resolved, bundle_overrides)
+    resolved = _normalize_profile_aliases(resolved)
     resolved["domain"] = domain
     resolved["resolved_from"] = ["default", inherits, "bundle"]
     return resolved
@@ -48,3 +53,16 @@ def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any
         else:
             merged[key] = value
     return merged
+
+
+def _normalize_profile_aliases(profile: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(profile)
+    if LEGACY_REFINER_KEY in normalized:
+        warnings.warn(
+            f"{LEGACY_REFINER_KEY} is deprecated; use {REFINEMENT_SCHEDULER_KEY}",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        normalized.setdefault(REFINEMENT_SCHEDULER_KEY, normalized[LEGACY_REFINER_KEY])
+        normalized.pop(LEGACY_REFINER_KEY, None)
+    return normalized

@@ -103,7 +103,7 @@ def derive_candidate_metadata(
         "disposition": disposition,
         "gold_match_hint": gold_match_hint,
         "drafting_mode": drafting_mode,
-        "loop_mode": "autonomous_refiner",
+        "loop_mode": "refinement_scheduler",
         "current_round": 0,
         "terminal_state": "pending",
         "human_gate": "skipped",

@@ -3,6 +3,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+import warnings
 
 import yaml
 
@@ -27,7 +28,7 @@ class ProfileResolverTests(unittest.TestCase):
 
         self.assertEqual(profile["domain"], "investing")
         self.assertEqual(profile["resolved_from"], ["default", "investing", "bundle"])
-        self.assertEqual(profile["autonomous_refiner"]["weights"]["boundary_quality"], 0.45)
+        self.assertEqual(profile["refinement_scheduler"]["weights"]["boundary_quality"], 0.45)
         self.assertEqual(profile["published_min_eval_cases"]["real_decisions"], 20)
         self.assertEqual(profile["rationale_density"]["min_anchor_refs"], 2)
 
@@ -37,7 +38,61 @@ class ProfileResolverTests(unittest.TestCase):
         self.assertEqual(bundle.domain, "investing")
         self.assertEqual(bundle.profile["domain"], "investing")
         self.assertIn("published_min_eval_cases", bundle.profile)
-        self.assertEqual(bundle.profile["autonomous_refiner"]["targets"]["overall_quality"], 0.82)
+        self.assertEqual(bundle.profile["refinement_scheduler"]["targets"]["overall_quality"], 0.82)
+
+    def test_legacy_refiner_key_emits_deprecation_warning_and_normalizes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir) / "bundle"
+            tmp_root.mkdir(parents=True)
+            manifest = {
+                "bundle_id": "demo",
+                "bundle_version": "0.1.0",
+                "domain": "investing",
+                "graph": {
+                    "path": "graph/graph.json",
+                    "graph_version": "kiu.graph/v0.1",
+                    "graph_hash": "sha256:test",
+                },
+                "skills": [],
+            }
+            (tmp_root / "manifest.yaml").write_text(
+                yaml.safe_dump(manifest, sort_keys=False, allow_unicode=True),
+                encoding="utf-8",
+            )
+            (tmp_root / "automation.yaml").write_text(
+                yaml.safe_dump(
+                    {
+                        "inherits": "investing",
+                        "autonomous_refiner": {"max_rounds": 9},
+                    },
+                    sort_keys=False,
+                    allow_unicode=True,
+                ),
+                encoding="utf-8",
+            )
+            (tmp_root / "graph").mkdir()
+            (tmp_root / "graph" / "graph.json").write_text(
+                json.dumps(
+                    {
+                        "graph_version": "kiu.graph/v0.1",
+                        "graph_hash": "sha256:test",
+                        "nodes": [],
+                        "edges": [],
+                        "communities": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with warnings.catch_warnings(record=True) as captured:
+                warnings.simplefilter("always")
+                profile = resolve_profile(tmp_root)
+
+            self.assertEqual(profile["refinement_scheduler"]["max_rounds"], 9)
+            self.assertNotIn("autonomous_refiner", profile)
+            self.assertTrue(
+                any("autonomous_refiner is deprecated" in str(item.message) for item in captured)
+            )
 
     def test_missing_domain_profile_fails_resolution(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

@@ -29,7 +29,7 @@ def refine_candidate(
     llm_budget_tokens: int = 100000,
     budget_tracker: LLMBudgetTracker | None = None,
 ) -> dict[str, Any]:
-    config = source_bundle.profile.get("autonomous_refiner", {})
+    config = source_bundle.profile.get("refinement_scheduler", {})
     weights = config.get("weights") or DEFAULT_WEIGHTS
     bonuses = config.get("bonuses", {})
     current = _initialize_candidate_metrics(candidate, weights=weights)
@@ -245,7 +245,7 @@ def plan_round_mutation(
         "stability_delta": 0.05,
         "append_trace_ref": trace_ref,
         "revision_note": (
-            f"Autonomous refinement round {round_index} tightened boundary signals and"
+            f"Refinement scheduler round {round_index} tightened boundary signals and"
             " improved evaluation support."
         ),
     }
@@ -264,7 +264,7 @@ def _initialize_candidate_metrics(
     for key in ("boundary_quality", "eval_aggregate", "cross_subset_stability"):
         initialized["candidate"].setdefault(key, metrics[key])
     initialized["candidate"].setdefault("current_round", 0)
-    initialized["candidate"].setdefault("loop_mode", "autonomous_refiner")
+    initialized["candidate"].setdefault("loop_mode", "refinement_scheduler")
     initialized["candidate"].setdefault("terminal_state", "pending")
     initialized["candidate"].setdefault("human_gate", "skipped")
     return initialized
