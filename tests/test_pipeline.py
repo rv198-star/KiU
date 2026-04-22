@@ -1144,6 +1144,52 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertIn("## Suggested Questions", report_text)
             self.assertIn("Problem-First Requirements Analysis", report_text)
 
+    def test_run_book_pipeline_cli_emits_end_to_end_outputs_for_example_source(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_root = Path(tmp_dir) / "artifacts"
+            source_path = ROOT / "examples" / "sources" / "effective-requirements-analysis-source.md"
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "run_book_pipeline.py"),
+                    "--input",
+                    str(source_path),
+                    "--bundle-id",
+                    "demo-source-bundle",
+                    "--source-id",
+                    "effective-requirements-analysis",
+                    "--run-id",
+                    "end-to-end-smoke",
+                    "--output-root",
+                    str(output_root),
+                    "--max-chars",
+                    "240",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+            payload = json.loads(result.stdout)
+            source_bundle_root = Path(payload["source_bundle_root"])
+            run_root = Path(payload["run_root"])
+            graph_report_path = Path(payload["graph_report_path"])
+            review_path = Path(payload["three_layer_review_path"])
+
+            self.assertTrue(source_bundle_root.exists())
+            self.assertTrue(run_root.exists())
+            self.assertTrue(graph_report_path.exists())
+            self.assertTrue(review_path.exists())
+
+            metrics = json.loads((run_root / "reports" / "metrics.json").read_text(encoding="utf-8"))
+            self.assertGreaterEqual(metrics["summary"]["workflow_script_candidates"], 2)
+
+            review_doc = json.loads(review_path.read_text(encoding="utf-8"))
+            self.assertIn("overall_score_100", review_doc)
+            self.assertGreaterEqual(review_doc["generated_bundle"]["workflow_candidate_count"], 2)
+
     def test_build_source_chunks_cli_emits_valid_chunks_for_fixture_source(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_root = Path(tmp_dir)
