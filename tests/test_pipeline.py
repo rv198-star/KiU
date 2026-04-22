@@ -677,6 +677,78 @@ class CandidatePipelineTests(unittest.TestCase):
                 any(edge["type"] == "mentions_term" for edge in extraction_result["edges"])
             )
 
+    def test_extract_graph_candidates_cli_supports_llm_assisted_with_mock_provider(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_path = ROOT / "examples" / "sources" / "effective-requirements-analysis-source.md"
+            source_chunks_path = tmp_root / "source-chunks.json"
+            output_path = tmp_root / "extraction-result.json"
+
+            build_chunks = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_source_chunks.py"),
+                    "--input",
+                    str(source_path),
+                    "--bundle-id",
+                    "demo-source-bundle",
+                    "--source-id",
+                    "effective-requirements-analysis",
+                    "--output",
+                    str(source_chunks_path),
+                    "--max-chars",
+                    "240",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(build_chunks.returncode, 0, build_chunks.stdout + build_chunks.stderr)
+
+            env = os.environ.copy()
+            env["KIU_LLM_PROVIDER"] = "mock"
+            env["KIU_LLM_MOCK_RESPONSE"] = (
+                "nodes:\n"
+                "  - id: llm::0001\n"
+                "    type: principle_signal\n"
+                "    label: 从 mock provider 追加的提炼原则\n"
+                "    source_file: examples/sources/effective-requirements-analysis-source.md\n"
+                "    extraction_kind: INFERRED\n"
+                "edges: []\n"
+                "warnings:\n"
+                "  - mock_llm_patch_applied\n"
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "extract_graph_candidates.py"),
+                    "--source-chunks",
+                    str(source_chunks_path),
+                    "--output",
+                    str(output_path),
+                    "--deterministic-pass",
+                    "heuristic-extractors",
+                    "--drafting-mode",
+                    "llm-assisted",
+                    "--llm-budget-tokens",
+                    "4000",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+                env=env,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            extraction_result = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertEqual(validate_extraction_result_doc(extraction_result), [])
+            self.assertTrue(
+                any(node["id"] == "llm::0001" for node in extraction_result["nodes"])
+            )
+            self.assertIn("mock_llm_patch_applied", extraction_result["warnings"])
+            self.assertEqual(extraction_result["llm_drafting"]["provider"], "mock")
+
     def test_build_source_chunks_cli_emits_valid_chunks_for_fixture_source(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_root = Path(tmp_dir)

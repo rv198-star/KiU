@@ -13,6 +13,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from kiu_pipeline.extraction import (
+    apply_llm_extraction_patch,
     build_empty_extraction_result,
     build_heuristic_extraction_result,
     build_section_heading_extraction_result,
@@ -28,10 +29,22 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source-chunks", required=True, help="Path to source-chunks JSON.")
     parser.add_argument("--output", required=True, help="Where to write extraction-result JSON.")
     parser.add_argument(
+        "--drafting-mode",
+        default="deterministic",
+        choices=("deterministic", "llm-assisted"),
+        help="Whether to emit deterministic-only output or apply an LLM patch on top.",
+    )
+    parser.add_argument(
         "--deterministic-pass",
         default="empty-shell",
         choices=("empty-shell", "section-headings", "heuristic-extractors"),
         help="Deterministic extraction pass to run before any future LLM stage.",
+    )
+    parser.add_argument(
+        "--llm-budget-tokens",
+        type=int,
+        default=6000,
+        help="Token budget ceiling for llm-assisted extraction drafting.",
     )
     return parser.parse_args()
 
@@ -50,6 +63,18 @@ def main() -> int:
         extraction_result = build_heuristic_extraction_result(source_chunks)
     else:
         extraction_result = build_empty_extraction_result(source_chunks)
+
+    if args.drafting_mode == "llm-assisted":
+        try:
+            extraction_result = apply_llm_extraction_patch(
+                source_chunks_doc=source_chunks,
+                extraction_result=extraction_result,
+                token_budget=args.llm_budget_tokens,
+            )
+        except Exception as exc:
+            print(json.dumps({"errors": [str(exc)]}, ensure_ascii=False, indent=2))
+            return 1
+
     result_errors = validate_extraction_result_doc(extraction_result)
     if result_errors:
         print(json.dumps({"errors": result_errors}, ensure_ascii=False, indent=2))

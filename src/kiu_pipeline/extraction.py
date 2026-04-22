@@ -3,6 +3,10 @@ from __future__ import annotations
 import re
 from typing import Any
 
+import yaml
+
+from kiu_pipeline.refiner.providers import create_provider_from_env, estimate_tokens
+
 
 SOURCE_CHUNKS_SCHEMA_VERSION = "kiu.source-chunks/v0.1"
 EXTRACTION_RESULTS_SCHEMA_VERSION = "kiu.extraction-results/v0.1"
@@ -362,6 +366,79 @@ def validate_extraction_result_doc(doc: dict[str, Any]) -> list[str]:
     return errors
 
 
+def apply_llm_extraction_patch(
+    *,
+    source_chunks_doc: dict[str, Any],
+    extraction_result: dict[str, Any],
+    token_budget: int,
+) -> dict[str, Any]:
+    prompt = _build_llm_extraction_prompt(source_chunks_doc, extraction_result)
+    prompt_tokens = estimate_tokens(prompt)
+    if prompt_tokens > token_budget:
+        raise ValueError(
+            f"llm extraction prompt exceeds budget: {prompt_tokens} > {token_budget}"
+        )
+
+    provider = create_provider_from_env()
+    response = provider.generate(
+        field_name="extraction_result_patch",
+        prompt=prompt,
+    )
+    patch_doc = yaml.safe_load(response.content) or {}
+    if not isinstance(patch_doc, dict):
+        raise ValueError("llm extraction patch must decode to a mapping")
+
+    merged = {
+        **extraction_result,
+        "nodes": list(extraction_result.get("nodes", [])),
+        "edges": list(extraction_result.get("edges", [])),
+        "warnings": list(extraction_result.get("warnings", [])),
+        "llm_drafting": {
+            "provider": response.provider,
+            "model": response.model,
+            "prompt_tokens": response.prompt_tokens,
+            "completion_tokens": response.completion_tokens,
+            "budget_tokens": token_budget,
+        },
+    }
+
+    existing_node_ids = {node.get("id") for node in merged["nodes"] if isinstance(node, dict)}
+    for node in patch_doc.get("nodes", []) or []:
+        if not isinstance(node, dict):
+            continue
+        node_id = node.get("id")
+        if node_id in existing_node_ids:
+            continue
+        if "source_file" not in node:
+            node["source_file"] = extraction_result.get("source_file")
+        if "extraction_kind" not in node:
+            node["extraction_kind"] = "INFERRED"
+        merged["nodes"].append(node)
+        existing_node_ids.add(node_id)
+
+    existing_edge_ids = {edge.get("id") for edge in merged["edges"] if isinstance(edge, dict)}
+    for edge in patch_doc.get("edges", []) or []:
+        if not isinstance(edge, dict):
+            continue
+        edge_id = edge.get("id")
+        if edge_id in existing_edge_ids:
+            continue
+        if "source_file" not in edge:
+            edge["source_file"] = extraction_result.get("source_file")
+        if "extraction_kind" not in edge:
+            edge["extraction_kind"] = "INFERRED"
+        if "confidence" not in edge:
+            edge["confidence"] = 0.7
+        merged["edges"].append(edge)
+        existing_edge_ids.add(edge_id)
+
+    for warning in patch_doc.get("warnings", []) or []:
+        if isinstance(warning, str) and warning not in merged["warnings"]:
+            merged["warnings"].append(warning)
+
+    return merged
+
+
 def _safe_id(raw: str) -> str:
     return re.sub(r"[^a-zA-Z0-9._-]+", "-", raw).strip("-").lower() or "signal"
 
@@ -385,3 +462,37 @@ def _extract_terms(text: str) -> list[str]:
         if term and term not in terms:
             terms.append(term)
     return terms
+
+
+def _build_llm_extraction_prompt(
+    source_chunks_doc: dict[str, Any],
+    extraction_result: dict[str, Any],
+) -> str:
+    chunks = source_chunks_doc.get("chunks", [])
+    chunk_summaries = []
+    for chunk in chunks[:8]:
+        if not isinstance(chunk, dict):
+            continue
+        chunk_summaries.append(
+            {
+                "chunk_id": chunk.get("chunk_id"),
+                "section": chunk.get("section"),
+                "line_start": chunk.get("line_start"),
+                "line_end": chunk.get("line_end"),
+                "chunk_text": chunk.get("chunk_text"),
+            }
+        )
+
+    prompt_doc = {
+        "task": (
+            "Add inferred extraction signals as YAML with top-level keys nodes, edges, warnings. "
+            "Return only YAML."
+        ),
+        "source_id": source_chunks_doc.get("source_id"),
+        "source_file": source_chunks_doc.get("source_file"),
+        "deterministic_pass": extraction_result.get("deterministic_pass"),
+        "existing_node_count": len(extraction_result.get("nodes", [])),
+        "existing_edge_count": len(extraction_result.get("edges", [])),
+        "chunks": chunk_summaries,
+    }
+    return yaml.safe_dump(prompt_doc, sort_keys=False, allow_unicode=True)
