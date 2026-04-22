@@ -674,6 +674,14 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertIn("case", extractor_kinds)
             self.assertIn("term", extractor_kinds)
             self.assertIn("counter-example", extractor_kinds)
+            extraction_kinds = {
+                entity.get("extraction_kind")
+                for entity in [*extraction_result["nodes"], *extraction_result["edges"]]
+            }
+            self.assertEqual(
+                extraction_kinds,
+                {"EXTRACTED", "INFERRED", "AMBIGUOUS"},
+            )
             self.assertTrue(
                 any(edge["type"] == "supported_by_evidence" for edge in extraction_result["edges"])
             )
@@ -682,6 +690,21 @@ class CandidatePipelineTests(unittest.TestCase):
             )
             self.assertTrue(
                 any(edge["type"] == "flags_counter_example" for edge in extraction_result["edges"])
+            )
+            self.assertTrue(
+                any(
+                    edge["type"] == "derives_counter_example_signal"
+                    and edge["extraction_kind"] == "INFERRED"
+                    for edge in extraction_result["edges"]
+                )
+            )
+            self.assertTrue(
+                any(
+                    node["type"] == "counter_example_signal"
+                    and node["extraction_kind"] == "AMBIGUOUS"
+                    and node.get("inference_basis") == "negative_outcome_heuristic"
+                    for node in extraction_result["nodes"]
+                )
             )
 
     def test_extract_graph_candidates_cli_supports_llm_assisted_with_mock_provider(self) -> None:
@@ -1426,6 +1449,11 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertGreaterEqual(review_doc["source_bundle"]["score_100"], 85.0)
             self.assertIn("graph_report_present", review_doc["source_bundle"]["notes"])
             self.assertIn("provenance_graph_complete", review_doc["source_bundle"]["notes"])
+            self.assertNotIn("tri_state_coverage_partial", review_doc["source_bundle"]["notes"])
+            extraction_kind_counts = review_doc["source_bundle"]["provenance"]["extraction_kind_counts"]
+            self.assertGreater(extraction_kind_counts["EXTRACTED"], 0)
+            self.assertGreater(extraction_kind_counts["INFERRED"], 0)
+            self.assertGreater(extraction_kind_counts["AMBIGUOUS"], 0)
             self.assertGreater(review_doc["usage_outputs"]["score_100"], 0.0)
 
     def test_build_source_chunks_cli_emits_valid_chunks_for_fixture_source(self) -> None:

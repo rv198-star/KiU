@@ -145,6 +145,36 @@ def build_heuristic_extraction_result(source_chunks_doc: dict[str, Any]) -> dict
         node_ids.add(node_id)
         nodes.append(node)
 
+    def add_inferred_signal_edge(
+        *,
+        section_node_id: str | None,
+        target_id: str,
+        edge_type: str,
+        source_file_value: str,
+        line_start: int,
+        line_end: int,
+        chunk_id: str,
+    ) -> None:
+        if not section_node_id:
+            return
+        edges.append(
+            {
+                "id": f"{edge_type}::{section_node_id}->{target_id}",
+                "type": edge_type,
+                "from": section_node_id,
+                "to": target_id,
+                "source_file": source_file_value,
+                "source_location": {
+                    "line_start": line_start,
+                    "line_end": line_end,
+                },
+                "extraction_kind": "INFERRED",
+                "confidence": 0.7,
+                "inference_basis": "shared_section_chunk_context",
+                "chunk_id": chunk_id,
+            }
+        )
+
     for index, entry in enumerate(section_map, start=1):
         title = entry.get("title")
         line_start = entry.get("line_start")
@@ -278,6 +308,15 @@ def build_heuristic_extraction_result(source_chunks_doc: dict[str, Any]) -> dict
                     "confidence": 1.0,
                 }
             )
+            add_inferred_signal_edge(
+                section_node_id=section_node_id,
+                target_id=case_id,
+                edge_type="derives_case_signal",
+                source_file_value=chunk.get("source_file", source_file),
+                line_start=line_start,
+                line_end=line_end,
+                chunk_id=chunk_id,
+            )
 
         if _has_counter_example_cue(chunk_text):
             counter_example_id = f"counter-example::{_safe_id(chunk_id)}"
@@ -292,8 +331,9 @@ def build_heuristic_extraction_result(source_chunks_doc: dict[str, Any]) -> dict
                         "line_start": line_start,
                         "line_end": line_end,
                     },
-                    "extraction_kind": "EXTRACTED",
+                    "extraction_kind": "AMBIGUOUS",
                     "extractor_kind": "counter-example",
+                    "inference_basis": "negative_outcome_heuristic",
                 }
             )
             edges.append(
@@ -307,9 +347,20 @@ def build_heuristic_extraction_result(source_chunks_doc: dict[str, Any]) -> dict
                         "line_start": line_start,
                         "line_end": line_end,
                     },
-                    "extraction_kind": "EXTRACTED",
-                    "confidence": 1.0,
+                    "extraction_kind": "AMBIGUOUS",
+                    "confidence": 0.6,
+                    "inference_basis": "negative_outcome_heuristic",
+                    "chunk_id": chunk_id,
                 }
+            )
+            add_inferred_signal_edge(
+                section_node_id=section_node_id,
+                target_id=counter_example_id,
+                edge_type="derives_counter_example_signal",
+                source_file_value=chunk.get("source_file", source_file),
+                line_start=line_start,
+                line_end=line_end,
+                chunk_id=chunk_id,
             )
 
         for term in _extract_terms(chunk_text):
@@ -342,6 +393,15 @@ def build_heuristic_extraction_result(source_chunks_doc: dict[str, Any]) -> dict
                     "extraction_kind": "EXTRACTED",
                     "confidence": 1.0,
                 }
+            )
+            add_inferred_signal_edge(
+                section_node_id=section_node_id,
+                target_id=term_id,
+                edge_type="derives_term_signal",
+                source_file_value=chunk.get("source_file", source_file),
+                line_start=line_start,
+                line_end=line_end,
+                chunk_id=chunk_id,
             )
 
     result["deterministic_pass"] = "heuristic-extractors"
