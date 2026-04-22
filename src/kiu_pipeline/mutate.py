@@ -5,6 +5,9 @@ from datetime import date
 import re
 from typing import Any
 
+from .draft import _build_usage_summary, replace_markdown_section, synchronize_candidate_skill_markdown
+from .load import parse_sections
+
 
 def mutate_candidate(
     *,
@@ -48,21 +51,27 @@ def mutate_candidate(
     )
     current_revision = mutated["revisions"]["current_revision"]
     mutated["eval_summary"]["skill_revision"] = current_revision
-    mutated["skill_markdown"] = _update_skill_markdown_metadata(
+    mutated["skill_markdown"] = synchronize_candidate_skill_markdown(
         mutated["skill_markdown"],
+        eval_summary=mutated["eval_summary"],
+        revisions=mutated["revisions"],
         skill_revision=current_revision,
+        status=mutated["eval_summary"].get("status", "under_evaluation"),
     )
     return mutated
 
 
 def _append_trace_reference(skill_markdown: str, trace_ref: str) -> str:
-    needle = "## Evaluation Summary"
-    bullet = f"- `{trace_ref}`\n\n"
-    if trace_ref in skill_markdown:
+    sections = parse_sections(skill_markdown)
+    usage_summary = sections.get("Usage Summary", "")
+    if trace_ref in usage_summary:
         return skill_markdown
-    if needle in skill_markdown and "Representative cases:" in skill_markdown:
-        return skill_markdown.replace(needle, bullet + needle, 1)
-    return skill_markdown.rstrip() + "\n\n" + bullet
+
+    trace_refs = re.findall(r"traces/[\w./-]+\.yaml", usage_summary)
+    trace_refs.append(trace_ref)
+    usage_notes = _extract_usage_notes(usage_summary)
+    rendered_usage = _build_usage_summary(trace_refs, usage_notes=usage_notes)
+    return replace_markdown_section(skill_markdown, "Usage Summary", rendered_usage)
 
 
 def _update_eval_summary(
@@ -118,23 +127,12 @@ def _update_revisions(
     )
     return updated
 
-
-def _update_skill_markdown_metadata(
-    skill_markdown: str,
-    *,
-    skill_revision: int,
-) -> str:
-    updated = skill_markdown
-    updated = re.sub(
-        r"status:\s+\w+",
-        "status: under_evaluation",
-        updated,
-        count=1,
-    )
-    updated = re.sub(
-        r"skill_revision:\s+\d+",
-        f"skill_revision: {skill_revision}",
-        updated,
-        count=1,
-    )
-    return updated
+def _extract_usage_notes(usage_summary: str) -> list[str]:
+    notes: list[str] = []
+    for line in usage_summary.splitlines():
+        stripped = line.strip()
+        if stripped == "Representative cases:":
+            break
+        if stripped.startswith("- ") and "traces/" not in stripped:
+            notes.append(stripped[2:].strip())
+    return notes

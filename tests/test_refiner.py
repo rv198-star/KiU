@@ -15,7 +15,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from kiu_pipeline.baseline import build_candidate_baseline
-from kiu_pipeline.load import load_source_bundle
+from kiu_pipeline.load import load_source_bundle, parse_sections
 from kiu_pipeline.mutate import mutate_candidate
 from kiu_pipeline.refiner import refine_candidate
 from kiu_pipeline.refiner.providers import MockLLMProvider
@@ -171,10 +171,58 @@ class RefinerMutationTests(unittest.TestCase):
         candidate = {
             "skill_markdown": (
                 "# Circle of Competence\n\n"
+                "## Identity\n"
+                "```yaml\n"
+                "skill_id: circle-of-competence\n"
+                "title: Circle of Competence\n"
+                "status: under_evaluation\n"
+                "bundle_version: 0.2.0\n"
+                "skill_revision: 1\n"
+                "```\n\n"
+                "## Contract\n"
+                "```yaml\n"
+                "trigger:\n"
+                "  patterns:\n"
+                "  - circle_of_competence_gap_is_visible\n"
+                "  exclusions: []\n"
+                "intake:\n"
+                "  required:\n"
+                "  - name: scenario\n"
+                "    type: structured\n"
+                "    description: Current case.\n"
+                "judgment_schema:\n"
+                "  output:\n"
+                "    type: structured\n"
+                "    schema:\n"
+                "      verdict: enum[inside,outside]\n"
+                "  reasoning_chain_required: true\n"
+                "boundary:\n"
+                "  fails_when:\n"
+                "  - evidence_is_too_sparse_for_candidate_review\n"
+                "  do_not_fire_when:\n"
+                "  - candidate_has_not_been_reviewed_by_human\n"
+                "```\n\n"
+                "## Rationale\n"
+                "Enough rationale text to keep the candidate structurally valid.[^anchor:demo]\n\n"
+                "## Evidence Summary\n"
+                "Evidence summary with one anchor reference.[^anchor:demo]\n\n"
+                "## Relations\n"
+                "```yaml\n"
+                "depends_on: []\n"
+                "delegates_to: []\n"
+                "constrained_by: []\n"
+                "complements: []\n"
+                "contradicts: []\n"
+                "```\n\n"
                 "## Usage Summary\n"
                 "Current trace attachments: 1.\n\n"
                 "Representative cases:\n"
                 "- `traces/canonical/dotcom-refusal.yaml`\n"
+                "\n"
+                "## Evaluation Summary\n"
+                "stale eval summary\n\n"
+                "## Revision Summary\n"
+                "stale revision summary\n"
             ),
             "anchors": {"graph_anchor_sets": [], "source_anchor_sets": []},
             "eval_summary": {
@@ -212,8 +260,8 @@ class RefinerMutationTests(unittest.TestCase):
             "candidate": {
                 "candidate_id": "circle-of-competence",
                 "current_round": 0,
-                "boundary_quality": 0.70,
-                "eval_aggregate": 0.70,
+                "boundary_quality": 0.78,
+                "eval_aggregate": 0.79,
                 "cross_subset_stability": 0.70,
                 "drafting_mode": "deterministic",
             },
@@ -235,6 +283,11 @@ class RefinerMutationTests(unittest.TestCase):
         self.assertIn("pilot-pre-mortem.yaml", mutated["skill_markdown"])
         self.assertEqual(mutated["eval_summary"]["status"], "under_evaluation")
         self.assertEqual(mutated["revisions"]["current_revision"], 2)
+        sections = parse_sections(mutated["skill_markdown"])
+        self.assertIn("trigger_test=`pass`", sections["Evaluation Summary"])
+        self.assertIn("fire_test=`pass`", sections["Evaluation Summary"])
+        self.assertIn("boundary_test=`pass`", sections["Evaluation Summary"])
+        self.assertIn("Tightened trigger boundary and added stress trace.", sections["Revision Summary"])
 
     def test_write_round_reports_emits_scorecard_and_final_decision(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

@@ -1,7 +1,7 @@
 fixture_id: financial-statement-analysis
 title: Financial Statement Analysis Example Source Bundle
 domain: financial-statement-analysis
-inherits: default
+inherits_from: default
 language: zh-CN
 bundle_version: 0.1.0
 source_markdown: examples/sources/financial-statement-analysis-source.md
@@ -262,8 +262,8 @@ nodes:
         trigger:
           patterns:
             - valuation_starts_from_hard_accounting_numbers
-          exclusions:
             - valuation_depends_only_on_story_or_long_term_guess
+          exclusions: []
         intake:
           required:
             - name: accounting_anchor

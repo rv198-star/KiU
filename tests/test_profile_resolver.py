@@ -57,7 +57,7 @@ class ProfileResolverTests(unittest.TestCase):
             manifest = {
                 "bundle_id": "demo",
                 "bundle_version": "0.1.0",
-                "domain": "investing",
+                "domain": "fixture-domain",
                 "graph": {
                     "path": "graph/graph.json",
                     "graph_version": "kiu.graph/v0.1",
@@ -103,6 +103,55 @@ class ProfileResolverTests(unittest.TestCase):
             self.assertTrue(
                 any("autonomous_refiner is deprecated" in str(item.message) for item in captured)
             )
+
+    def test_inherits_from_alias_resolves_domain_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir) / "bundle"
+            tmp_root.mkdir(parents=True)
+            manifest = {
+                "bundle_id": "demo",
+                "bundle_version": "0.1.0",
+                "domain": "fixture-domain",
+                "graph": {
+                    "path": "graph/graph.json",
+                    "graph_version": "kiu.graph/v0.1",
+                    "graph_hash": "sha256:test",
+                },
+                "skills": [],
+            }
+            (tmp_root / "manifest.yaml").write_text(
+                yaml.safe_dump(manifest, sort_keys=False, allow_unicode=True),
+                encoding="utf-8",
+            )
+            (tmp_root / "automation.yaml").write_text(
+                yaml.safe_dump(
+                    {
+                        "inherits_from": "default",
+                    },
+                    sort_keys=False,
+                    allow_unicode=True,
+                ),
+                encoding="utf-8",
+            )
+            (tmp_root / "graph").mkdir()
+            (tmp_root / "graph" / "graph.json").write_text(
+                json.dumps(
+                    {
+                        "graph_version": "kiu.graph/v0.1",
+                        "graph_hash": "sha256:test",
+                        "nodes": [],
+                        "edges": [],
+                        "communities": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            profile = resolve_profile(tmp_root)
+
+            self.assertEqual(profile["domain"], "fixture-domain")
+            self.assertEqual(profile["resolved_from"], ["default", "default", "bundle"])
+            self.assertIn("refinement_scheduler", profile)
 
     def test_show_profile_cli_prints_resolved_profile(self) -> None:
         result = subprocess.run(

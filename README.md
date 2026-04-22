@@ -4,11 +4,18 @@
 
 KiU v0.1 is a graph-first, evidence-backed skill bundle format with a complete reference bundle and a local validator.
 
+Current release framing:
+
+- `v0.4.x` is the single-domain production-line hardening line.
+- Multi-domain validation, cross-bundle graph merge, and true autonomous refinement proof remain v0.5 work.
+
 Start here:
 
 - [Usage Guide](docs/usage-guide.md)
 - [KiU Skill Spec v0.1](docs/kiu-skill-spec-v0.1.md)
 - [KiU Skill Spec v0.3](docs/kiu-skill-spec-v0.3.md)
+- [KiU Skill Spec v0.4](docs/kiu-skill-spec-v0.4.md)
+- [v0.4.1 Assessment and v0.4.2 Plan](docs/2026-04-22-v0.4.1-assessment-and-v0.4.2-plan.md)
 - [KiU v0.2 Candidate Pipeline](docs/kiu-v0.2-pipeline.md)
 - [Reference Bundle](bundles/poor-charlies-almanack-v0.1/manifest.yaml)
 

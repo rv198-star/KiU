@@ -1,7 +1,7 @@
 fixture_id: effective-requirements-analysis
 title: Effective Requirements Analysis Example Source Bundle
 domain: requirements-analysis
-inherits: default
+inherits_from: default
 language: zh-CN
 bundle_version: 0.1.0
 source_markdown: examples/sources/effective-requirements-analysis-source.md

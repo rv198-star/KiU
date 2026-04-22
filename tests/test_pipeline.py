@@ -271,6 +271,87 @@ class CandidatePipelineTests(unittest.TestCase):
                                         actual_subset["cases"],
                                     )
 
+    def test_scaffolded_example_bundle_prefers_inherits_from(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            for fixture_path in self.example_fixture_paths:
+                with self.subTest(fixture=fixture_path.name):
+                    source_root = tmp_root / "sources" / fixture_path.stem
+                    scaffold = subprocess.run(
+                        [
+                            sys.executable,
+                            str(ROOT / "scripts" / "scaffold_example_bundle.py"),
+                            "--fixture",
+                            str(fixture_path),
+                            "--output-root",
+                            str(source_root),
+                        ],
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    )
+                    self.assertEqual(scaffold.returncode, 0, scaffold.stdout + scaffold.stderr)
+
+                    automation = yaml.safe_load(
+                        (source_root / "bundle" / "automation.yaml").read_text(encoding="utf-8")
+                    )
+
+                    self.assertIn("inherits_from", automation)
+                    self.assertNotIn("inherits", automation)
+                    self.assertEqual(automation["inherits_from"], "default")
+
+    def test_preflight_rejects_generated_skill_summary_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            _, generated_bundle = self._generate_fixture_bundle(
+                fixture_path=ROOT / "examples" / "fixtures" / "effective-requirements-analysis.yaml",
+                tmp_root=tmp_root,
+            )
+            skill_dir = generated_bundle / "skills" / "business-interface-analysis"
+            skill_markdown = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+            skill_markdown = skill_markdown.replace(
+                "boundary_test=`pass`。",
+                "boundary_test=`pending`。",
+                1,
+            )
+            skill_markdown = skill_markdown.replace(
+                "## Revision Summary\n初版 seed 已把业务接口分析与系统接口设计的边界写入 contract，并补足最小 traces/eval 绑定。",
+                "## Revision Summary\nstale revision summary",
+                1,
+            )
+            (skill_dir / "SKILL.md").write_text(skill_markdown, encoding="utf-8")
+
+            report = validate_generated_bundle(generated_bundle)
+
+            self.assertTrue(
+                any("Evaluation Summary drift" in error for error in report["errors"]),
+                report["errors"],
+            )
+            self.assertTrue(
+                any("Revision Summary drift" in error for error in report["errors"]),
+                report["errors"],
+            )
+
+    def test_financial_statement_fixture_routes_story_only_into_accounting_anchor_skill(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            _, generated_bundle = self._generate_fixture_bundle(
+                fixture_path=ROOT / "examples" / "fixtures" / "financial-statement-analysis.yaml",
+                tmp_root=tmp_root,
+            )
+            skill_dir = generated_bundle / "skills" / "lock-onto-accounting-value"
+            sections = parse_sections((skill_dir / "SKILL.md").read_text(encoding="utf-8"))
+            contract = extract_yaml_section(sections["Contract"])
+
+            self.assertIn(
+                "valuation_depends_only_on_story_or_long_term_guess",
+                contract["trigger"]["patterns"],
+            )
+            self.assertNotIn(
+                "valuation_depends_only_on_story_or_long_term_guess",
+                contract["trigger"]["exclusions"],
+            )
+
     def test_build_candidates_cli_runs_refinement_scheduler_and_emits_terminal_state(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             output_root = Path(tmp_dir) / "generated"

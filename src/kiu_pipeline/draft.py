@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import yaml
@@ -22,6 +23,8 @@ def build_candidate_skill_markdown(
     seed: CandidateSeed,
     bundle_version: str,
     skill_revision: int,
+    eval_summary: dict[str, Any] | None = None,
+    revisions: dict[str, Any] | None = None,
 ) -> str:
     source_skill = seed.source_skill
     seed_content = seed.seed_content or {}
@@ -48,20 +51,27 @@ def build_candidate_skill_markdown(
         trace_refs,
         usage_notes=seed_content.get("usage_notes", []),
     )
-    evaluation_summary = (
-        "This candidate was prefilled by the v0.2 deterministic pipeline and remains"
-        " `under_evaluation`. Shared evaluation cases are attached in `eval/summary.yaml`"
-        " and must be reviewed before publication."
-    )
-    if not source_skill:
-        evaluation_summary = _build_seed_evaluation_summary(seed)
-    revision_summary = (
-        "Revision 1 is the initial v0.2 pipeline seed. The next loop must confirm"
-        " trigger precision, boundary quality, and whether the attached evidence is"
-        " sufficient for publication. See `iterations/revisions.yaml`."
-    )
-    if not source_skill:
-        revision_summary = _build_seed_revision_summary(seed)
+    eval_summary_doc = eval_summary
+    if eval_summary_doc is None:
+        eval_summary_doc = source_skill.eval_summary if source_skill else seed_content.get("eval_summary", {})
+    evaluation_summary = build_evaluation_summary_markdown(eval_summary_doc)
+
+    revisions_doc = revisions
+    if revisions_doc is None:
+        revisions_doc = source_skill.revisions if source_skill else seed_content.get("revisions", {})
+        if not revisions_doc and not source_skill:
+            revisions_doc = {
+                "current_revision": skill_revision,
+                "history": [
+                    {
+                        "revision": skill_revision,
+                        "summary": _build_seed_revision_summary(seed),
+                        "evidence_changes": [],
+                    }
+                ],
+                "open_gaps": [],
+            }
+    revision_summary = build_revision_summary_markdown(revisions_doc)
 
     sections = [
         ("Identity", _yaml_block(identity)),
@@ -221,10 +231,51 @@ def _build_seed_evaluation_summary(seed: CandidateSeed) -> str:
     return "\n".join(lines)
 
 
-def _build_seed_revision_summary(seed: CandidateSeed) -> str:
-    revision_seed = seed.seed_content.get("revision_seed", {})
+def build_evaluation_summary_markdown(eval_summary: dict[str, Any]) -> str:
+    kiu_test = eval_summary.get("kiu_test", {})
+    subsets = eval_summary.get("subsets", {})
     lines = [
-        revision_seed.get(
+        (
+            "当前 KiU Test 状态："
+            f"trigger_test=`{kiu_test.get('trigger_test', 'pending')}`，"
+            f"fire_test=`{kiu_test.get('fire_test', 'pending')}`，"
+            f"boundary_test=`{kiu_test.get('boundary_test', 'pending')}`。"
+        ),
+        "",
+        "已绑定最小评测集：",
+    ]
+    for subset_name in ("real_decisions", "synthetic_adversarial", "out_of_distribution"):
+        subset = subsets.get(subset_name, {})
+        lines.append(
+            (
+                f"- `{subset_name}`: passed={subset.get('passed', 0)} / total={subset.get('total', 0)}, "
+                f"threshold={subset.get('threshold', 0.0)}, status=`{subset.get('status', 'pending')}`"
+            )
+        )
+    key_failure_modes = eval_summary.get("key_failure_modes", [])
+    if key_failure_modes:
+        lines.append("")
+        lines.append("关键失败模式：")
+        for item in key_failure_modes:
+            lines.append(f"- {item}")
+    lines.append("")
+    lines.append("详见 `eval/summary.yaml` 与共享 `evaluation/`。")
+    return "\n".join(lines)
+
+
+def build_revision_summary_markdown(revisions: dict[str, Any]) -> str:
+    current_revision = int(revisions.get("current_revision", 1) or 1)
+    history = revisions.get("history", [])
+    current_entry = next(
+        (
+            entry
+            for entry in reversed(history)
+            if int(entry.get("revision", 0) or 0) == current_revision
+        ),
+        history[-1] if history else {},
+    )
+    lines = [
+        current_entry.get(
             "summary",
             (
                 "Revision 1 is the initial v0.2 pipeline seed. The next loop must confirm"
@@ -233,19 +284,45 @@ def _build_seed_revision_summary(seed: CandidateSeed) -> str:
             ),
         )
     ]
-    evidence_changes = revision_seed.get("evidence_changes", [])
+    evidence_changes = current_entry.get("evidence_changes", [])
     if evidence_changes:
         lines.append("")
         lines.append("本轮补入：")
         for item in evidence_changes:
             lines.append(f"- {item}")
-    open_gaps = revision_seed.get("open_gaps", [])
+    open_gaps = revisions.get("open_gaps", [])
     if open_gaps:
         lines.append("")
         lines.append("当前待补缺口：")
         for item in open_gaps:
             lines.append(f"- {item}")
     return "\n".join(lines)
+
+
+def synchronize_candidate_skill_markdown(
+    skill_markdown: str,
+    *,
+    eval_summary: dict[str, Any],
+    revisions: dict[str, Any],
+    skill_revision: int,
+    status: str = "under_evaluation",
+) -> str:
+    updated = _update_skill_markdown_metadata(
+        skill_markdown,
+        skill_revision=skill_revision,
+        status=status,
+    )
+    updated = replace_markdown_section(
+        updated,
+        "Evaluation Summary",
+        build_evaluation_summary_markdown(eval_summary),
+    )
+    updated = replace_markdown_section(
+        updated,
+        "Revision Summary",
+        build_revision_summary_markdown(revisions),
+    )
+    return updated
 
 
 def _collect_anchor_descriptors(source_bundle: SourceBundle, seed: CandidateSeed) -> list[dict[str, str]]:
@@ -301,6 +378,63 @@ def _titleize(text: str) -> str:
     return text.replace("-", " ").title()
 
 
+def replace_markdown_section(markdown: str, section_name: str, body: str) -> str:
+    pattern = rf"(^## {re.escape(section_name)}\n)(.*?)(?=^## |\Z)"
+    replacement = rf"\1{body.strip()}\n\n"
+    if re.search(pattern, markdown, flags=re.MULTILINE | re.DOTALL):
+        return re.sub(pattern, replacement, markdown, count=1, flags=re.MULTILINE | re.DOTALL)
+    return markdown.rstrip() + f"\n\n## {section_name}\n{body.strip()}\n"
+
+
+def _update_skill_markdown_metadata(
+    skill_markdown: str,
+    *,
+    skill_revision: int,
+    status: str,
+) -> str:
+    updated = skill_markdown
+    updated = re.sub(
+        r"status:\s+\w+",
+        f"status: {status}",
+        updated,
+        count=1,
+    )
+    updated = re.sub(
+        r"skill_revision:\s+\d+",
+        f"skill_revision: {skill_revision}",
+        updated,
+        count=1,
+    )
+    return updated
+
+
 def _yaml_block(doc: dict[str, Any]) -> str:
     rendered = yaml.safe_dump(doc, sort_keys=False, allow_unicode=True).rstrip()
     return f"```yaml\n{rendered}\n```"
+
+
+def _build_seed_revision_summary(seed: CandidateSeed) -> str:
+    revision_seed = seed.seed_content.get("revision_seed", {})
+    lines = [
+        revision_seed.get(
+            "summary",
+            (
+                "Revision 1 is the initial v0.2 pipeline seed. The next loop must confirm"
+                " trigger precision, boundary quality, and whether the attached evidence is"
+                " sufficient for publication. See `iterations/revisions.yaml`."
+            ),
+        )
+    ]
+    evidence_changes = revision_seed.get("evidence_changes", [])
+    if evidence_changes:
+        lines.append("")
+        lines.append("本轮补入：")
+        for item in evidence_changes:
+            lines.append(f"- {item}")
+    open_gaps = revision_seed.get("open_gaps", [])
+    if open_gaps:
+        lines.append("")
+        lines.append("当前待补缺口：")
+        for item in open_gaps:
+            lines.append(f"- {item}")
+    return "\n".join(lines)

@@ -153,9 +153,10 @@ def _build_automation_doc(fixture: dict[str, Any]) -> dict[str, Any]:
             override["gold_match_hint"] = node["gold_match_hint"]
         seed_overrides[node["id"]] = override
 
+    inherited_profile = fixture.get("inherits_from", fixture.get("inherits", "default"))
     automation = {
         "profile_version": "kiu.pipeline-profile/v0.3",
-        "inherits": fixture.get("inherits", "default"),
+        "inherits_from": inherited_profile,
         "trigger_registry": "triggers.yaml",
         "seed_overrides": seed_overrides,
     }

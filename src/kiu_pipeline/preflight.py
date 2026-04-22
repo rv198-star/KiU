@@ -5,6 +5,8 @@ from typing import Any
 
 import yaml
 
+from .draft import build_evaluation_summary_markdown, build_revision_summary_markdown
+from .load import parse_sections
 from kiu_validator.core import validate_bundle
 
 
@@ -46,6 +48,23 @@ def validate_generated_bundle(bundle_root: str | Path) -> dict[str, Any]:
             errors.append(f"{skill_id}: candidate.yaml missing loop_mode")
         if "terminal_state" not in candidate_doc:
             errors.append(f"{skill_id}: candidate.yaml missing terminal_state")
+
+        skill_markdown = (candidate_path.parent / "SKILL.md").read_text(encoding="utf-8")
+        sections = parse_sections(skill_markdown)
+        eval_doc = yaml.safe_load(
+            (candidate_path.parent / "eval" / "summary.yaml").read_text(encoding="utf-8")
+        ) or {}
+        revisions_doc = yaml.safe_load(
+            (candidate_path.parent / "iterations" / "revisions.yaml").read_text(encoding="utf-8")
+        ) or {}
+
+        expected_eval_summary = build_evaluation_summary_markdown(eval_doc).strip()
+        if sections.get("Evaluation Summary", "").strip() != expected_eval_summary:
+            errors.append(f"{skill_id}: Evaluation Summary drift vs eval/summary.yaml")
+
+        expected_revision_summary = build_revision_summary_markdown(revisions_doc).strip()
+        if sections.get("Revision Summary", "").strip() != expected_revision_summary:
+            errors.append(f"{skill_id}: Revision Summary drift vs iterations/revisions.yaml")
 
     report["errors"] = errors
     report["summary"] = {

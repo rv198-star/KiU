@@ -13,6 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SHARED_PROFILES_ROOT = REPO_ROOT / "shared_profiles"
 LEGACY_REFINER_KEY = "autonomous_refiner"
 REFINEMENT_SCHEDULER_KEY = "refinement_scheduler"
+INHERITS_KEYS = ("inherits_from", "inherits")
 
 
 def resolve_profile(bundle_path: str | Path) -> dict[str, Any]:
@@ -28,7 +29,7 @@ def _resolve_profile_cached(bundle_root_raw: str) -> dict[str, Any]:
         raise ValueError(f"{bundle_root}: manifest missing required domain")
 
     bundle_profile = _load_yaml(bundle_root / "automation.yaml")
-    inherits = bundle_profile.get("inherits", domain)
+    inherits = _resolve_inherits_from(bundle_profile, domain)
     default_profile = _load_yaml(SHARED_PROFILES_ROOT / "default" / "profile.yaml")
     domain_profile_path = SHARED_PROFILES_ROOT / inherits / "profile.yaml"
     if not domain_profile_path.exists():
@@ -36,7 +37,8 @@ def _resolve_profile_cached(bundle_root_raw: str) -> dict[str, Any]:
     domain_profile = _load_yaml(domain_profile_path)
 
     bundle_overrides = dict(bundle_profile)
-    bundle_overrides.pop("inherits", None)
+    for key in INHERITS_KEYS:
+        bundle_overrides.pop(key, None)
     bundle_overrides = _normalize_profile_aliases(bundle_overrides)
 
     resolved = _deep_merge(default_profile, domain_profile)
@@ -73,3 +75,13 @@ def _normalize_profile_aliases(profile: dict[str, Any]) -> dict[str, Any]:
         normalized.setdefault(REFINEMENT_SCHEDULER_KEY, normalized[LEGACY_REFINER_KEY])
         normalized.pop(LEGACY_REFINER_KEY, None)
     return normalized
+
+
+def _resolve_inherits_from(bundle_profile: dict[str, Any], default_domain: str) -> str:
+    preferred = bundle_profile.get("inherits_from")
+    legacy = bundle_profile.get("inherits")
+    if preferred and legacy and preferred != legacy:
+        raise ValueError(
+            f"automation.yaml sets conflicting inherits_from ({preferred}) and inherits ({legacy})"
+        )
+    return preferred or legacy or default_domain

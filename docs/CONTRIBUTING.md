@@ -16,12 +16,28 @@ For new docs:
 
 ## Validation Before Change
 
+Install the repo into a local environment first:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -e .
+```
+
 Before submitting changes, run:
 
 ```bash
-python3 -m unittest tests/test_profile_resolver.py
-python3 -m unittest tests/test_validator.py
-python3 -m unittest tests/test_pipeline.py
-python3 -m unittest tests/test_refiner.py
-python3 scripts/validate_bundle.py bundles/poor-charlies-almanack-v0.1
+.venv/bin/python -m unittest tests/test_profile_resolver.py
+.venv/bin/python -m unittest tests/test_validator.py
+.venv/bin/python -m unittest tests/test_pipeline.py
+.venv/bin/python -m unittest tests/test_refiner.py
+.venv/bin/python scripts/validate_bundle.py bundles/poor-charlies-almanack-v0.1
 ```
+
+## Release Hygiene
+
+For release-facing changes, keep these rules explicit:
+
+- update `CHANGELOG.md` in the same branch as the code or bundle change
+- if a revision was manually rewritten, say so in `iterations/revisions.yaml` and `SKILL.md`
+- only call a revision "loop-driven" when `refinement_scheduler` actually ran
+- generated candidate `SKILL.md` summaries must stay synced with `eval/summary.yaml` and `iterations/revisions.yaml`

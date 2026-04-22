@@ -7,6 +7,7 @@ KiU 目前包含两层内容：
 - `v0.1`：graph-first、evidence-backed 的 reference bundle 与 validator
 - `v0.2`：从已发布 graph snapshot 生成 candidate seeds，并默认执行 refinement scheduling
 - `v0.3`：domain-profile 驱动的 validator / refinement scheduler / `llm-assisted` drafting
+- `v0.4`：单 domain 生产线强化，加入 production quality gating、example fixtures、workflow-vs-agentic 路由约束，以及生成摘要诚实同步
 
 当前仓库内置的参考语料仍然是 *Poor Charlie's Almanack*。
 
@@ -55,6 +56,22 @@ python3 scripts/generate_candidates.py \
 
 如果你需要改成另一处固定目录，设置 `KIU_LOCAL_OUTPUT_ROOT=/your/path` 即可。
 只有在你明确希望写到仓库内路径时，才传 `--output-root generated` 之类的显式覆盖。
+
+## v0.4 Design Notes
+
+`v0.4.x` 的定位不是“KiU 全部假设已经验证完成”，而是把单 domain 的生产线先做扎实。当前设计重点有四条：
+
+- `workflow` 和 `agentic` 的边界先由 profile 显式声明，而不是让 runtime 临场猜。
+- `SKILL.md` 是厚视图，不是真源；`eval/summary.yaml` 与 `iterations/revisions.yaml` 才是结构化真源。
+- `production_quality` 只能证明“生成产物达到当前生产线门槛”，不等于“真实 runtime 消费闭环已经证明”。
+- 人工修订与 loop 驱动修订必须分开记账，不能把手工改稿伪装成 autonomous refinement。
+
+在 `automation.yaml` 里，profile 继承字段现在接受：
+
+- `inherits_from`
+- `inherits`（兼容旧字段）
+
+推荐新 bundle 使用 `inherits_from`，旧 bundle 保持 `inherits` 也能继续解析。
 
 ## What This Repo Contains
 
@@ -177,6 +194,7 @@ python3 -m unittest tests/test_pipeline.py
 That check covers:
 
 - generated candidate bundle rendering
+- rendered `Evaluation Summary` / `Revision Summary` honesty against YAML truth docs
 - `candidate.yaml` presence
 - metrics report emission
 - rejection of `workflow_script_candidate` inside `bundle/skills/`

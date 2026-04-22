@@ -186,14 +186,6 @@ def _render_skill_candidate(
     (skill_dir / "eval").mkdir(parents=True, exist_ok=True)
     (skill_dir / "iterations").mkdir(parents=True, exist_ok=True)
 
-    skill_markdown = build_candidate_skill_markdown(
-        source_bundle=source_bundle,
-        seed=seed,
-        bundle_version=BUNDLE_VERSION,
-        skill_revision=skill_revision,
-    )
-    (skill_dir / "SKILL.md").write_text(skill_markdown, encoding="utf-8")
-
     anchors = build_candidate_anchors(
         source_bundle=source_bundle,
         seed=seed,
@@ -211,6 +203,16 @@ def _render_skill_candidate(
 
     revisions = _build_revision_log(source_bundle, seed, skill_revision)
     _write_yaml(skill_dir / "iterations" / "revisions.yaml", revisions)
+
+    skill_markdown = build_candidate_skill_markdown(
+        source_bundle=source_bundle,
+        seed=seed,
+        bundle_version=BUNDLE_VERSION,
+        skill_revision=skill_revision,
+        eval_summary=eval_summary,
+        revisions=revisions,
+    )
+    (skill_dir / "SKILL.md").write_text(skill_markdown, encoding="utf-8")
 
     _write_yaml(skill_dir / "candidate.yaml", seed.metadata)
 
