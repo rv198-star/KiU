@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 
@@ -121,6 +122,191 @@ def build_section_heading_extraction_result(source_chunks_doc: dict[str, Any]) -
     return result
 
 
+def build_heuristic_extraction_result(source_chunks_doc: dict[str, Any]) -> dict[str, Any]:
+    result = build_empty_extraction_result(source_chunks_doc)
+    section_map = source_chunks_doc.get("section_map", [])
+    chunks = source_chunks_doc.get("chunks", [])
+    source_file = source_chunks_doc.get("source_file")
+
+    nodes: list[dict[str, Any]] = []
+    edges: list[dict[str, Any]] = []
+    node_ids: set[str] = set()
+    section_node_by_title: dict[str, str] = {}
+
+    def add_node(node: dict[str, Any]) -> None:
+        node_id = node["id"]
+        if node_id in node_ids:
+            return
+        node_ids.add(node_id)
+        nodes.append(node)
+
+    for index, entry in enumerate(section_map, start=1):
+        title = entry.get("title")
+        line_start = entry.get("line_start")
+        level = entry.get("level")
+        if not isinstance(title, str) or not title:
+            continue
+        if not isinstance(line_start, int) or line_start < 1:
+            continue
+        extractor_kind = "framework" if level == 1 else "principle"
+        node_id = f"{extractor_kind}::{index:04d}"
+        add_node(
+            {
+                "id": node_id,
+                "type": f"{extractor_kind}_signal",
+                "label": title,
+                "source_file": source_file,
+                "source_location": {
+                    "line_start": line_start,
+                    "line_end": line_start,
+                },
+                "extraction_kind": "EXTRACTED",
+                "extractor_kind": extractor_kind,
+            }
+        )
+        section_node_by_title[title] = node_id
+        path = entry.get("path", [])
+        if isinstance(path, list) and len(path) > 1:
+            parent_title = path[-2]
+            parent_id = section_node_by_title.get(parent_title)
+            if parent_id:
+                edges.append(
+                    {
+                        "id": f"section-parent::{parent_id}->{node_id}",
+                        "type": "section_parent",
+                        "from": parent_id,
+                        "to": node_id,
+                        "source_file": source_file,
+                        "source_location": {
+                            "line_start": line_start,
+                            "line_end": line_start,
+                        },
+                        "extraction_kind": "EXTRACTED",
+                        "confidence": 1.0,
+                    }
+                )
+
+    for chunk in chunks:
+        chunk_id = chunk.get("chunk_id")
+        chunk_text = chunk.get("chunk_text")
+        line_start = chunk.get("line_start")
+        line_end = chunk.get("line_end")
+        section_title = chunk.get("section")
+        if not isinstance(chunk_id, str) or not chunk_id:
+            continue
+        if not isinstance(chunk_text, str) or not chunk_text:
+            continue
+        if not isinstance(line_start, int) or not isinstance(line_end, int):
+            continue
+        evidence_id = f"evidence::{_safe_id(chunk_id)}"
+        add_node(
+            {
+                "id": evidence_id,
+                "type": "chunk_evidence",
+                "label": _excerpt(chunk_text),
+                "source_file": chunk.get("source_file", source_file),
+                "source_location": {
+                    "line_start": line_start,
+                    "line_end": line_end,
+                },
+                "extraction_kind": "EXTRACTED",
+                "extractor_kind": "evidence",
+                "chunk_id": chunk_id,
+            }
+        )
+
+        section_node_id = None
+        if isinstance(section_title, str):
+            section_node_id = section_node_by_title.get(section_title)
+        if section_node_id:
+            edges.append(
+                {
+                    "id": f"supported-by::{section_node_id}->{evidence_id}",
+                    "type": "supported_by_evidence",
+                    "from": section_node_id,
+                    "to": evidence_id,
+                    "source_file": chunk.get("source_file", source_file),
+                    "source_location": {
+                        "line_start": line_start,
+                        "line_end": line_end,
+                    },
+                    "extraction_kind": "EXTRACTED",
+                    "confidence": 1.0,
+                }
+            )
+
+        if _has_case_cue(chunk_text):
+            case_id = f"case::{_safe_id(chunk_id)}"
+            add_node(
+                {
+                    "id": case_id,
+                    "type": "case_signal",
+                    "label": _excerpt(chunk_text),
+                    "source_file": chunk.get("source_file", source_file),
+                    "source_location": {
+                        "line_start": line_start,
+                        "line_end": line_end,
+                    },
+                    "extraction_kind": "EXTRACTED",
+                    "extractor_kind": "case",
+                }
+            )
+            edges.append(
+                {
+                    "id": f"case-from::{evidence_id}->{case_id}",
+                    "type": "illustrated_by_case",
+                    "from": evidence_id,
+                    "to": case_id,
+                    "source_file": chunk.get("source_file", source_file),
+                    "source_location": {
+                        "line_start": line_start,
+                        "line_end": line_end,
+                    },
+                    "extraction_kind": "EXTRACTED",
+                    "confidence": 1.0,
+                }
+            )
+
+        for term in _extract_terms(chunk_text):
+            term_id = f"term::{_safe_id(term.lower())}"
+            add_node(
+                {
+                    "id": term_id,
+                    "type": "term_signal",
+                    "label": term,
+                    "source_file": chunk.get("source_file", source_file),
+                    "source_location": {
+                        "line_start": line_start,
+                        "line_end": line_end,
+                    },
+                    "extraction_kind": "EXTRACTED",
+                    "extractor_kind": "term",
+                }
+            )
+            edges.append(
+                {
+                    "id": f"term-from::{evidence_id}->{term_id}",
+                    "type": "mentions_term",
+                    "from": evidence_id,
+                    "to": term_id,
+                    "source_file": chunk.get("source_file", source_file),
+                    "source_location": {
+                        "line_start": line_start,
+                        "line_end": line_end,
+                    },
+                    "extraction_kind": "EXTRACTED",
+                    "confidence": 1.0,
+                }
+            )
+
+    result["deterministic_pass"] = "heuristic-extractors"
+    result["nodes"] = nodes
+    result["edges"] = edges
+    if not nodes:
+        result["warnings"] = ["no_heuristic_signals_extracted"]
+    return result
+
+
 def validate_extraction_result_doc(doc: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if doc.get("schema_version") != EXTRACTION_RESULTS_SCHEMA_VERSION:
@@ -174,3 +360,28 @@ def validate_extraction_result_doc(doc: dict[str, Any]) -> list[str]:
             errors.append(f"{label}: invalid confidence")
 
     return errors
+
+
+def _safe_id(raw: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9._-]+", "-", raw).strip("-").lower() or "signal"
+
+
+def _excerpt(text: str, max_chars: int = 72) -> str:
+    text = re.sub(r"\s+", " ", text).strip()
+    if len(text) <= max_chars:
+        return text
+    return text[: max_chars - 3] + "..."
+
+
+def _has_case_cue(text: str) -> bool:
+    cues = ("例如", "比如", "案例", "故事", "trace")
+    return any(cue in text for cue in cues)
+
+
+def _extract_terms(text: str) -> list[str]:
+    terms: list[str] = []
+    for match in re.findall(r"[（(]([A-Za-z][A-Za-z0-9/ +.-]{2,})[）)]", text):
+        term = match.strip()
+        if term and term not in terms:
+            terms.append(term)
+    return terms

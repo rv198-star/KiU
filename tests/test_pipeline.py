@@ -600,6 +600,83 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertEqual(extraction_result["nodes"][0]["extraction_kind"], "EXTRACTED")
             self.assertEqual(extraction_result["edges"][0]["confidence"], 1.0)
 
+    def test_extract_graph_candidates_cli_supports_heuristic_extractors_pass(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_chunks_path = tmp_root / "source-chunks.json"
+            output_path = tmp_root / "extraction-result.json"
+            source_chunks_doc = {
+                "schema_version": "kiu.source-chunks/v0.1",
+                "bundle_id": "demo-source-bundle",
+                "source_id": "financial-analysis-demo",
+                "source_file": "examples/demo-financial-analysis.md",
+                "language": "zh-CN",
+                "section_map": [
+                    {
+                        "level": 1,
+                        "title": "Demo Financial Analysis",
+                        "line_start": 1,
+                        "path": ["Demo Financial Analysis"],
+                    },
+                    {
+                        "level": 2,
+                        "title": "Challenge Price With Value",
+                        "line_start": 5,
+                        "path": ["Demo Financial Analysis", "Challenge Price With Value"],
+                    },
+                ],
+                "chunks": [
+                    {
+                        "chunk_id": "chunk-001",
+                        "source_id": "financial-analysis-demo",
+                        "source_file": "examples/demo-financial-analysis.md",
+                        "chapter": "Demo Financial Analysis",
+                        "section": "Challenge Price With Value",
+                        "line_start": 6,
+                        "line_end": 8,
+                        "chunk_text": "估值的目的是用独立价值去挑战价格。例如，市场热度不能替代基本价值（fundamental value）。",
+                        "token_estimate": 40,
+                        "language": "zh-CN",
+                    }
+                ],
+            }
+            source_chunks_path.write_text(
+                json.dumps(source_chunks_doc, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "extract_graph_candidates.py"),
+                    "--source-chunks",
+                    str(source_chunks_path),
+                    "--output",
+                    str(output_path),
+                    "--deterministic-pass",
+                    "heuristic-extractors",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            extraction_result = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertEqual(validate_extraction_result_doc(extraction_result), [])
+            extractor_kinds = {node.get("extractor_kind") for node in extraction_result["nodes"]}
+            self.assertIn("framework", extractor_kinds)
+            self.assertIn("principle", extractor_kinds)
+            self.assertIn("evidence", extractor_kinds)
+            self.assertIn("case", extractor_kinds)
+            self.assertIn("term", extractor_kinds)
+            self.assertTrue(
+                any(edge["type"] == "supported_by_evidence" for edge in extraction_result["edges"])
+            )
+            self.assertTrue(
+                any(edge["type"] == "mentions_term" for edge in extraction_result["edges"])
+            )
+
     def test_build_source_chunks_cli_emits_valid_chunks_for_fixture_source(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_root = Path(tmp_dir)

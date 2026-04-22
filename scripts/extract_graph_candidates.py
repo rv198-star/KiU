@@ -14,6 +14,7 @@ if str(SRC) not in sys.path:
 
 from kiu_pipeline.extraction import (
     build_empty_extraction_result,
+    build_heuristic_extraction_result,
     build_section_heading_extraction_result,
     validate_extraction_result_doc,
     validate_source_chunks_doc,
@@ -29,7 +30,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--deterministic-pass",
         default="empty-shell",
-        choices=("empty-shell", "section-headings"),
+        choices=("empty-shell", "section-headings", "heuristic-extractors"),
         help="Deterministic extraction pass to run before any future LLM stage.",
     )
     return parser.parse_args()
@@ -45,6 +46,8 @@ def main() -> int:
 
     if args.deterministic_pass == "section-headings":
         extraction_result = build_section_heading_extraction_result(source_chunks)
+    elif args.deterministic_pass == "heuristic-extractors":
+        extraction_result = build_heuristic_extraction_result(source_chunks)
     else:
         extraction_result = build_empty_extraction_result(source_chunks)
     result_errors = validate_extraction_result_doc(extraction_result)
