@@ -204,7 +204,7 @@ class CandidatePipelineTests(unittest.TestCase):
             skill_dir = tmp_bundle / "skills" / "circle-of-competence"
             skill_doc = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
             skill_doc = skill_doc.replace("status: published", "status: under_evaluation")
-            skill_doc = skill_doc.replace("skill_revision: 2", "skill_revision: 1")
+            skill_doc = skill_doc.replace("skill_revision: 3", "skill_revision: 1")
             (skill_dir / "SKILL.md").write_text(skill_doc, encoding="utf-8")
 
             eval_path = skill_dir / "eval" / "summary.yaml"

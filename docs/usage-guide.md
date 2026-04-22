@@ -24,6 +24,8 @@ python3 scripts/show_profile.py bundles/poor-charlies-almanack-v0.1
 python3 -m unittest tests/test_validator.py
 ```
 
+If the validator reports `rationale_below_density_threshold` for a published investing skill, the skill text is below the domain's hard density floor and must be revised before release.
+
 Expected result:
 
 - the validator prints `VALID`

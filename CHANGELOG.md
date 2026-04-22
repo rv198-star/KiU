@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [0.3.0] - 2026-04-21
+
 ### Added
 - `llm-assisted` drafting now performs real `Rationale` generation with prompt templates, provider abstraction, validator precheck, rejection logging, and token-budget tracking.
 - `reports/rounds/*.json` now records auditable LLM prompt/response artifacts for drafting rounds.

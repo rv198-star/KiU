@@ -1,6 +1,7 @@
 profile_version: kiu.domain-profile/v0.3
 domain: investing
 content_density:
+  published_requirement: hard
   rationale:
     warning_min_chars: 240
     min_anchor_refs: 2

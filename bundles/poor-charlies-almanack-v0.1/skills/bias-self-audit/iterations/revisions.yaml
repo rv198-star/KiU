@@ -1,6 +1,6 @@
 skill_id: bias-self-audit
 bundle_version: 0.1.0
-current_revision: 2
+current_revision: 3
 history:
   - revision: 1
     date: 2026-04-21
@@ -18,5 +18,13 @@ history:
     evidence_changes:
       - Added incentive-caused-delusion-audit as a canonical trace.
       - Expanded attached evaluation coverage to 4 real, 4 adversarial, and 2 OOD cases.
+  - revision: 3
+    date: 2026-04-22
+    summary: Raised published text density for the v0.3.1 hard gate and switched eval binding to full-corpus glob references.
+    graph_hash: sha256:2e440a3779aedfc89867b284214496c6c9fd91ddf840b284222b97f08bfed29d
+    effective_status: published
+    evidence_changes:
+      - Densified rationale and evidence text with explicit bias-naming and mitigation requirements.
+      - Rebound evaluation coverage from sample IDs to 20/20/10 shared-corpus glob references.
 open_gaps:
   - Refine low-stakes refusal calibration in later bundle versions without weakening the current published contract.

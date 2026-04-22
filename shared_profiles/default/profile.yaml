@@ -1,6 +1,7 @@
 profile_version: kiu.domain-profile/v0.3
 domain: default
 content_density:
+  published_requirement: soft
   rationale:
     warning_min_chars: 180
     min_anchor_refs: 1

@@ -44,6 +44,7 @@ DEFAULT_VALIDATION_PROFILE = {
         "out_of_distribution": 2,
     },
     "content_density": {
+        "published_requirement": "soft",
         "rationale": {
             "warning_min_chars": 180,
             "min_anchor_refs": 1,
@@ -233,7 +234,14 @@ def _validate_skill(
         skill_errors,
         known_skill_ids,
     )
-    _validate_density(skill_id, sections, skill_warnings, profile)
+    _validate_density(
+        skill_id,
+        status,
+        sections,
+        skill_errors,
+        skill_warnings,
+        profile,
+    )
 
     anchors = _load_yaml(skill_dir / "anchors.yaml", skill_errors, f"{skill_id}: anchors")
     _validate_anchors(
@@ -614,6 +622,8 @@ def _load_trigger_registry(
             warnings.append(
                 f"trigger registry: trigger_symbol_missing_negative_examples {symbol}"
             )
+    if not registry:
+        warnings.append("bundle: trigger registry is empty; trigger validation coverage is weakened")
     return registry
 
 
@@ -655,10 +665,14 @@ def _validate_trigger_symbol_list(
 
 def _validate_density(
     skill_id: str,
+    status: str | None,
     sections: dict[str, str],
+    errors: list[str],
     warnings: list[str],
     profile: dict[str, Any],
 ) -> None:
+    density_mode = profile.get("content_density", {}).get("published_requirement", "soft")
+    sink = errors if status == "published" and density_mode == "hard" else warnings
     rationale_cfg = profile.get("content_density", {}).get("rationale", {})
     rationale_text = sections.get("Rationale", "")
     rationale_chars = _dense_char_count(rationale_text)
@@ -666,7 +680,7 @@ def _validate_density(
     warning_min_chars = int(rationale_cfg.get("warning_min_chars", 180))
     min_anchor_refs = int(rationale_cfg.get("min_anchor_refs", 1))
     if rationale_chars < warning_min_chars or rationale_anchor_refs < min_anchor_refs:
-        warnings.append(
+        sink.append(
             f"{skill_id}: rationale_below_density_threshold "
             f"(chars={rationale_chars}, min_chars={warning_min_chars}, "
             f"anchor_refs={rationale_anchor_refs}, min_anchor_refs={min_anchor_refs})"
@@ -677,7 +691,7 @@ def _validate_density(
     evidence_anchor_refs = _count_anchor_refs(evidence_text)
     evidence_min_anchor_refs = int(evidence_cfg.get("min_anchor_refs", 1))
     if evidence_anchor_refs < evidence_min_anchor_refs:
-        warnings.append(
+        sink.append(
             f"{skill_id}: evidence_summary_missing_anchors "
             f"(anchor_refs={evidence_anchor_refs}, min_anchor_refs={evidence_min_anchor_refs})"
         )

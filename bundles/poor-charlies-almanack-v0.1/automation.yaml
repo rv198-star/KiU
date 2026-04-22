@@ -1,4 +1,4 @@
-profile_version: kiu.pipeline-profile/v0.2
+profile_version: kiu.pipeline-profile/v0.3
 source_bundle_id: poor-charlies-almanack-v0.1
 inherits: investing
 seed_node_types:

@@ -6,7 +6,7 @@ skill_id: margin-of-safety-sizing
 title: Margin of Safety Sizing
 status: published
 bundle_version: 0.1.0
-skill_revision: 2
+skill_revision: 3
 ```
 
 ## Contract
@@ -47,10 +47,10 @@ boundary:
 ```
 
 ## Rationale
-The skill turns "margin of safety" into exposure guidance rather than a slogan. It should shrink position size when the error bars, leverage, or liquidity profile make survival fragile.
+This skill makes margin of safety operational at the sizing layer rather than leaving it trapped inside valuation talk. The evaluator must ask how wrong the thesis can be, how quickly liquidity can disappear, and whether leverage or irreversibility can turn a recoverable mistake into ruin. If the downside path includes forced selling, refinancing dependence, or zero cash buffer, the correct answer is to cut size or decline the bet even when the upside narrative still sounds compelling.[^anchor:margin-source-note] The Salomon exposure-cap trace and the no-buffer adversarial evaluation both show that survival comes from limiting exposure before certainty arrives, not from averaging down after the balance sheet has already lost flexibility.[^anchor:margin-trace] [^anchor:margin-eval]
 
 ## Evidence Summary
-The reference bundle anchors this skill to the risk-control community with See's Candies discipline and Salomon exposure capping as shared traces. The source note explicitly states that sizing is part of the margin-of-safety contract.
+The bundle anchors this skill to the margin source note, the Salomon exposure-cap trace, and the zero-buffer adversarial case. Together they tie sizing discipline to survival, liquidity, and balance-sheet resilience instead of treating margin of safety as a purely verbal comfort phrase.[^anchor:margin-source-note] [^trace:canonical/salomon-exposure-cap.yaml] [^anchor:margin-eval]
 
 ## Relations
 ```yaml
@@ -76,4 +76,4 @@ Representative cases:
 The full v0.1 evaluation corpus is attached and published. The dominant failure mode remains users presenting conviction without downside, liquidity, or ruin math. See `eval/summary.yaml`.
 
 ## Revision Summary
-Revision 2 promotes the skill to `published` after expanding the sizing cases from a sample gate to a release-scale corpus. See `iterations/revisions.yaml`.
+Revision 3 is the v0.3.1 hard-gate repair: the rationale and evidence text now spell out survival-first sizing logic, and the eval summary binds the full shared corpus through release-scale glob references. See `iterations/revisions.yaml`.
