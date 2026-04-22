@@ -38,16 +38,23 @@ def benchmark_reference_pack(
     generated_run = _scan_generated_run(run_path, bundle_root) if run_path is not None else None
     reference_pack = _scan_reference_pack(reference_root)
 
-    comparison = _build_comparison(
-        kiu_bundle=kiu_bundle,
-        generated_run=generated_run,
-        reference_pack=reference_pack,
-        comparison_scope=comparison_scope,
-    )
     concept_alignment = _build_concept_alignment(
         kiu_bundle=kiu_bundle,
         reference_pack=reference_pack,
         alignment_file=alignment_file,
+    )
+    same_scenario_usage = _build_same_scenario_usage(
+        bundle_root=bundle_root,
+        reference_root=reference_root,
+        concept_alignment=concept_alignment,
+    )
+    comparison = _build_comparison(
+        kiu_bundle=kiu_bundle,
+        generated_run=generated_run,
+        reference_pack=reference_pack,
+        concept_alignment=concept_alignment,
+        same_scenario_usage=same_scenario_usage,
+        comparison_scope=comparison_scope,
     )
     scorecard = _build_scorecard(
         kiu_bundle=kiu_bundle,
@@ -61,6 +68,7 @@ def benchmark_reference_pack(
         "kiu_bundle": kiu_bundle,
         "generated_run": generated_run,
         "reference_pack": reference_pack,
+        "same_scenario_usage": same_scenario_usage,
         "scorecard": scorecard,
     }
 
@@ -279,6 +287,8 @@ def _build_comparison(
     kiu_bundle: dict[str, Any],
     generated_run: dict[str, Any] | None,
     reference_pack: dict[str, Any],
+    concept_alignment: dict[str, Any],
+    same_scenario_usage: dict[str, Any],
     comparison_scope: str,
 ) -> dict[str, Any]:
     reference_skill_count = int(reference_pack.get("skill_count", 0) or 0)
@@ -292,6 +302,7 @@ def _build_comparison(
     generated_usage_samples = (
         int(generated_run.get("usage_sample_count", 0) or 0) if generated_run is not None else None
     )
+    same_scenario_summary = same_scenario_usage.get("summary", {})
 
     return {
         "scope": comparison_scope,
@@ -380,7 +391,23 @@ def _build_comparison(
         "real_usage_quality": {
             "kiu_usage_score_100": generated_usage_score,
             "reference_usage_score_100": None,
-            "notes": ["reference_pack_has_no_usage_review_artifacts"],
+            "kiu_same_scenario_usage_score_100": same_scenario_summary.get(
+                "kiu_average_usage_score_100"
+            ),
+            "reference_same_scenario_usage_score_100": same_scenario_summary.get(
+                "reference_average_usage_score_100"
+            ),
+            "same_scenario_average_delta_100": same_scenario_summary.get(
+                "average_usage_score_delta_100"
+            ),
+            "same_scenario_matched_pair_count": same_scenario_summary.get("matched_pair_count"),
+            "same_scenario_case_count": same_scenario_summary.get("scenario_count"),
+            "concept_aligned_pair_count": concept_alignment.get("summary", {}).get("matched_pair_count"),
+            "notes": (
+                ["same_scenario_usage_heuristic_review"]
+                if same_scenario_summary.get("scenario_count", 0)
+                else ["reference_pack_has_no_usage_review_artifacts"]
+            ),
         },
     }
 
@@ -454,6 +481,159 @@ def _build_concept_alignment(
             if matched_pairs
             else 0.0,
         },
+    }
+
+
+def _build_same_scenario_usage(
+    *,
+    bundle_root: Path,
+    reference_root: Path,
+    concept_alignment: dict[str, Any],
+) -> dict[str, Any]:
+    try:
+        source_bundle = load_source_bundle(bundle_root)
+    except Exception as exc:
+        return {
+            "matched_pairs": [],
+            "summary": {
+                "matched_pair_count": 0,
+                "scenario_count": 0,
+                "kiu_average_usage_score_100": 0.0,
+                "reference_average_usage_score_100": 0.0,
+                "average_usage_score_delta_100": 0.0,
+                "kiu_weighted_pass_rate": 0.0,
+                "reference_weighted_pass_rate": 0.0,
+            },
+            "notes": [f"failed_to_load_kiu_bundle:{exc.__class__.__name__}"],
+        }
+
+    matched_pairs = []
+    notes: list[str] = []
+    kiu_case_scores: list[float] = []
+    reference_case_scores: list[float] = []
+    kiu_credit_total = 0.0
+    reference_credit_total = 0.0
+    scenario_total = 0
+
+    for pair in concept_alignment.get("matched_pairs", []):
+        kiu_skill = source_bundle.skills.get(pair["kiu_skill_id"])
+        if kiu_skill is None:
+            notes.append(f"missing_kiu_skill:{pair['kiu_skill_id']}")
+            continue
+
+        reference_skill_dir = reference_root / pair["reference_skill_id"]
+        reference_skill_path = reference_skill_dir / "SKILL.md"
+        prompt_path = reference_skill_dir / "test-prompts.json"
+        if not reference_skill_path.exists():
+            notes.append(f"missing_reference_skill:{pair['reference_skill_id']}")
+            continue
+        if not prompt_path.exists():
+            notes.append(f"missing_test_prompts:{pair['reference_skill_id']}")
+            continue
+
+        prompt_doc = json.loads(prompt_path.read_text(encoding="utf-8"))
+        raw_cases = prompt_doc.get("test_cases", [])
+        test_cases = [case for case in raw_cases if isinstance(case, dict)]
+        if not test_cases:
+            notes.append(f"empty_test_cases:{pair['reference_skill_id']}")
+            continue
+
+        reference_markdown = reference_skill_path.read_text(encoding="utf-8")
+        reference_frontmatter = _parse_frontmatter(reference_markdown)
+        reference_sections = parse_sections(reference_markdown)
+        kiu_case_reviews = []
+        reference_case_reviews = []
+        case_reviews = []
+        alignment_strength = _relationship_alignment_strength(pair.get("relationship"))
+        minimum_pass_rate = float(prompt_doc.get("minimum_pass_rate", 0.0) or 0.0)
+
+        for case in test_cases:
+            kiu_review = _evaluate_kiu_usage_case(
+                skill=kiu_skill,
+                case=case,
+                alignment_strength=alignment_strength,
+            )
+            reference_review = _evaluate_reference_usage_case(
+                skill_id=pair["reference_skill_id"],
+                markdown=reference_markdown,
+                frontmatter=reference_frontmatter,
+                sections=reference_sections,
+                case=case,
+            )
+            case_reviews.append(
+                {
+                    "case_id": str(case.get("id", "")),
+                    "type": str(case.get("type", "")),
+                    "prompt": str(case.get("prompt", "")),
+                    "expected_behavior": str(case.get("expected_behavior", "")),
+                    "notes": str(case.get("notes", "")),
+                    "kiu_review": kiu_review,
+                    "reference_review": reference_review,
+                    "score_delta_100": round(
+                        float(kiu_review["overall_score_100"])
+                        - float(reference_review["overall_score_100"]),
+                        1,
+                    ),
+                }
+            )
+            kiu_case_reviews.append({"type": str(case.get("type", "")), **kiu_review})
+            reference_case_reviews.append({"type": str(case.get("type", "")), **reference_review})
+
+        kiu_usage_review = _summarize_usage_case_reviews(
+            case_reviews=kiu_case_reviews,
+            minimum_pass_rate=minimum_pass_rate,
+        )
+        reference_usage_review = _summarize_usage_case_reviews(
+            case_reviews=reference_case_reviews,
+            minimum_pass_rate=minimum_pass_rate,
+        )
+        matched_pairs.append(
+            {
+                "kiu_skill_id": pair["kiu_skill_id"],
+                "reference_skill_id": pair["reference_skill_id"],
+                "relationship": pair.get("relationship", "aligned"),
+                "scenario_count": len(case_reviews),
+                "minimum_pass_rate": minimum_pass_rate,
+                "kiu_usage_review": kiu_usage_review,
+                "reference_usage_review": reference_usage_review,
+                "usage_score_delta_100": round(
+                    float(kiu_usage_review["overall_score_100"])
+                    - float(reference_usage_review["overall_score_100"]),
+                    1,
+                ),
+                "cases": case_reviews,
+            }
+        )
+        kiu_case_scores.extend(
+            float(item["overall_score_100"]) for item in kiu_case_reviews
+        )
+        reference_case_scores.extend(
+            float(item["overall_score_100"]) for item in reference_case_reviews
+        )
+        kiu_credit_total += float(kiu_usage_review["credit_total"])
+        reference_credit_total += float(reference_usage_review["credit_total"])
+        scenario_total += len(case_reviews)
+
+    return {
+        "matched_pairs": matched_pairs,
+        "summary": {
+            "matched_pair_count": len(matched_pairs),
+            "scenario_count": scenario_total,
+            "kiu_average_usage_score_100": round(_average(kiu_case_scores), 1),
+            "reference_average_usage_score_100": round(_average(reference_case_scores), 1),
+            "average_usage_score_delta_100": round(
+                _average(kiu_case_scores) - _average(reference_case_scores),
+                1,
+            )
+            if scenario_total
+            else 0.0,
+            "kiu_weighted_pass_rate": round(_safe_ratio(kiu_credit_total, scenario_total), 4),
+            "reference_weighted_pass_rate": round(
+                _safe_ratio(reference_credit_total, scenario_total),
+                4,
+            ),
+        },
+        "notes": notes,
     }
 
 
@@ -664,6 +844,419 @@ def _count_extraction_kinds(graph_doc: dict[str, Any]) -> dict[str, int]:
         if kind in counts:
             counts[kind] += 1
     return counts
+
+
+def _evaluate_kiu_usage_case(
+    *,
+    skill: Any,
+    case: dict[str, Any],
+    alignment_strength: float,
+) -> dict[str, Any]:
+    review = _review_kiu_skill(skill)
+    contract = skill.contract or {}
+    trigger = contract.get("trigger", {}) if isinstance(contract.get("trigger"), dict) else {}
+    boundary = contract.get("boundary", {}) if isinstance(contract.get("boundary"), dict) else {}
+    judgment_schema = (
+        contract.get("judgment_schema", {})
+        if isinstance(contract.get("judgment_schema"), dict)
+        else {}
+    )
+    trigger_text = "\n".join(
+        [
+            skill.skill_id,
+            str(skill.title),
+            yaml.safe_dump(trigger, sort_keys=True, allow_unicode=True),
+            str(skill.sections.get("Rationale", "")),
+            str(skill.sections.get("Evidence Summary", "")),
+        ]
+    )
+    boundary_text = "\n".join(
+        [
+            yaml.safe_dump(boundary, sort_keys=True, allow_unicode=True),
+            str(skill.sections.get("Revision Summary", "")),
+        ]
+    )
+    action_text = "\n".join(
+        [
+            yaml.safe_dump(judgment_schema, sort_keys=True, allow_unicode=True),
+            str(skill.sections.get("Usage Summary", "")),
+            str(skill.sections.get("Evaluation Summary", "")),
+        ]
+    )
+    return _evaluate_usage_case(
+        case=case,
+        review=review,
+        title_text=f"{skill.skill_id}\n{skill.title}",
+        trigger_text=trigger_text,
+        boundary_text=boundary_text,
+        action_text=action_text,
+        supports_do_not_fire=bool(boundary.get("do_not_fire_when")),
+        supports_edge=_supports_edge_handling(
+            yaml.safe_dump(judgment_schema, sort_keys=True, allow_unicode=True)
+            + "\n"
+            + yaml.safe_dump(boundary, sort_keys=True, allow_unicode=True)
+        ),
+        supports_decline=_supports_decline_action(
+            yaml.safe_dump(judgment_schema, sort_keys=True, allow_unicode=True)
+            + "\n"
+            + yaml.safe_dump(boundary, sort_keys=True, allow_unicode=True)
+        ),
+        alignment_strength=alignment_strength,
+    )
+
+
+def _evaluate_reference_usage_case(
+    *,
+    skill_id: str,
+    markdown: str,
+    frontmatter: dict[str, Any],
+    sections: dict[str, str],
+    case: dict[str, Any],
+) -> dict[str, Any]:
+    review = _review_reference_skill(
+        skill_id=skill_id,
+        frontmatter=frontmatter,
+        sections=sections,
+        markdown=markdown,
+    )
+    description = str(frontmatter.get("description", "") or "")
+    trigger_text = "\n".join(
+        [
+            skill_id,
+            description,
+            _find_section(sections, prefixes=("A2",), keywords=("触发", "Trigger")),
+            _find_section(sections, prefixes=("R",), keywords=("原文", "Reading")),
+        ]
+    )
+    boundary_text = _find_section(
+        sections,
+        prefixes=("B",),
+        keywords=("边界", "Boundary"),
+    )
+    action_text = _find_section(
+        sections,
+        prefixes=("E",),
+        keywords=("执行", "Execution"),
+    )
+    return _evaluate_usage_case(
+        case=case,
+        review=review,
+        title_text=f"{skill_id}\n{description}",
+        trigger_text=trigger_text,
+        boundary_text=boundary_text,
+        action_text=action_text,
+        supports_do_not_fire=bool(boundary_text),
+        supports_edge=_supports_edge_handling(boundary_text + "\n" + action_text),
+        supports_decline=_supports_decline_action(boundary_text + "\n" + action_text),
+        alignment_strength=1.0,
+    )
+
+
+def _evaluate_usage_case(
+    *,
+    case: dict[str, Any],
+    review: dict[str, Any],
+    title_text: str,
+    trigger_text: str,
+    boundary_text: str,
+    action_text: str,
+    supports_do_not_fire: bool,
+    supports_edge: bool,
+    supports_decline: bool,
+    alignment_strength: float,
+) -> dict[str, Any]:
+    case_type = str(case.get("type", "") or "")
+    prompt = str(case.get("prompt", "") or "")
+    expected_behavior = str(case.get("expected_behavior", "") or "")
+    notes = str(case.get("notes", "") or "")
+    case_text = "\n".join([prompt, expected_behavior, notes])
+
+    trigger_clarity = float(review.get("trigger_clarity_100", 0.0) or 0.0) / 100.0
+    boundary_clarity = float(review.get("boundary_clarity_100", 0.0) or 0.0) / 100.0
+    actionability = float(review.get("actionability_100", 0.0) or 0.0) / 100.0
+    core_overlap = max(
+        _text_overlap_ratio(case_text, title_text),
+        _text_overlap_ratio(expected_behavior, trigger_text),
+    )
+    boundary_overlap = _text_overlap_ratio(expected_behavior + "\n" + notes, boundary_text)
+    action_overlap = _text_overlap_ratio(expected_behavior, action_text)
+    concept_query = _looks_like_concept_query(case_text)
+    concept_query_boundary = _supports_concept_query_boundary(boundary_text)
+
+    if case_type == "should_trigger":
+        trigger_ratio = _average(
+            [
+                alignment_strength,
+                trigger_clarity,
+                max(core_overlap, alignment_strength * 0.55),
+            ]
+        )
+        boundary_ratio = _average(
+            [
+                boundary_clarity,
+                1.0 if supports_do_not_fire else 0.45,
+                max(boundary_overlap, 0.2 if supports_do_not_fire else 0.0),
+            ]
+        )
+        next_action_ratio = _average(
+            [
+                actionability,
+                max(action_overlap, 0.35),
+                1.0 if supports_decline else 0.6,
+            ]
+        )
+        threshold = 75.0
+        overall = round(
+            100.0 * (0.45 * trigger_ratio + 0.20 * boundary_ratio + 0.35 * next_action_ratio),
+            1,
+        )
+    elif case_type == "should_not_trigger":
+        restraint_reason = max(
+            boundary_overlap,
+            1.0 if concept_query and concept_query_boundary else 0.0,
+        )
+        trigger_ratio = _average(
+            [
+                boundary_clarity,
+                1.0 if supports_do_not_fire else 0.0,
+                restraint_reason,
+            ]
+        )
+        boundary_ratio = _average(
+            [
+                boundary_clarity,
+                restraint_reason,
+                1.0 if (concept_query_boundary or (supports_do_not_fire and not concept_query)) else 0.0,
+            ]
+        )
+        next_action_ratio = _average(
+            [
+                actionability,
+                1.0 if supports_decline else 0.2,
+                restraint_reason,
+            ]
+        )
+        threshold = 75.0
+        overall = round(
+            100.0 * (0.25 * trigger_ratio + 0.50 * boundary_ratio + 0.25 * next_action_ratio),
+            1,
+        )
+    else:
+        edge_ratio = 1.0 if supports_edge else 0.0
+        trigger_ratio = _average(
+            [
+                alignment_strength,
+                trigger_clarity,
+                max(core_overlap, alignment_strength * 0.45),
+            ]
+        )
+        boundary_ratio = _average(
+            [
+                boundary_clarity,
+                edge_ratio,
+                max(boundary_overlap, 0.2 if supports_do_not_fire else 0.0),
+            ]
+        )
+        next_action_ratio = _average(
+            [
+                actionability,
+                max(action_overlap, 0.3),
+                1.0 if supports_decline else 0.55,
+            ]
+        )
+        threshold = 65.0
+        overall = round(
+            100.0 * (0.30 * trigger_ratio + 0.40 * boundary_ratio + 0.30 * next_action_ratio),
+            1,
+        )
+
+    verdict, credit = _usage_verdict(
+        score_100=overall,
+        threshold_100=threshold,
+        strict=(case_type == "should_not_trigger"),
+    )
+    review_notes = [
+        f"alignment_strength:{round(alignment_strength, 2)}",
+        "concept_query_case" if concept_query else "",
+        "concept_query_boundary_missing" if concept_query and not concept_query_boundary else "",
+        "boundary_reason_sparse" if boundary_overlap < 0.12 else "boundary_reason_covered",
+        "next_action_sparse" if action_overlap < 0.12 and not supports_decline else "",
+        "edge_support_missing" if case_type == "edge_case" and not supports_edge else "",
+    ]
+    return {
+        "overall_score_100": overall,
+        "trigger_precision_100": round(100.0 * trigger_ratio, 1),
+        "boundary_discipline_100": round(100.0 * boundary_ratio, 1),
+        "next_action_specificity_100": round(100.0 * next_action_ratio, 1),
+        "verdict": verdict,
+        "credit": credit,
+        "notes": [note for note in review_notes if note],
+    }
+
+
+def _summarize_usage_case_reviews(
+    *,
+    case_reviews: list[dict[str, Any]],
+    minimum_pass_rate: float,
+) -> dict[str, Any]:
+    scenario_count = len(case_reviews)
+    pass_count = sum(1 for item in case_reviews if item.get("verdict") == "pass")
+    partial_count = sum(1 for item in case_reviews if item.get("verdict") == "partial")
+    fail_count = sum(1 for item in case_reviews if item.get("verdict") == "fail")
+    credit_total = sum(float(item.get("credit", 0.0) or 0.0) for item in case_reviews)
+    strict_non_trigger_passed = all(
+        item.get("verdict") == "pass"
+        for item in case_reviews
+        if item.get("type") == "should_not_trigger"
+    )
+    pass_rate = _safe_ratio(credit_total, scenario_count)
+    return {
+        "overall_score_100": round(
+            _average([item.get("overall_score_100") for item in case_reviews]),
+            1,
+        ),
+        "scenario_count": scenario_count,
+        "pass_count": pass_count,
+        "partial_count": partial_count,
+        "fail_count": fail_count,
+        "credit_total": round(credit_total, 4),
+        "weighted_pass_rate": round(pass_rate, 4),
+        "minimum_pass_rate": minimum_pass_rate,
+        "strict_non_trigger_passed": strict_non_trigger_passed,
+        "meets_minimum_pass_rate": bool(
+            scenario_count
+            and pass_rate >= minimum_pass_rate
+            and strict_non_trigger_passed
+        ),
+    }
+
+
+def _usage_verdict(
+    *,
+    score_100: float,
+    threshold_100: float,
+    strict: bool,
+) -> tuple[str, float]:
+    if score_100 >= threshold_100:
+        return "pass", 1.0
+    partial_floor = threshold_100 - (20.0 if strict else 15.0)
+    if score_100 >= partial_floor:
+        return "partial", 0.0 if strict else 0.5
+    return "fail", 0.0
+
+
+def _relationship_alignment_strength(relationship: str | None) -> float:
+    mapping = {
+        "direct_match": 1.0,
+        "close_match": 0.9,
+        "thematic_overlap": 0.75,
+        "partial_overlap": 0.65,
+        "exact_slug_match": 1.0,
+        "aligned": 0.8,
+    }
+    return mapping.get(str(relationship or "aligned"), 0.8)
+
+
+def _supports_edge_handling(text: str) -> bool:
+    return _contains_any(
+        text,
+        (
+            "edge",
+            "partial",
+            "谨慎",
+            "边界",
+            "圈外",
+            "圈内",
+            "部分",
+            "defer",
+            "study_more",
+        ),
+    )
+
+
+def _supports_decline_action(text: str) -> bool:
+    return _contains_any(
+        text,
+        (
+            "decline",
+            "study_more",
+            "defer",
+            "pass",
+            "reject",
+            "do_not_fire",
+            "不要",
+            "不应",
+            "拒绝",
+            "暂缓",
+            "放弃",
+        ),
+    )
+
+
+def _supports_concept_query_boundary(text: str) -> bool:
+    return _contains_any(
+        text,
+        (
+            "concept",
+            "definition",
+            "explain",
+            "history",
+            "概念",
+            "定义",
+            "解释",
+            "历史",
+            "知识查询",
+            "知识问答",
+        ),
+    )
+
+
+def _looks_like_concept_query(text: str) -> bool:
+    return _contains_any(
+        text,
+        (
+            "是什么",
+            "怎么定义",
+            "定义",
+            "概念",
+            "讲几个",
+            "历史故事",
+            "解释",
+            "what is",
+            "define",
+            "history",
+            "concept",
+        ),
+    )
+
+
+def _contains_any(text: str, patterns: tuple[str, ...]) -> bool:
+    lowered = text.lower()
+    return any(pattern.lower() in lowered for pattern in patterns)
+
+
+def _text_overlap_ratio(query_text: str, doc_text: str) -> float:
+    query_tokens = _usage_tokens(query_text)
+    doc_tokens = _usage_tokens(doc_text)
+    if not query_tokens or not doc_tokens:
+        return 0.0
+    overlap = len(query_tokens & doc_tokens)
+    denominator = max(4, min(len(query_tokens), 12))
+    return round(min(overlap / denominator, 1.0), 4)
+
+
+def _usage_tokens(text: str) -> set[str]:
+    lowered = text.lower()
+    ascii_tokens = set(re.findall(r"[a-z][a-z0-9_-]{1,}", lowered))
+    cjk_tokens: set[str] = set()
+    for segment in re.findall(r"[\u4e00-\u9fff]{2,}", text):
+        cjk_tokens.add(segment)
+        for width in (2, 3):
+            if len(segment) < width:
+                continue
+            for index in range(len(segment) - width + 1):
+                cjk_tokens.add(segment[index : index + width])
+    return ascii_tokens | cjk_tokens
 
 
 def _review_kiu_skill(skill: Any) -> dict[str, Any]:
@@ -982,6 +1575,7 @@ def _safe_ratio(numerator: int | float | None, denominator: int | float | None) 
 def _render_markdown_report(report: dict[str, Any]) -> str:
     comparison = report["comparison"]
     concept_alignment = report["concept_alignment"]
+    same_scenario_usage = report.get("same_scenario_usage", {})
     scorecard = report["scorecard"]
     generated_run = report.get("generated_run") or {}
     return "\n".join(
@@ -1009,6 +1603,14 @@ def _render_markdown_report(report: dict[str, Any]) -> str:
             f"- Matched pairs: `{concept_alignment['summary']['matched_pair_count']}`",
             f"- KiU aligned artifact score: `{concept_alignment['summary']['kiu_average_artifact_score_100']}`",
             f"- Reference aligned artifact score: `{concept_alignment['summary']['reference_average_artifact_score_100']}`",
+            "",
+            "## Same-Scenario Usage",
+            "",
+            f"- Matched pairs: `{same_scenario_usage.get('summary', {}).get('matched_pair_count')}`",
+            f"- Scenario count: `{same_scenario_usage.get('summary', {}).get('scenario_count')}`",
+            f"- KiU usage score: `{same_scenario_usage.get('summary', {}).get('kiu_average_usage_score_100')}`",
+            f"- Reference usage score: `{same_scenario_usage.get('summary', {}).get('reference_average_usage_score_100')}`",
+            f"- Average delta: `{same_scenario_usage.get('summary', {}).get('average_usage_score_delta_100')}`",
             "",
             "## Scorecard",
             "",

@@ -45,6 +45,13 @@ def _write_reference_pack(root: Path, skill_slugs: list[str]) -> Path:
     return root
 
 
+def _write_test_prompts(skill_dir: Path, payload: dict[str, object]) -> None:
+    (skill_dir / "test-prompts.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
 def _write_alignment_file(root: Path) -> Path:
     path = root / "alignment.yaml"
     path.write_text(
@@ -214,6 +221,122 @@ class ReferenceBenchmarkCliTests(unittest.TestCase):
                 payload["comparison"]["output_count"]["generated_throughput_vs_reference"],
                 0.0,
             )
+
+    def test_reference_benchmark_cli_emits_same_scenario_usage_review(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            reference_root = _write_reference_pack(
+                tmp_root / "reference-poor-charlies",
+                ["circle-of-competence", "inversion-thinking"],
+            )
+            _write_test_prompts(
+                reference_root / "circle-of-competence",
+                {
+                    "skill": "circle-of-competence",
+                    "version": "0.1.0",
+                    "test_cases": [
+                        {
+                            "id": "should-trigger-01",
+                            "type": "should_trigger",
+                            "prompt": "有个朋友拉我一起投资他的餐饮连锁项目，我之前从来没做过餐饮，但我觉得应该差不多能搞明白。",
+                            "expected_behavior": "应激活 circle-of-competence，帮助用户测试自己是否真的理解这门生意，而不是靠模糊自信下注。",
+                            "notes": "真实投资判断，不是概念问答。",
+                        },
+                        {
+                            "id": "should-not-trigger-01",
+                            "type": "should_not_trigger",
+                            "prompt": "能力圈是什么概念？芒格和巴菲特怎么定义它？",
+                            "expected_behavior": "不应激活本 skill，因为用户只是在问概念定义，不是在做真实投资判断。",
+                            "notes": "关键词命中但属于知识查询。",
+                        },
+                        {
+                            "id": "edge-01",
+                            "type": "edge_case",
+                            "prompt": "我做了5年产品经理，现在有机会去一个完全不同行业做产品，我想试试看，但怕自己搞不定。",
+                            "expected_behavior": "可以激活但应保留边界判断，区分哪些通用能力可迁移，哪些行业知识仍在圈外。",
+                            "notes": "部分圈内，部分圈外。",
+                        },
+                    ],
+                    "minimum_pass_rate": 0.8,
+                },
+            )
+            _write_test_prompts(
+                reference_root / "inversion-thinking",
+                {
+                    "skill": "inversion-thinking",
+                    "version": "0.1.0",
+                    "test_cases": [
+                        {
+                            "id": "should-trigger-01",
+                            "type": "should_trigger",
+                            "prompt": "我们只看市场机会，帮我反过来想想这个产品发布会怎么彻底失败。",
+                            "expected_behavior": "应激活 inversion-thinking，引导用户从失败路径出发列出致命风险。",
+                            "notes": "典型逆向思考触发场景。",
+                        },
+                        {
+                            "id": "should-not-trigger-01",
+                            "type": "should_not_trigger",
+                            "prompt": "逆向思维是什么意思？给我讲几个历史故事。",
+                            "expected_behavior": "不应激活本 skill，因为这是概念解释，不是正在做风险规避式决策。",
+                            "notes": "知识查询，不是方法应用。",
+                        },
+                    ],
+                    "minimum_pass_rate": 0.8,
+                },
+            )
+            alignment_path = _write_alignment_file(tmp_root)
+            output_path = tmp_root / "benchmark-same-scenario.json"
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "benchmark_reference_pack.py"),
+                    "--kiu-bundle",
+                    str(ROOT / "bundles" / "poor-charlies-almanack-v0.1"),
+                    "--reference-pack",
+                    str(reference_root),
+                    "--alignment-file",
+                    str(alignment_path),
+                    "--comparison-scope",
+                    "same-source",
+                    "--output",
+                    str(output_path),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            payload = json.loads(output_path.read_text(encoding="utf-8"))
+
+            self.assertIn("same_scenario_usage", payload)
+            self.assertEqual(payload["same_scenario_usage"]["summary"]["matched_pair_count"], 2)
+            self.assertEqual(payload["same_scenario_usage"]["summary"]["scenario_count"], 5)
+            self.assertGreater(
+                payload["same_scenario_usage"]["summary"]["kiu_average_usage_score_100"],
+                0.0,
+            )
+            self.assertGreater(
+                payload["same_scenario_usage"]["summary"]["reference_average_usage_score_100"],
+                0.0,
+            )
+            self.assertGreater(
+                payload["comparison"]["real_usage_quality"]["reference_same_scenario_usage_score_100"],
+                0.0,
+            )
+            first_pair = payload["same_scenario_usage"]["matched_pairs"][0]
+            self.assertIn("kiu_usage_review", first_pair)
+            self.assertIn("reference_usage_review", first_pair)
+            self.assertEqual(first_pair["scenario_count"], len(first_pair["cases"]))
+            self.assertIn("minimum_pass_rate", first_pair)
+            first_case = first_pair["cases"][0]
+            self.assertIn("case_id", first_case)
+            self.assertIn("type", first_case)
+            self.assertIn("kiu_review", first_case)
+            self.assertIn("reference_review", first_case)
+            self.assertIn("overall_score_100", first_case["kiu_review"])
+            self.assertIn("verdict", first_case["reference_review"])
 
 
 if __name__ == "__main__":

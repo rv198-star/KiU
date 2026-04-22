@@ -707,6 +707,69 @@ class CandidatePipelineTests(unittest.TestCase):
                 )
             )
 
+    def test_extract_graph_candidates_marks_business_first_boundary_regression_as_tri_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_path = ROOT / "examples" / "sources" / "effective-requirements-analysis-source.md"
+            source_chunks_path = tmp_root / "source-chunks.json"
+            output_path = tmp_root / "extraction-result.json"
+
+            build_chunks = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_source_chunks.py"),
+                    "--input",
+                    str(source_path),
+                    "--bundle-id",
+                    "demo-source-bundle",
+                    "--source-id",
+                    "effective-requirements-analysis",
+                    "--output",
+                    str(source_chunks_path),
+                    "--max-chars",
+                    "240",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(build_chunks.returncode, 0, build_chunks.stdout + build_chunks.stderr)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "extract_graph_candidates.py"),
+                    "--source-chunks",
+                    str(source_chunks_path),
+                    "--output",
+                    str(output_path),
+                    "--deterministic-pass",
+                    "heuristic-extractors",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            extraction_result = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertTrue(
+                any(
+                    node["type"] == "counter_example_signal"
+                    and node.get("section_title") == "Business-First Subsystem Decomposition"
+                    for node in extraction_result["nodes"]
+                ),
+                extraction_result["nodes"],
+            )
+            self.assertTrue(
+                any(
+                    edge["type"] == "derives_counter_example_signal"
+                    and edge["from"] == "principle::0003"
+                    for edge in extraction_result["edges"]
+                ),
+                extraction_result["edges"],
+            )
+
     def test_extract_graph_candidates_cli_supports_llm_assisted_with_mock_provider(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_root = Path(tmp_dir)
@@ -1456,7 +1519,7 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertGreater(extraction_kind_counts["INFERRED"], 0)
             self.assertGreater(extraction_kind_counts["AMBIGUOUS"], 0)
             tri_state_effectiveness = review_doc["source_bundle"]["tri_state_effectiveness"]
-            self.assertGreater(tri_state_effectiveness["candidate_coverage_ratio"], 0.5)
+            self.assertEqual(tri_state_effectiveness["candidate_coverage_ratio"], 1.0)
             self.assertGreater(tri_state_effectiveness["inferred_edge_reference_ratio"], 0.0)
             self.assertGreater(tri_state_effectiveness["ambiguous_node_reference_ratio"], 0.0)
             self.assertGreater(review_doc["usage_outputs"]["score_100"], 0.0)

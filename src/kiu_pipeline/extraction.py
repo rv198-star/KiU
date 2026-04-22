@@ -557,10 +557,29 @@ def _has_case_cue(text: str) -> bool:
 
 
 def _has_counter_example_cue(text: str) -> bool:
-    cues = ("反例", "误区", "失败", "错误", "不能", "不要", "只剩")
+    cues = (
+        "反例",
+        "误区",
+        "失败",
+        "错误",
+        "不能",
+        "不要",
+        "只剩",
+        "遗漏",
+        "重叠",
+        "漂移",
+        "站不住",
+        "退化成代码对代码",
+        "无法确认边界是否完整",
+    )
     if any(cue in text for cue in cues):
         return True
-    return bool(re.search(r"如果[^。；\n]{0,36}(错误|失败|偏离|带到)", text))
+    return bool(
+        re.search(r"如果[^。；\n]{0,36}(错误|失败|偏离|带到|无法确认)", text)
+        or re.search(r"只是[^。；\n]{0,24}重新命名", text)
+        or re.search(r"当[^。；\n]{0,24}站不住时", text)
+        or re.search(r"后续[^。；\n]{0,24}退化成", text)
+    )
 
 
 def _extract_terms(text: str) -> list[str]:
