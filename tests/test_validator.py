@@ -22,6 +22,7 @@ class BundleValidationTests(unittest.TestCase):
 
     def setUp(self) -> None:
         self.bundle_path = ROOT / "bundles" / "poor-charlies-almanack-v0.1"
+        self.engineering_bundle_path = ROOT / "bundles" / "engineering-postmortem-v0.1"
 
     def _load_yaml(self, path: Path) -> dict:
         return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
@@ -104,6 +105,12 @@ class BundleValidationTests(unittest.TestCase):
         self._write_yaml(automation_path, automation_doc)
         return registry_path
 
+    def _rewrite_bundle_id(self, bundle_root: Path, bundle_id: str) -> None:
+        manifest_path = bundle_root / "manifest.yaml"
+        manifest = self._load_yaml(manifest_path)
+        manifest["bundle_id"] = bundle_id
+        self._write_yaml(manifest_path, manifest)
+
     def test_bundle_validates_without_errors(self) -> None:
         report = validate_bundle(self.bundle_path)
 
@@ -120,6 +127,28 @@ class BundleValidationTests(unittest.TestCase):
                 "bias-self-audit",
                 "opportunity-cost-of-the-next-best-idea",
             },
+        )
+
+    def test_engineering_bundle_validates_without_errors(self) -> None:
+        report = validate_bundle(self.engineering_bundle_path)
+
+        self.assertEqual(report["errors"], [])
+        self.assertEqual(report["manifest"]["domain"], "engineering")
+        self.assertEqual(
+            {skill["skill_id"] for skill in report["skills"]},
+            {"postmortem-blameless", "blast-radius-check"},
+        )
+
+    def test_engineering_bundle_supports_cross_bundle_validation(self) -> None:
+        report = validate_bundle(
+            self.engineering_bundle_path,
+            merge_with=[self.bundle_path],
+        )
+
+        self.assertEqual(report["errors"], [])
+        self.assertEqual(
+            report["merged_graph"]["source_bundles"],
+            ["engineering-postmortem-v0.1", "poor-charlies-almanack-v0.1"],
         )
 
     def test_bundle_has_shared_graph_trace_and_evaluation_assets(self) -> None:
@@ -730,12 +759,81 @@ class BundleValidationTests(unittest.TestCase):
                 tmp_bundle,
                 "circle-of-competence",
                 "  - bias-self-audit",
-                "  - external:reference-bundle/bias-self-audit",
+                "  - external:reference-bundle:bias-self-audit",
             )
 
             report = validate_bundle(tmp_bundle)
 
             self.assertEqual(report["errors"], [])
+
+    def test_validator_resolves_external_relation_target_with_merge_context(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            primary_bundle = tmp_root / "primary"
+            reference_bundle = tmp_root / "reference"
+            shutil.copytree(self.bundle_path, primary_bundle)
+            shutil.copytree(self.bundle_path, reference_bundle)
+
+            self._replace_skill_text(
+                primary_bundle,
+                "circle-of-competence",
+                "  - bias-self-audit",
+                "  - external:reference-bundle:bias-self-audit",
+            )
+            self._rewrite_bundle_id(reference_bundle, "reference-bundle")
+
+            report = validate_bundle(primary_bundle, merge_with=[reference_bundle])
+
+            self.assertEqual(report["errors"], [])
+
+    def test_validator_accepts_legacy_external_relation_target_with_merge_context(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            primary_bundle = tmp_root / "primary"
+            reference_bundle = tmp_root / "reference"
+            shutil.copytree(self.bundle_path, primary_bundle)
+            shutil.copytree(self.bundle_path, reference_bundle)
+
+            self._replace_skill_text(
+                primary_bundle,
+                "circle-of-competence",
+                "  - bias-self-audit",
+                "  - external:reference-bundle/bias-self-audit",
+            )
+            self._rewrite_bundle_id(reference_bundle, "reference-bundle")
+
+            report = validate_bundle(primary_bundle, merge_with=[reference_bundle])
+
+            self.assertEqual(report["errors"], [])
+
+    def test_validator_rejects_unresolved_external_relation_target_when_merge_context_provided(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            primary_bundle = tmp_root / "primary"
+            reference_bundle = tmp_root / "reference"
+            shutil.copytree(self.bundle_path, primary_bundle)
+            shutil.copytree(self.bundle_path, reference_bundle)
+
+            self._replace_skill_text(
+                primary_bundle,
+                "circle-of-competence",
+                "  - bias-self-audit",
+                "  - external:reference-bundle:missing-skill",
+            )
+            self._rewrite_bundle_id(reference_bundle, "reference-bundle")
+
+            report = validate_bundle(primary_bundle, merge_with=[reference_bundle])
+
+            self.assertTrue(
+                any(
+                    "unknown external relation target external:reference-bundle:missing-skill"
+                    in error
+                    for error in report["errors"]
+                ),
+                report["errors"],
+            )
 
     def test_validator_accepts_legacy_autonomous_refiner_alias(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -766,9 +864,45 @@ class BundleValidationTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("VALID", result.stdout)
 
+    def test_cli_reports_success_with_merge_with_reference_bundle(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            primary_bundle = tmp_root / "primary"
+            reference_bundle = tmp_root / "reference"
+            shutil.copytree(self.bundle_path, primary_bundle)
+            shutil.copytree(self.bundle_path, reference_bundle)
+
+            self._replace_skill_text(
+                primary_bundle,
+                "circle-of-competence",
+                "  - bias-self-audit",
+                "  - external:reference-bundle:bias-self-audit",
+            )
+            self._rewrite_bundle_id(reference_bundle, "reference-bundle")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "validate_bundle.py"),
+                    str(primary_bundle),
+                    "--merge-with",
+                    str(reference_bundle),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("VALID", result.stdout)
+
     def test_v03_foundation_includes_trigger_registry_assets(self) -> None:
         self.assertTrue((ROOT / "shared_profiles" / "investing" / "triggers.yaml").exists())
         self.assertTrue((ROOT / "schemas" / "trigger-registry.schema.yaml").exists())
+
+    def test_v05_engineering_profile_assets_exist(self) -> None:
+        self.assertTrue((ROOT / "shared_profiles" / "engineering" / "profile.yaml").exists())
+        self.assertTrue((ROOT / "shared_profiles" / "engineering" / "triggers.yaml").exists())
 
     def test_v03_release_assets_exist(self) -> None:
         self.assertTrue((ROOT / ".github" / "workflows" / "ci.yml").exists())

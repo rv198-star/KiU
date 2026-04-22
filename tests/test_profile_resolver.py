@@ -23,6 +23,7 @@ class ProfileResolverTests(unittest.TestCase):
 
     def setUp(self) -> None:
         self.bundle_path = ROOT / "bundles" / "poor-charlies-almanack-v0.1"
+        self.engineering_bundle_path = ROOT / "bundles" / "engineering-postmortem-v0.1"
 
     def test_resolve_profile_loads_default_and_domain_overrides(self) -> None:
         profile = resolve_profile(self.bundle_path)
@@ -41,6 +42,16 @@ class ProfileResolverTests(unittest.TestCase):
         self.assertEqual(bundle.profile["domain"], "investing")
         self.assertIn("published_min_eval_cases", bundle.profile)
         self.assertEqual(bundle.profile["refinement_scheduler"]["targets"]["overall_quality"], 0.82)
+
+    def test_engineering_profile_loads_domain_overrides(self) -> None:
+        profile = resolve_profile(self.engineering_bundle_path)
+
+        self.assertEqual(profile["domain"], "engineering")
+        self.assertEqual(profile["resolved_from"], ["default", "engineering", "bundle"])
+        self.assertEqual(profile["published_min_eval_cases"]["real_decisions"], 15)
+        self.assertEqual(profile["published_min_eval_cases"]["synthetic_adversarial"], 15)
+        self.assertEqual(profile["published_min_eval_cases"]["out_of_distribution"], 8)
+        self.assertEqual(profile["content_density"]["published_requirement"], "hard")
 
     def test_resolve_profile_returns_isolated_copy_from_cache(self) -> None:
         first = resolve_profile(self.bundle_path)

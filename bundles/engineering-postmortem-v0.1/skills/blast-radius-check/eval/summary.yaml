@@ -1,0 +1,36 @@
+skill_id: blast-radius-check
+bundle_version: 0.1.0
+skill_revision: 1
+status: under_evaluation
+kiu_test:
+  trigger_test: pass
+  fire_test: pass
+  boundary_test: pass
+subsets:
+  real_decisions:
+    cases:
+      - ../../../evaluation/real_decisions/blast-radius-customer-import.yaml
+    passed: 1
+    total: 1
+    threshold: 0.5
+    status: pass
+  synthetic_adversarial:
+    cases:
+      - ../../../evaluation/synthetic_adversarial/blast-radius-one-click-migration.yaml
+    passed: 1
+    total: 1
+    threshold: 0.5
+    status: pass
+  out_of_distribution:
+    cases:
+      - ../../../evaluation/out_of_distribution/blast-radius-copy-only-change.yaml
+    passed: 1
+    total: 1
+    threshold: 1.0
+    status: pass
+key_failure_modes:
+  - 团队可能把“有回滚按钮”误当成 blast radius 已被控制，而忽略不可逆数据后果。
+  - 当 scope 描述过度乐观时，技能仍可能低估慢性扩散或下游兼容性风险。
+references:
+  evaluation_root: ../../../evaluation
+  coverage_mode: engineering_seed_cases

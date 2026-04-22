@@ -1,0 +1,9 @@
+case_id: postmortem-hero-blame-trap
+subset: synthetic_adversarial
+primary_skill: postmortem-blameless
+related_skills:
+  - postmortem-blameless
+situation: 事故结束后团队准备把问题归结为“某位资深工程师这次不够仔细”，并据此结束复盘。
+expected_behavior: fire
+expected_verdict: blameless_reframe_needed
+note: 资深身份不能替代因果链分析，技能应把讨论拉回系统条件和检测缺口。

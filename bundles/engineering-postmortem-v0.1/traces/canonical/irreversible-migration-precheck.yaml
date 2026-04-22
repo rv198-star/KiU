@@ -1,0 +1,8 @@
+trace_id: irreversible-migration-precheck
+title: 不可逆迁移预检
+related_skills:
+  - blast-radius-check
+kind: release_review
+situation: 数据迁移会覆盖历史状态，但变更单里只有“若出问题再回滚”的口头承诺。
+decision: 把可逆性单独拎出来审查，补齐备份、回放演练和 abort condition。
+outcome: 团队在真正执行前发现了回滚不可行的环节，改成双写过渡方案。

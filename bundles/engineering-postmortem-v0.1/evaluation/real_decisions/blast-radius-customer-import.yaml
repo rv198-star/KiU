@@ -1,0 +1,9 @@
+case_id: blast-radius-customer-import
+subset: real_decisions
+primary_skill: blast-radius-check
+related_skills:
+  - blast-radius-check
+situation: 团队要替换客户导入链路，但无法说明受影响租户、失败后的数据后果和回滚时间窗。
+expected_behavior: fire
+expected_verdict: blast_radius_unknown
+note: 应先界定影响面、回滚路径和 abort condition，再决定是否上线。

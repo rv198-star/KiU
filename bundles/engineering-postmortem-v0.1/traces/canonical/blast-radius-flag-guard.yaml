@@ -1,0 +1,8 @@
+trace_id: blast-radius-flag-guard
+title: Feature Flag 守住影响面
+related_skills:
+  - blast-radius-check
+kind: release_review
+situation: 核心路径重构准备上线，但团队一开始没有说清受影响客户和依赖服务范围。
+decision: 先补 blast radius 说明，再要求上线必须挂 feature flag 与快速关闭开关。
+outcome: 变更最终以受控灰度方式上线，避免了直接全量切换。

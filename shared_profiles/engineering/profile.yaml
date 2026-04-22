@@ -1,0 +1,39 @@
+profile_version: kiu.domain-profile/v0.3
+domain: engineering
+content_density:
+  published_requirement: hard
+  rationale:
+    warning_min_chars: 200
+    min_anchor_refs: 1
+  evidence_summary:
+    min_anchor_refs: 1
+rationale_density:
+  warning_min_chars: 200
+  min_anchor_refs: 1
+published_min_eval_cases:
+  real_decisions: 15
+  synthetic_adversarial: 15
+  out_of_distribution: 8
+min_eval_cases_for_published:
+  real_decisions: 15
+  synthetic_adversarial: 15
+  out_of_distribution: 8
+trigger_registry: shared_profiles/engineering/triggers.yaml
+refinement_scheduler:
+  weights:
+    boundary_quality: 0.45
+    eval_aggregate: 0.35
+    cross_subset_stability: 0.20
+  release_quality:
+    weights:
+      artifact_quality: 0.65
+      loop_quality: 0.35
+    thresholds:
+      artifact_quality: 0.76
+      production_quality: 0.80
+  targets:
+    overall_quality: 0.81
+    boundary_quality: 0.83
+    min_positive_delta: 0.02
+    artifact_quality: 0.76
+    production_quality: 0.80

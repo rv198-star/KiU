@@ -93,6 +93,8 @@ def main() -> int:
         print(json.dumps(report["errors"], ensure_ascii=False, indent=2))
         return 1
 
+    metrics = json.loads((run_root / "reports" / "metrics.json").read_text(encoding="utf-8"))
+
     quality_report = assess_run_quality(
         candidates=refined,
         profile=source_bundle.profile,
@@ -104,7 +106,7 @@ def main() -> int:
             {
                 "run_root": str(run_root),
                 "bundle_root": str(bundle_root),
-                "summary": report["summary"],
+                "summary": metrics["summary"],
                 "quality": {
                     "release_ready": quality_report["release_ready"],
                     "bundle_quality_grade": quality_report["bundle_quality_grade"],

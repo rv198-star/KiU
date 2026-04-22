@@ -1,0 +1,56 @@
+profile_version: kiu.pipeline-profile/v0.3
+source_bundle_id: engineering-postmortem-v0.1
+inherits_from: engineering
+seed_node_types:
+  - skill_principle
+  - control_principle
+candidate_kinds:
+  general_agentic:
+    workflow_certainty: medium
+    context_certainty: high
+  workflow_script:
+    workflow_certainty: high
+    context_certainty: high
+routing_rules:
+  - when:
+      workflow_certainty: high
+      context_certainty: high
+    recommended_execution_mode: workflow_script
+    disposition: workflow_script_candidate
+  - when:
+      workflow_certainty: medium
+      context_certainty: high
+    recommended_execution_mode: llm_agentic
+    disposition: skill_candidate
+seed_overrides:
+  n_postmortem_principle:
+    candidate_kind: general_agentic
+    gold_match_hint: postmortem-blameless
+  n_blast_radius_principle:
+    candidate_kind: general_agentic
+    gold_match_hint: blast-radius-check
+  n_reversibility_gate:
+    candidate_id: reversibility-preflight-checklist
+    candidate_kind: workflow_script
+refinement_scheduler:
+  enabled_by_default: true
+  min_rounds: 2
+  max_rounds: 5
+  patience: 2
+  targets:
+    overall_quality: 0.81
+    boundary_quality: 0.83
+    min_positive_delta: 0.02
+  weights:
+    boundary_quality: 0.45
+    eval_aggregate: 0.35
+    cross_subset_stability: 0.20
+  bonuses:
+    clarity: 0.03
+    coverage: 0.01
+  mutable_surfaces:
+    - skill_markdown
+    - anchors
+    - eval_summary
+    - revisions
+    - trace_references

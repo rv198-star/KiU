@@ -1,0 +1,8 @@
+trace_id: runbook-ownership-reset
+title: Runbook 责任重置
+related_skills:
+  - postmortem-blameless
+kind: incident_postmortem
+situation: 值班同学照着过时 runbook 处理，事后差点被当成主要责任人。
+decision: 把讨论焦点从“谁执行了旧步骤”改成“为什么旧 runbook 还能继续流通”。
+outcome: 团队补上 runbook owner、季度复核和告警链路校验，减少了同类误用。

@@ -1,0 +1,36 @@
+skill_id: postmortem-blameless
+bundle_version: 0.1.0
+skill_revision: 1
+status: under_evaluation
+kiu_test:
+  trigger_test: pass
+  fire_test: pass
+  boundary_test: pass
+subsets:
+  real_decisions:
+    cases:
+      - ../../../evaluation/real_decisions/postmortem-db-index-blame.yaml
+    passed: 1
+    total: 1
+    threshold: 0.5
+    status: pass
+  synthetic_adversarial:
+    cases:
+      - ../../../evaluation/synthetic_adversarial/postmortem-hero-blame-trap.yaml
+    passed: 1
+    total: 1
+    threshold: 0.5
+    status: pass
+  out_of_distribution:
+    cases:
+      - ../../../evaluation/out_of_distribution/postmortem-live-fire-incident.yaml
+    passed: 1
+    total: 1
+    threshold: 1.0
+    status: pass
+key_failure_modes:
+  - 当“追责”与“修系统”同时存在时，blameless 容易被误听成不讨论 accountability。
+  - 如果 timeline 只有口述，没有检测与变更证据，复盘仍可能停留在空泛价值观层面。
+references:
+  evaluation_root: ../../../evaluation
+  coverage_mode: engineering_seed_cases

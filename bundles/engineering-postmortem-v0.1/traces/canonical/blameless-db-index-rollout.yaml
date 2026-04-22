@@ -1,0 +1,8 @@
+trace_id: blameless-db-index-rollout
+title: 数据库索引回滚争执
+related_skills:
+  - postmortem-blameless
+kind: incident_postmortem
+situation: 索引上线导致查询抖动后，讨论快速集中到最后一个执行变更的工程师。
+decision: 先补齐时间线、告警缺口和审批链，再区分个人失误与系统诱因。
+outcome: 复盘产出转成了告警门槛修复、回滚演练和审批模板更新。

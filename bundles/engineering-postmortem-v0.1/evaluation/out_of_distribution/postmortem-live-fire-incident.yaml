@@ -1,0 +1,9 @@
+case_id: postmortem-live-fire-incident
+subset: out_of_distribution
+primary_skill: postmortem-blameless
+related_skills:
+  - postmortem-blameless
+situation: 事故仍在扩散，团队正在紧急止血，还没有形成稳定时间线。
+expected_behavior: do_not_fire
+expected_verdict: insufficient_context
+note: 事故未被控制时应优先止血，不应把复盘技能提前到处置阶段。

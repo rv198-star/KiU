@@ -50,7 +50,11 @@ def render_generated_run(
 
     for seed in seeds:
         if seed.metadata["disposition"] == "workflow_script_candidate":
-            _render_workflow_candidate(workflow_root, seed)
+            _render_workflow_candidate(
+                workflow_root=workflow_root,
+                source_bundle=source_bundle,
+                seed=seed,
+            )
             workflow_only_seeds.append(seed)
             continue
 
@@ -217,10 +221,17 @@ def _render_skill_candidate(
     _write_yaml(skill_dir / "candidate.yaml", seed.metadata)
 
 
-def _render_workflow_candidate(workflow_root: Path, seed: CandidateSeed) -> None:
+def _render_workflow_candidate(
+    *,
+    workflow_root: Path,
+    source_bundle: SourceBundle,
+    seed: CandidateSeed,
+) -> None:
     candidate_dir = workflow_root / seed.candidate_id
     candidate_dir.mkdir(parents=True, exist_ok=True)
     _write_yaml(candidate_dir / "candidate.yaml", seed.metadata)
+    workflow_doc = _build_workflow_descriptor(source_bundle=source_bundle, seed=seed)
+    _write_yaml(candidate_dir / "workflow.yaml", workflow_doc)
     note = (
         f"# {seed.candidate_id}\n\n"
         "This seed was downgraded to `workflow_script_candidate` because both"
@@ -228,6 +239,10 @@ def _render_workflow_candidate(workflow_root: Path, seed: CandidateSeed) -> None
         " audit but is intentionally excluded from `bundle/skills/`.\n"
     )
     (candidate_dir / "README.md").write_text(note, encoding="utf-8")
+    (candidate_dir / "CHECKLIST.md").write_text(
+        _build_workflow_checklist(workflow_doc),
+        encoding="utf-8",
+    )
 
 
 def _build_revision_log(
@@ -271,6 +286,152 @@ def _build_revision_log(
             ],
         ),
     }
+
+
+def _build_workflow_descriptor(
+    *,
+    source_bundle: SourceBundle,
+    seed: CandidateSeed,
+) -> dict[str, Any]:
+    nodes = {
+        node["id"]: node
+        for node in source_bundle.graph_doc.get("nodes", [])
+        if isinstance(node, dict) and "id" in node
+    }
+    edges = {
+        edge["id"]: edge
+        for edge in source_bundle.graph_doc.get("edges", [])
+        if isinstance(edge, dict) and "id" in edge
+    }
+    communities = {
+        community["id"]: community
+        for community in source_bundle.graph_doc.get("communities", [])
+        if isinstance(community, dict) and "id" in community
+    }
+    primary_node_id = seed.primary_node_id
+    primary_node = nodes.get(primary_node_id, {})
+    supporting_nodes = [nodes[node_id] for node_id in seed.supporting_node_ids if node_id in nodes]
+    supporting_edges = [edges[edge_id] for edge_id in seed.supporting_edge_ids if edge_id in edges]
+    related_communities = [
+        communities[community_id]
+        for community_id in seed.community_ids
+        if community_id in communities
+    ]
+
+    return {
+        "workflow_id": seed.candidate_id,
+        "title": _humanize_identifier(seed.candidate_id),
+        "source_bundle_id": source_bundle.manifest["bundle_id"],
+        "source_graph_hash": source_bundle.manifest["graph"]["graph_hash"],
+        "recommended_execution_mode": seed.metadata["recommended_execution_mode"],
+        "disposition": seed.metadata["disposition"],
+        "workflow_certainty": seed.metadata["workflow_certainty"],
+        "context_certainty": seed.metadata["context_certainty"],
+        "objective": (
+            "Run a deterministic preflight before execution when the control pattern is"
+            " better served by a fixed workflow than an agentic skill."
+        ),
+        "seed": {
+            "primary_node_id": primary_node_id,
+            "supporting_node_ids": list(seed.supporting_node_ids),
+            "supporting_edge_ids": list(seed.supporting_edge_ids),
+            "community_ids": list(seed.community_ids),
+        },
+        "evidence_anchors": {
+            "primary_node": {
+                "id": primary_node_id,
+                "label": primary_node.get("label", primary_node_id),
+                "type": primary_node.get("type"),
+            },
+            "supporting_nodes": [
+                {
+                    "id": node["id"],
+                    "label": node.get("label", node["id"]),
+                    "type": node.get("type"),
+                }
+                for node in supporting_nodes
+            ],
+            "supporting_edges": [
+                {
+                    "id": edge["id"],
+                    "type": edge.get("type"),
+                    "from": edge.get("from"),
+                    "to": edge.get("to"),
+                }
+                for edge in supporting_edges
+            ],
+            "communities": [
+                {
+                    "id": community["id"],
+                    "label": community.get("label", community["id"]),
+                }
+                for community in related_communities
+            ],
+        },
+        "checklist_sections": [
+            "Scope",
+            "Rollback",
+            "Reversibility",
+            "Evidence Anchors",
+        ],
+    }
+
+
+def _build_workflow_checklist(workflow_doc: dict[str, Any]) -> str:
+    anchors = workflow_doc.get("evidence_anchors", {})
+    primary = anchors.get("primary_node", {})
+    supporting_nodes = anchors.get("supporting_nodes", [])
+    supporting_edges = anchors.get("supporting_edges", [])
+    communities = anchors.get("communities", [])
+
+    return (
+        f"# {workflow_doc['workflow_id']}\n\n"
+        f"Execution mode: `{workflow_doc['recommended_execution_mode']}`\n\n"
+        "## Objective\n"
+        f"{workflow_doc['objective']}\n\n"
+        "## Scope\n"
+        "- [ ] Summarize the proposed change and the exact affected surface.\n"
+        "- [ ] Name the users, data paths, and downstream systems in scope.\n"
+        "- [ ] Define the abort condition before execution starts.\n\n"
+        "## Rollback\n"
+        "- [ ] Confirm rollback steps are written, owned, and time-bounded.\n"
+        "- [ ] State whether rollback has been rehearsed on a representative environment.\n"
+        "- [ ] Record the monitoring signal that would trigger rollback.\n\n"
+        "## Reversibility\n"
+        "- [ ] Identify any irreversible data writes or side effects.\n"
+        "- [ ] Document the safeguard for irreversible steps: backup, dual-write, holdback, or canary.\n"
+        "- [ ] Record the explicit go/no-go decision.\n\n"
+        "## Evidence Anchors\n"
+        f"- Primary node: `{primary.get('id', '<missing>')}`"
+        f" ({primary.get('label', '<missing-label>')})\n"
+        f"- Supporting nodes: {', '.join(_format_anchor_list(supporting_nodes, key='label')) or 'none'}\n"
+        f"- Supporting edges: {', '.join(_format_edge_list(supporting_edges)) or 'none'}\n"
+        f"- Communities: {', '.join(_format_anchor_list(communities, key='label')) or 'none'}\n"
+    )
+
+
+def _format_anchor_list(items: list[dict[str, Any]], *, key: str) -> list[str]:
+    rendered: list[str] = []
+    for item in items:
+        item_id = item.get("id", "<missing-id>")
+        label = item.get(key, item_id)
+        rendered.append(f"`{item_id}` ({label})")
+    return rendered
+
+
+def _format_edge_list(items: list[dict[str, Any]]) -> list[str]:
+    rendered: list[str] = []
+    for item in items:
+        item_id = item.get("id", "<missing-id>")
+        edge_type = item.get("type", "<missing-type>")
+        edge_from = item.get("from", "<missing-from>")
+        edge_to = item.get("to", "<missing-to>")
+        rendered.append(f"`{item_id}` ({edge_type}: {edge_from} -> {edge_to})")
+    return rendered
+
+
+def _humanize_identifier(value: str) -> str:
+    return value.replace("-", " ").replace("_", " ").title()
 
 
 def _write_yaml(path: Path, doc: dict[str, Any]) -> None:

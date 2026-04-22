@@ -7,6 +7,7 @@ from typing import Any
 
 import yaml
 
+from kiu_graph.merge import merge_bundle_graphs
 from kiu_pipeline.profile_resolver import resolve_profile
 
 
@@ -56,8 +57,13 @@ DEFAULT_VALIDATION_PROFILE = {
 }
 
 
-def validate_bundle(bundle_path: str | Path) -> dict[str, Any]:
+def validate_bundle(
+    bundle_path: str | Path,
+    *,
+    merge_with: list[str | Path] | None = None,
+) -> dict[str, Any]:
     root = Path(bundle_path)
+    merge_paths = [Path(path) for path in (merge_with or [])]
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -70,6 +76,8 @@ def validate_bundle(bundle_path: str | Path) -> dict[str, Any]:
     edge_ids: set[str] = set()
     community_ids: set[str] = set()
     computed_graph_hash = None
+    external_skill_refs: set[tuple[str, str]] | None = None
+    merged_graph_report: dict[str, Any] | None = None
 
     if manifest:
         graph_meta = manifest.get("graph", {})
@@ -104,6 +112,22 @@ def validate_bundle(bundle_path: str | Path) -> dict[str, Any]:
                     "community_count": len(community_ids),
                 }
 
+    if merge_paths:
+        external_skill_refs = _load_external_skill_refs(merge_paths, errors)
+        try:
+            merged_graph_doc = merge_bundle_graphs([root, *merge_paths])
+        except Exception as exc:
+            errors.append(f"merge_graph: {exc}")
+        else:
+            merged_graph_report = {
+                "bundle_count": merged_graph_doc.get("bundle_count", 0),
+                "source_bundles": merged_graph_doc.get("source_bundles", []),
+                "graph_hash": merged_graph_doc.get("graph_hash"),
+                "node_count": len(merged_graph_doc.get("nodes", [])),
+                "edge_count": len(merged_graph_doc.get("edges", [])),
+                "community_count": len(merged_graph_doc.get("communities", [])),
+            }
+
     skills: list[dict[str, Any]] = []
     skill_entries = manifest.get("skills", []) if manifest else []
     known_skill_ids = {
@@ -122,6 +146,7 @@ def validate_bundle(bundle_path: str | Path) -> dict[str, Any]:
                 community_ids=community_ids,
                 computed_graph_hash=computed_graph_hash,
                 known_skill_ids=known_skill_ids,
+                external_skill_refs=external_skill_refs,
                 trigger_registry=trigger_registry,
                 profile=profile,
             )
@@ -149,6 +174,7 @@ def validate_bundle(bundle_path: str | Path) -> dict[str, Any]:
         "bundle_path": str(root),
         "manifest": manifest,
         "graph": graph_report,
+        "merged_graph": merged_graph_report,
         "shared_assets": shared_assets,
         "skills": skills,
         "errors": errors,
@@ -168,6 +194,7 @@ def _validate_skill(
     community_ids: set[str],
     computed_graph_hash: str | None,
     known_skill_ids: set[str],
+    external_skill_refs: set[tuple[str, str]] | None,
     trigger_registry: dict[str, dict[str, Any]],
     profile: dict[str, Any],
 ) -> dict[str, Any]:
@@ -233,6 +260,7 @@ def _validate_skill(
         relations,
         skill_errors,
         known_skill_ids,
+        external_skill_refs,
     )
     _validate_density(
         skill_id,
@@ -379,6 +407,7 @@ def _validate_relations(
     relations: dict[str, Any],
     errors: list[str],
     known_skill_ids: set[str],
+    external_skill_refs: set[tuple[str, str]] | None,
 ) -> None:
     keys = set(relations.keys())
     if keys != set(REQUIRED_RELATIONS):
@@ -399,11 +428,73 @@ def _validate_relations(
                 )
                 continue
             if target.startswith("external:"):
+                parsed_target = _parse_external_relation_target(target)
+                if parsed_target is None:
+                    errors.append(
+                        f"{skill_id}: invalid external relation target {target} in {relation_name}"
+                    )
+                    continue
+                if external_skill_refs is not None and parsed_target not in external_skill_refs:
+                    errors.append(
+                        f"{skill_id}: unknown external relation target {target} in {relation_name}"
+                    )
                 continue
             if target not in known_skill_ids:
                 errors.append(
                     f"{skill_id}: unknown relation target {target} in {relation_name}"
                 )
+
+
+def _parse_external_relation_target(target: str) -> tuple[str, str] | None:
+    raw_target = target.removeprefix("external:")
+    if ":" in raw_target:
+        bundle_id, skill_id = raw_target.split(":", 1)
+    elif "/" in raw_target:
+        bundle_id, skill_id = raw_target.split("/", 1)
+    else:
+        return None
+    if not bundle_id or not skill_id:
+        return None
+    return bundle_id, skill_id
+
+
+def _load_external_skill_refs(
+    bundle_paths: list[Path],
+    errors: list[str],
+) -> set[tuple[str, str]]:
+    refs: set[tuple[str, str]] = set()
+    bundle_ids: set[str] = set()
+    for bundle_root in bundle_paths:
+        manifest = _load_yaml(
+            bundle_root / "manifest.yaml",
+            errors,
+            f"merge bundle manifest ({bundle_root})",
+        )
+        if not manifest:
+            continue
+        bundle_id = manifest.get("bundle_id")
+        if not isinstance(bundle_id, str) or not bundle_id:
+            errors.append(f"merge bundle ({bundle_root}): missing bundle_id")
+            continue
+        if bundle_id in bundle_ids:
+            errors.append(f"merge bundle duplicate bundle_id {bundle_id}")
+            continue
+        bundle_ids.add(bundle_id)
+
+        skill_entries = manifest.get("skills", [])
+        if not isinstance(skill_entries, list):
+            errors.append(f"merge bundle ({bundle_id}): skills must be a list")
+            continue
+        for entry in skill_entries:
+            if not isinstance(entry, dict):
+                errors.append(f"merge bundle ({bundle_id}): invalid skill entry {entry!r}")
+                continue
+            skill_id = entry.get("skill_id")
+            if not isinstance(skill_id, str) or not skill_id:
+                errors.append(f"merge bundle ({bundle_id}): missing skill_id")
+                continue
+            refs.add((bundle_id, skill_id))
+    return refs
 
 
 def _validate_anchors(

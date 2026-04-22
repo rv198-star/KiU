@@ -41,3 +41,11 @@ def write_production_quality(
 ) -> None:
     path = Path(run_root) / "reports" / "production-quality.json"
     path.write_text(json.dumps(doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def write_three_layer_review(
+    run_root: str | Path,
+    doc: dict[str, Any],
+) -> None:
+    path = Path(run_root) / "reports" / "three-layer-review.json"
+    path.write_text(json.dumps(doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

@@ -1,0 +1,55 @@
+triggers:
+  - symbol: incident_review_focuses_on_person
+    definition: 复盘讨论过快聚焦到某个操作人，而不是时间线与系统条件。
+    positive_examples:
+      - 大家开始争论谁点错了按钮，但没人能复原检测和审批链路。
+    negative_examples:
+      - 讨论先围绕时间线、监控、权限和交接事实展开。
+  - symbol: causal_chain_is_unclear
+    definition: 事故的因果链、检测链或恢复链仍然不清楚。
+    positive_examples:
+      - 团队只知道最后爆了，但不知道之前哪些信号已经出现。
+    negative_examples:
+      - 时间线、检测点和恢复动作都已经清楚列出。
+  - symbol: incident_is_still_uncontained
+    definition: 事故还在进行中，当前阶段优先级是止血而不是复盘归因。
+    positive_examples:
+      - 系统还在掉单，团队仍在执行应急动作。
+    negative_examples:
+      - 影响已稳定，开始进入复盘整理阶段。
+  - symbol: timeline_is_missing
+    definition: 缺少最基本的时间线，无法支撑有效复盘。
+    positive_examples:
+      - 只有结论和情绪，没有按时间顺序的事实记录。
+    negative_examples:
+      - 关键事件、检测信号和操作动作都已经按时间排列。
+  - symbol: risky_change_scope_is_unclear
+    definition: 变更范围、受影响用户或依赖面仍不清楚。
+    positive_examples:
+      - 大家知道要发版，但没人说得清哪些服务和客户会受影响。
+    negative_examples:
+      - 影响面、依赖和最坏结果已经在变更单里明确写出。
+  - symbol: rollback_path_is_unclear
+    definition: 变更没有清晰的回滚路径或 abort condition。
+    positive_examples:
+      - 团队默认出了问题再看，但没有写回滚步骤和触发条件。
+    negative_examples:
+      - 回滚入口、判定阈值和责任人都已经预先声明。
+  - symbol: reversibility_is_ignored
+    definition: 变更包含不可逆步骤，但评审里没有显式讨论可逆性。
+    positive_examples:
+      - 数据迁移会覆盖历史状态，却没有讨论如何止损。
+    negative_examples:
+      - 团队先判断哪些步骤可逆、哪些必须加额外保护。
+  - symbol: affected_surface_is_unknown
+    definition: 受影响的数据、用户、依赖系统或运营流程仍然未知。
+    positive_examples:
+      - 说要全量切换，但不知道下游是否有老版本消费者。
+    negative_examples:
+      - 受影响对象和例外路径已经完整列出。
+  - symbol: change_is_fully_reversible_and_low_impact
+    definition: 变更影响面很小、可即时回退，而且没有不可逆副作用。
+    positive_examples:
+      - 仅修改内部文案并且可随时回滚。
+    negative_examples:
+      - 变更涉及数据迁移、外部计费或权限策略。

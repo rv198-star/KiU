@@ -1,0 +1,8 @@
+trace_id: phased-rollout-holdback
+title: 分批发布与人工 Holdback
+related_skills:
+  - blast-radius-check
+kind: release_review
+situation: 新版任务调度器要替换旧链路，但团队无法证明所有租户都能安全切换。
+decision: 先把租户分层，再设置 canary、分批推进和人工 holdback 条件。
+outcome: 受影响范围被切成可观测的小批次，异常在扩散前就被截住。

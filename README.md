@@ -6,8 +6,8 @@ KiU v0.1 is a graph-first, evidence-backed skill bundle format with a complete r
 
 Current release framing:
 
-- `v0.4.x` is the single-domain production-line hardening line.
-- Multi-domain validation, cross-bundle graph merge, and true autonomous refinement proof remain v0.5 work.
+- `v0.5.0` closes the foundation line: multi-domain validation, cross-bundle graph merge, workflow-vs-agentic boundary enforcement, and three-layer review evidence.
+- Further quality gains now depend on collecting more real usage cases and feeding those results back into bundle/source/profile refinement.
 
 Start here:
 
@@ -16,8 +16,11 @@ Start here:
 - [KiU Skill Spec v0.3](docs/kiu-skill-spec-v0.3.md)
 - [KiU Skill Spec v0.4](docs/kiu-skill-spec-v0.4.md)
 - [v0.4.1 Assessment and v0.4.2 Plan](docs/2026-04-22-v0.4.1-assessment-and-v0.4.2-plan.md)
+- [v0.5 Workflow Boundary Hardening Plan](docs/superpowers/plans/2026-04-22-v0.5-workflow-boundary-hardening.md)
+- [v0.5 Workflow Delivery And Three-Layer Scoring Plan](docs/superpowers/plans/2026-04-22-v0.5-workflow-delivery-and-three-layer-scoring.md)
 - [KiU v0.2 Candidate Pipeline](docs/kiu-v0.2-pipeline.md)
 - [Reference Bundle](bundles/poor-charlies-almanack-v0.1/manifest.yaml)
+- [Engineering Reference Bundle](bundles/engineering-postmortem-v0.1/manifest.yaml)
 
 Install locally:
 
@@ -43,6 +46,14 @@ Build a refinement-scheduled candidate bundle:
 python3 scripts/build_candidates.py \
   --source-bundle bundles/poor-charlies-almanack-v0.1 \
   --run-id phase2-smoke
+```
+
+Review a generated run across source bundle, generated bundle, and usage outputs:
+
+```bash
+python3 scripts/review_generated_run.py \
+  --run-root /tmp/kiu-local-artifacts/generated/poor-charlies-almanack-v0.1/phase2-smoke \
+  --source-bundle bundles/poor-charlies-almanack-v0.1
 ```
 
 By default, pipeline output is written outside the repo to `/tmp/kiu-local-artifacts/generated/`.

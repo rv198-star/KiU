@@ -1,0 +1,9 @@
+case_id: blast-radius-copy-only-change
+subset: out_of_distribution
+primary_skill: blast-radius-check
+related_skills:
+  - blast-radius-check
+situation: 本次只是内部页面文案改动，可即时回滚，也不会触发数据或权限变化。
+expected_behavior: do_not_fire
+expected_verdict: blast_radius_bounded
+note: 低影响且可逆的小改动不应被高风险变更检查过度拦截。

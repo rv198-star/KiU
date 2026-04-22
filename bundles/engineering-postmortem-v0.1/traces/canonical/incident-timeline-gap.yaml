@@ -1,0 +1,8 @@
+trace_id: incident-timeline-gap
+title: 时间线缺口暴露监控盲区
+related_skills:
+  - postmortem-blameless
+kind: incident_postmortem
+situation: 故障复盘里只有结论，没有检测信号与操作顺序，导致每个人都在讲自己的版本。
+decision: 先统一时间线，再追问哪些监控、handoff 和 runbook 让错误难以及时暴露。
+outcome: 团队发现真正的问题是告警缺口和交接断层，而不是单点“误操作”。

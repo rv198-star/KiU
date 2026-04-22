@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## [0.5.0] - 2026-04-22
+
+### Added
+- Added the second public domain profile `engineering` plus the reference source bundle `engineering-postmortem-v0.1`, including `postmortem-blameless`, `blast-radius-check`, and shared canonical traces/evaluation cases.
+- Added cross-bundle graph merge support with `src/kiu_graph/merge.py`, `scripts/merge_graphs.py`, and validator `--merge-with` coverage for external relations.
+- Added generated-run three-layer review scoring via `scripts/review_generated_run.py`, emitting `reports/three-layer-review.json` with auditable 100-point scores for source bundle, generated bundle, and usage outputs.
+- Added minimum workflow deliverable skeletons for downgraded workflow candidates: `workflow.yaml` and `CHECKLIST.md` now ship under `workflow_candidates/<id>/`.
+
+### Changed
+- Hardened the workflow-vs-agentic boundary so `high/high` routing stays outside `bundle/skills/` while still preserving usable workflow preflight artifacts for audit and execution prep.
+- `generate_candidates.py` and `build_candidates.py` now report workflow candidate counts from generated run metrics instead of silently under-reporting them in CLI summaries.
+- Bundle validation now understands merged external bundle references and enforces the engineering-domain release path with the same structural rigor as investing.
+- The v0.5 foundation line is now release-framed as: multi-domain validation, cross-bundle graph proof, explicit workflow/agentic boundary, and fresh three-layer review evidence.
+
 ## [0.4.2] - 2026-04-22
 
 ### Added

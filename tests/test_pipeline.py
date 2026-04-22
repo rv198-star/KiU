@@ -26,6 +26,7 @@ class CandidatePipelineTests(unittest.TestCase):
 
     def setUp(self) -> None:
         self.bundle_path = ROOT / "bundles" / "poor-charlies-almanack-v0.1"
+        self.engineering_bundle_path = ROOT / "bundles" / "engineering-postmortem-v0.1"
         self.example_fixture_paths = [
             ROOT / "examples" / "fixtures" / "effective-requirements-analysis.yaml",
             ROOT / "examples" / "fixtures" / "financial-statement-analysis.yaml",
@@ -172,6 +173,253 @@ class CandidatePipelineTests(unittest.TestCase):
 
             self.assertEqual(report["errors"], [])
             self.assertEqual(report["summary"]["skill_candidates"], 5)
+
+    def test_engineering_source_bundle_generates_skill_and_workflow_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_root = Path(tmp_dir) / "generated"
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "generate_candidates.py"),
+                    "--source-bundle",
+                    str(self.engineering_bundle_path),
+                    "--output-root",
+                    str(output_root),
+                    "--run-id",
+                    "engineering-boundary",
+                    "--drafting-mode",
+                    "deterministic",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            payload = json.loads(result.stdout)
+
+            run_root = output_root / "engineering-postmortem-v0.1" / "engineering-boundary"
+            bundle_root = run_root / "bundle"
+            workflow_root = run_root / "workflow_candidates"
+            manifest = yaml.safe_load((bundle_root / "manifest.yaml").read_text(encoding="utf-8"))
+            metrics = json.loads((run_root / "reports" / "metrics.json").read_text(encoding="utf-8"))
+
+            self.assertEqual(
+                {entry["skill_id"] for entry in manifest["skills"]},
+                {"postmortem-blameless", "blast-radius-check"},
+            )
+            self.assertEqual(payload["summary"]["workflow_script_candidates"], 1)
+            self.assertEqual(metrics["summary"]["workflow_script_candidates"], 1)
+            self.assertFalse((bundle_root / "skills" / "reversibility-preflight-checklist").exists())
+            workflow_candidate = workflow_root / "reversibility-preflight-checklist" / "candidate.yaml"
+            self.assertTrue(workflow_candidate.exists())
+
+            workflow_doc = yaml.safe_load(workflow_candidate.read_text(encoding="utf-8"))
+            self.assertEqual(workflow_doc["recommended_execution_mode"], "workflow_script")
+            self.assertEqual(workflow_doc["disposition"], "workflow_script_candidate")
+            self.assertEqual(workflow_doc["workflow_certainty"], "high")
+            self.assertEqual(workflow_doc["context_certainty"], "high")
+
+    def test_engineering_workflow_candidate_emits_minimum_deliverable_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_root = Path(tmp_dir) / "generated"
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "generate_candidates.py"),
+                    "--source-bundle",
+                    str(self.engineering_bundle_path),
+                    "--output-root",
+                    str(output_root),
+                    "--run-id",
+                    "engineering-workflow-deliverable",
+                    "--drafting-mode",
+                    "deterministic",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+            candidate_root = (
+                output_root
+                / "engineering-postmortem-v0.1"
+                / "engineering-workflow-deliverable"
+                / "workflow_candidates"
+                / "reversibility-preflight-checklist"
+            )
+            workflow_path = candidate_root / "workflow.yaml"
+            checklist_path = candidate_root / "CHECKLIST.md"
+
+            self.assertTrue(workflow_path.exists())
+            self.assertTrue(checklist_path.exists())
+
+            workflow_doc = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
+            checklist = checklist_path.read_text(encoding="utf-8")
+
+            self.assertEqual(workflow_doc["workflow_id"], "reversibility-preflight-checklist")
+            self.assertEqual(workflow_doc["recommended_execution_mode"], "workflow_script")
+            self.assertEqual(workflow_doc["disposition"], "workflow_script_candidate")
+            self.assertEqual(workflow_doc["source_bundle_id"], "engineering-postmortem-v0.1")
+            self.assertTrue(workflow_doc["source_graph_hash"].startswith("sha256:"))
+            self.assertEqual(workflow_doc["seed"]["primary_node_id"], "n_reversibility_gate")
+            self.assertEqual(
+                workflow_doc["seed"]["supporting_edge_ids"],
+                ["e_blast_reversibility_constrained_by"],
+            )
+
+            self.assertIn("# reversibility-preflight-checklist", checklist)
+            self.assertIn("## Scope", checklist)
+            self.assertIn("## Rollback", checklist)
+            self.assertIn("## Reversibility", checklist)
+            self.assertIn("## Evidence Anchors", checklist)
+
+    def test_build_candidates_reports_workflow_boundary_for_engineering_source_bundle(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_root = Path(tmp_dir) / "generated"
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_candidates.py"),
+                    "--source-bundle",
+                    str(self.engineering_bundle_path),
+                    "--output-root",
+                    str(output_root),
+                    "--run-id",
+                    "engineering-build-boundary",
+                    "--drafting-mode",
+                    "deterministic",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            payload = json.loads(result.stdout)
+
+            run_root = output_root / "engineering-postmortem-v0.1" / "engineering-build-boundary"
+            workflow_candidate = (
+                run_root
+                / "workflow_candidates"
+                / "reversibility-preflight-checklist"
+                / "candidate.yaml"
+            )
+
+            self.assertEqual(payload["summary"]["workflow_script_candidates"], 1)
+            self.assertTrue(workflow_candidate.exists())
+            self.assertTrue((run_root / "reports" / "final-decision.json").exists())
+
+    def test_review_generated_run_emits_three_layer_scores(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_root = Path(tmp_dir) / "generated"
+            build = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_candidates.py"),
+                    "--source-bundle",
+                    str(self.engineering_bundle_path),
+                    "--output-root",
+                    str(output_root),
+                    "--run-id",
+                    "engineering-review-score",
+                    "--drafting-mode",
+                    "deterministic",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(build.returncode, 0, build.stdout + build.stderr)
+
+            run_root = output_root / "engineering-postmortem-v0.1" / "engineering-review-score"
+            usage_root = run_root / "usage-review"
+            usage_root.mkdir(parents=True, exist_ok=True)
+            usage_doc = {
+                "review_case_id": "engineering-postmortem-blameless",
+                "generated_run_root": str(run_root),
+                "skill_path": str(
+                    run_root / "bundle" / "skills" / "postmortem-blameless" / "SKILL.md"
+                ),
+                "input_scenario": {
+                    "incident_summary": "发布后查询抖动，团队开始追责个人。",
+                    "timeline": "审批临时放行，告警延迟触发，runbook 缺失。",
+                    "current_blame_narrative": "就是执行人失误。",
+                },
+                "firing_assessment": {
+                    "should_fire": True,
+                    "why_this_skill_fired": [
+                        "复盘滑向归咎个人。",
+                        "时间线尚未被系统化重建。",
+                    ],
+                },
+                "boundary_check": {
+                    "status": "pass",
+                    "notes": ["事故已受控，且已提供基础时间线。"],
+                },
+                "structured_output": {
+                    "verdict": "blameless_reframe_needed",
+                    "next_action": "identify_system_factors",
+                    "confidence": "high",
+                },
+                "analysis_summary": "先回到时间线和系统诱因，而不是先锁定个人责任。",
+                "quality_assessment": {
+                    "contract_fit": "strong",
+                    "evidence_alignment": [
+                        "blameless-db-index-rollout",
+                        "incident-timeline-gap",
+                    ],
+                    "caveats": ["如果缺少检测证据，应下调 confidence。"],
+                },
+            }
+            (usage_root / "sample.yaml").write_text(
+                yaml.safe_dump(usage_doc, sort_keys=False, allow_unicode=True),
+                encoding="utf-8",
+            )
+            foreign_usage_doc = dict(usage_doc)
+            foreign_usage_doc["review_case_id"] = "foreign-case"
+            foreign_usage_doc["generated_run_root"] = str(output_root / "foreign" / "run")
+            (usage_root / "foreign.yaml").write_text(
+                yaml.safe_dump(foreign_usage_doc, sort_keys=False, allow_unicode=True),
+                encoding="utf-8",
+            )
+
+            review = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "review_generated_run.py"),
+                    "--run-root",
+                    str(run_root),
+                    "--source-bundle",
+                    str(self.engineering_bundle_path),
+                    "--usage-review-dir",
+                    str(usage_root),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(review.returncode, 0, review.stdout + review.stderr)
+
+            report_path = run_root / "reports" / "three-layer-review.json"
+            self.assertTrue(report_path.exists())
+
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertIn("source_bundle", report)
+            self.assertIn("generated_bundle", report)
+            self.assertIn("usage_outputs", report)
+            self.assertIn("score_100", report["source_bundle"])
+            self.assertIn("score_100", report["generated_bundle"])
+            self.assertIn("score_100", report["usage_outputs"])
+            self.assertEqual(report["generated_bundle"]["workflow_candidate_count"], 1)
+            self.assertEqual(report["usage_outputs"]["sample_count"], 1)
+            self.assertIn(
+                "workflow_boundary_preserved",
+                report["generated_bundle"]["notes"],
+            )
 
     def test_example_fixtures_can_generate_independent_candidate_bundles(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

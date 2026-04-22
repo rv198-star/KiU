@@ -1,0 +1,9 @@
+case_id: postmortem-db-index-blame
+subset: real_decisions
+primary_skill: postmortem-blameless
+related_skills:
+  - postmortem-blameless
+situation: 索引变更引发高延迟后，复盘会议只在讨论最后一个点击发布按钮的人。
+expected_behavior: fire
+expected_verdict: blameless_reframe_needed
+note: 应先重建时间线并识别监控、审批和 runbook 等系统性诱因。
