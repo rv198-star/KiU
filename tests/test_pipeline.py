@@ -18,6 +18,7 @@ if str(SRC) not in sys.path:
 from kiu_pipeline.preflight import validate_generated_bundle
 from kiu_pipeline.seed import derive_candidate_metadata
 from kiu_pipeline.load import extract_yaml_section, parse_sections
+from kiu_pipeline.extraction import validate_source_chunks_doc
 from kiu_pipeline.local_paths import resolve_output_root
 from kiu_pipeline.regression import DEFAULT_V06_CHECK_IDS
 
@@ -546,6 +547,99 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertEqual(extraction_result["nodes"], [])
             self.assertEqual(extraction_result["edges"], [])
             self.assertEqual(extraction_result["warnings"], [])
+
+    def test_build_source_chunks_cli_emits_valid_chunks_for_fixture_source(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_path = ROOT / "examples" / "sources" / "effective-requirements-analysis-source.md"
+            output_path = tmp_root / "source-chunks.json"
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_source_chunks.py"),
+                    "--input",
+                    str(source_path),
+                    "--bundle-id",
+                    "demo-source-bundle",
+                    "--source-id",
+                    "effective-requirements-analysis",
+                    "--output",
+                    str(output_path),
+                    "--max-chars",
+                    "220",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["output_path"], str(output_path))
+
+            doc = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertEqual(validate_source_chunks_doc(doc), [])
+            self.assertGreaterEqual(len(doc["chunks"]), 4)
+            self.assertEqual(doc["source_file"], "examples/sources/effective-requirements-analysis-source.md")
+            target_chunk = next(
+                chunk
+                for chunk in doc["chunks"]
+                if chunk["section"] == "Problem-First Requirements Analysis"
+            )
+            self.assertEqual(
+                target_chunk["chapter"],
+                "Effective Requirements Analysis Fixture Source",
+            )
+            self.assertEqual(
+                target_chunk["section"],
+                "Problem-First Requirements Analysis",
+            )
+            self.assertIn("section_map", doc)
+            self.assertTrue(
+                any(
+                    entry["title"] == "Business Interface Analysis"
+                    for entry in doc["section_map"]
+                )
+            )
+
+    def test_build_source_chunks_cli_supports_example_regression_books(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            sample_books = [
+                ROOT / "examples" / "有效需求分析（第2版）.md",
+                ROOT / "examples" / "财务报表分析_Markdown版.md",
+            ]
+
+            for source_path in sample_books:
+                with self.subTest(source=source_path.name):
+                    output_path = tmp_root / f"{source_path.stem}.chunks.json"
+                    result = subprocess.run(
+                        [
+                            sys.executable,
+                            str(ROOT / "scripts" / "build_source_chunks.py"),
+                            "--input",
+                            str(source_path),
+                            "--bundle-id",
+                            "example-regression-books",
+                            "--source-id",
+                            source_path.stem,
+                            "--output",
+                            str(output_path),
+                            "--max-chars",
+                            "1200",
+                        ],
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    )
+
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    doc = json.loads(output_path.read_text(encoding="utf-8"))
+                    self.assertEqual(validate_source_chunks_doc(doc), [])
+                    self.assertGreater(len(doc["chunks"]), 10)
+                    self.assertIn("section_map", doc)
+                    self.assertGreater(len(doc["section_map"]), 5)
 
     def test_example_fixtures_can_generate_independent_candidate_bundles(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
