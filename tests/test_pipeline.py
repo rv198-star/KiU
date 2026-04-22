@@ -1014,6 +1014,140 @@ class CandidatePipelineTests(unittest.TestCase):
             2,
         )
 
+    def test_mine_candidate_seeds_keeps_tri_state_heavy_candidate_on_agentic_path(self) -> None:
+        bundle = SimpleNamespace(
+            profile={
+                "seed_node_types": ["principle_signal"],
+                "candidate_kinds": {
+                    "general_agentic": {
+                        "workflow_certainty": "medium",
+                        "context_certainty": "high",
+                    },
+                    "workflow_script": {
+                        "workflow_certainty": "high",
+                        "context_certainty": "high",
+                    },
+                },
+                "routing_rules": [
+                    {
+                        "when": {
+                            "workflow_certainty": "high",
+                            "context_certainty": "high",
+                        },
+                        "recommended_execution_mode": "workflow_script",
+                        "disposition": "workflow_script_candidate",
+                    },
+                    {
+                        "when": {
+                            "workflow_certainty": "medium",
+                            "context_certainty": "high",
+                        },
+                        "recommended_execution_mode": "llm_agentic",
+                        "disposition": "skill_candidate",
+                    },
+                ],
+            },
+            skills={},
+            manifest={
+                "bundle_id": "synthetic-extraction-bundle",
+                "graph": {"graph_hash": "sha256:synthetic"},
+            },
+        )
+        graph = normalize_graph(
+            {
+                "graph_version": "kiu.graph/v0.2",
+                "source_snapshot": "synthetic-source",
+                "graph_hash": "sha256:synthetic",
+                "nodes": [
+                    {
+                        "id": "principle::0001",
+                        "type": "principle_signal",
+                        "label": "Boundary-Heavy Checklist",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 5, "line_end": 5},
+                        "extraction_kind": "EXTRACTED",
+                        "routing_hints": {
+                            "workflow_cues": 3,
+                            "context_cues": 2,
+                            "matched_keywords": ["第一步", "清单", "边界"],
+                            "evidence_chunk_ids": ["synthetic:0001"],
+                        },
+                    },
+                    {
+                        "id": "evidence::0001",
+                        "type": "chunk_evidence",
+                        "label": "先检查输入，再执行后续步骤。",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 6, "line_end": 7},
+                        "extraction_kind": "EXTRACTED",
+                    },
+                    {
+                        "id": "counter-example::0002",
+                        "type": "counter_example_signal",
+                        "label": "如果边界缺失，流程会把错误前提固化进执行。",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 8, "line_end": 9},
+                        "extraction_kind": "AMBIGUOUS",
+                    },
+                    {
+                        "id": "counter-example::0003",
+                        "type": "counter_example_signal",
+                        "label": "当约束不清时，清单本身会制造误导。",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 10, "line_end": 11},
+                        "extraction_kind": "AMBIGUOUS",
+                    },
+                ],
+                "edges": [
+                    {
+                        "id": "supported-by::principle::0001->evidence::0001",
+                        "type": "supported_by_evidence",
+                        "from": "principle::0001",
+                        "to": "evidence::0001",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 6, "line_end": 7},
+                        "extraction_kind": "EXTRACTED",
+                        "confidence": 1.0,
+                    },
+                    {
+                        "id": "derives_counter_example_signal::principle::0001->counter-example::0002",
+                        "type": "derives_counter_example_signal",
+                        "from": "principle::0001",
+                        "to": "counter-example::0002",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 8, "line_end": 9},
+                        "extraction_kind": "INFERRED",
+                        "confidence": 0.7,
+                    },
+                    {
+                        "id": "derives_counter_example_signal::principle::0001->counter-example::0003",
+                        "type": "derives_counter_example_signal",
+                        "from": "principle::0001",
+                        "to": "counter-example::0003",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 10, "line_end": 11},
+                        "extraction_kind": "INFERRED",
+                        "confidence": 0.7,
+                    },
+                ],
+                "communities": [],
+            }
+        )
+
+        seeds = mine_candidate_seeds(bundle, graph)
+
+        self.assertEqual(len(seeds), 1)
+        self.assertEqual(seeds[0].candidate_kind, "general_agentic")
+        self.assertEqual(seeds[0].metadata["recommended_execution_mode"], "llm_agentic")
+        self.assertEqual(seeds[0].metadata["disposition"], "skill_candidate")
+        self.assertGreater(
+            seeds[0].metadata["routing_evidence"]["tri_state_support_ratio"],
+            0.5,
+        )
+        self.assertTrue(
+            seeds[0].metadata["routing_evidence"]["workflow_promotion_blocked_by_evidence"]
+        )
+
     def test_mine_candidate_seeds_merges_duplicate_candidate_ids_and_preserves_support(self) -> None:
         bundle = SimpleNamespace(
             profile={

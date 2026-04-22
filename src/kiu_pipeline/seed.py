@@ -15,6 +15,7 @@ DEFAULT_WORKFLOW_LABEL_KEYWORDS = (
     "检查",
     "预检",
 )
+DEFAULT_MAX_TRI_STATE_SUPPORT_RATIO_FOR_WORKFLOW = 0.5
 
 
 def mine_candidate_seeds(
@@ -188,6 +189,13 @@ def _infer_candidate_kind(
     min_context_cues = _normalize_nonnegative_int(
         workflow_script_doc.get("min_context_cues", 1)
     )
+    max_tri_state_support_ratio = workflow_script_doc.get(
+        "max_tri_state_support_ratio_for_workflow",
+        DEFAULT_MAX_TRI_STATE_SUPPORT_RATIO_FOR_WORKFLOW,
+    )
+    if not isinstance(max_tri_state_support_ratio, (int, float)):
+        max_tri_state_support_ratio = DEFAULT_MAX_TRI_STATE_SUPPORT_RATIO_FOR_WORKFLOW
+    max_tri_state_support_ratio = min(max(float(max_tri_state_support_ratio), 0.0), 1.0)
 
     node_hints = node.get("routing_hints", {})
     if not isinstance(node_hints, dict):
@@ -205,7 +213,13 @@ def _infer_candidate_kind(
     workflow_cues = _normalize_nonnegative_int(node_hints.get("workflow_cues"))
     context_cues = _normalize_nonnegative_int(node_hints.get("context_cues"))
     evidence_support_count = _normalize_nonnegative_int(support.get("evidence_support_count"))
-    if context_cues == 0 and evidence_support_count > 0:
+    extracted_evidence_support_count = _normalize_nonnegative_int(
+        support.get("extracted_evidence_support_count")
+    )
+    tri_state_support_count = _normalize_nonnegative_int(support.get("tri_state_support_count"))
+    support_entity_count = _normalize_nonnegative_int(support.get("support_entity_count"))
+    tri_state_support_ratio = _safe_ratio(tri_state_support_count, support_entity_count)
+    if context_cues == 0 and extracted_evidence_support_count > 0:
         context_cues = 1
 
     matched_keywords = [
@@ -216,13 +230,18 @@ def _infer_candidate_kind(
     matched_keywords = sorted(set([*matched_keywords, *label_matches]))
 
     workflow_signal_total = workflow_cues + len(label_matches)
+    workflow_promotion_blocked_by_evidence = (
+        tri_state_support_ratio > max_tri_state_support_ratio
+        and tri_state_support_count > extracted_evidence_support_count
+    )
     selected_candidate_kind = default_candidate_kind
-    if node.get("type") in type_hints:
+    if node.get("type") in type_hints and not workflow_promotion_blocked_by_evidence:
         selected_candidate_kind = "workflow_script"
     elif (
         workflow_signal_total >= min_workflow_cues
         and context_cues >= min_context_cues
-        and evidence_support_count > 0
+        and extracted_evidence_support_count > 0
+        and not workflow_promotion_blocked_by_evidence
     ):
         selected_candidate_kind = "workflow_script"
 
@@ -232,6 +251,23 @@ def _infer_candidate_kind(
         "workflow_cues": workflow_cues,
         "context_cues": context_cues,
         "evidence_support_count": evidence_support_count,
+        "extracted_evidence_support_count": extracted_evidence_support_count,
+        "tri_state_support_count": tri_state_support_count,
+        "support_entity_count": support_entity_count,
+        "tri_state_support_ratio": tri_state_support_ratio,
+        "ambiguous_support_node_count": _normalize_nonnegative_int(
+            support.get("ambiguous_support_node_count")
+        ),
+        "inferred_support_node_count": _normalize_nonnegative_int(
+            support.get("inferred_support_node_count")
+        ),
+        "ambiguous_support_edge_count": _normalize_nonnegative_int(
+            support.get("ambiguous_support_edge_count")
+        ),
+        "inferred_support_edge_count": _normalize_nonnegative_int(
+            support.get("inferred_support_edge_count")
+        ),
+        "workflow_promotion_blocked_by_evidence": workflow_promotion_blocked_by_evidence,
         "matched_keywords": matched_keywords,
     }
     evidence_chunk_ids = [
@@ -249,20 +285,58 @@ def _collect_support(node_id: str, graph: NormalizedGraph) -> dict[str, list[str
     supporting_edge_ids = []
     community_ids = []
     evidence_support_count = 0
+    extracted_evidence_support_count = 0
+    ambiguous_support_node_ids: set[str] = set()
+    inferred_support_node_ids: set[str] = set()
+    ambiguous_support_edge_ids: set[str] = set()
+    inferred_support_edge_ids: set[str] = set()
+    extracted_support_edge_ids: set[str] = set()
     for edge in graph.adjacency.get(node_id, []):
         supporting_edge_ids.append(edge["id"])
         other = edge["to"] if edge["from"] == node_id else edge["from"]
         supporting_node_ids.append(other)
+        edge_kind = edge.get("extraction_kind")
+        if edge_kind == "AMBIGUOUS":
+            ambiguous_support_edge_ids.add(edge["id"])
+        elif edge_kind == "INFERRED":
+            inferred_support_edge_ids.add(edge["id"])
+        elif edge_kind == "EXTRACTED":
+            extracted_support_edge_ids.add(edge["id"])
         if edge.get("type") == "supported_by_evidence":
             evidence_support_count += 1
+            if edge_kind == "EXTRACTED":
+                extracted_evidence_support_count += 1
+        other_node = graph.nodes.get(other, {})
+        node_kind = other_node.get("extraction_kind")
+        if node_kind == "AMBIGUOUS":
+            ambiguous_support_node_ids.add(other)
+        elif node_kind == "INFERRED":
+            inferred_support_node_ids.add(other)
     for community in graph.communities.values():
         if node_id in community.get("node_ids", []):
             community_ids.append(community["id"])
+    unique_node_ids = sorted(set(supporting_node_ids))
+    unique_edge_ids = sorted(set(supporting_edge_ids))
+    tri_state_support_count = (
+        len(ambiguous_support_node_ids)
+        + len(inferred_support_node_ids)
+        + len(ambiguous_support_edge_ids)
+        + len(inferred_support_edge_ids)
+    )
+    support_entity_count = len(unique_node_ids) + len(unique_edge_ids)
     return {
-        "supporting_node_ids": sorted(set(supporting_node_ids)),
-        "supporting_edge_ids": sorted(set(supporting_edge_ids)),
+        "supporting_node_ids": unique_node_ids,
+        "supporting_edge_ids": unique_edge_ids,
         "community_ids": sorted(set(community_ids)),
         "evidence_support_count": evidence_support_count,
+        "extracted_evidence_support_count": extracted_evidence_support_count,
+        "ambiguous_support_node_count": len(ambiguous_support_node_ids),
+        "inferred_support_node_count": len(inferred_support_node_ids),
+        "ambiguous_support_edge_count": len(ambiguous_support_edge_ids),
+        "inferred_support_edge_count": len(inferred_support_edge_ids),
+        "extracted_support_edge_count": len(extracted_support_edge_ids),
+        "tri_state_support_count": tri_state_support_count,
+        "support_entity_count": support_entity_count,
     }
 
 
@@ -417,8 +491,41 @@ def _merge_routing_evidence(
         "evidence_support_count": sum(
             _normalize_nonnegative_int(doc.get("evidence_support_count")) for doc in routing_docs
         ),
+        "extracted_evidence_support_count": sum(
+            _normalize_nonnegative_int(doc.get("extracted_evidence_support_count"))
+            for doc in routing_docs
+        ),
+        "tri_state_support_count": sum(
+            _normalize_nonnegative_int(doc.get("tri_state_support_count")) for doc in routing_docs
+        ),
+        "support_entity_count": sum(
+            _normalize_nonnegative_int(doc.get("support_entity_count")) for doc in routing_docs
+        ),
+        "ambiguous_support_node_count": sum(
+            _normalize_nonnegative_int(doc.get("ambiguous_support_node_count"))
+            for doc in routing_docs
+        ),
+        "inferred_support_node_count": sum(
+            _normalize_nonnegative_int(doc.get("inferred_support_node_count"))
+            for doc in routing_docs
+        ),
+        "ambiguous_support_edge_count": sum(
+            _normalize_nonnegative_int(doc.get("ambiguous_support_edge_count"))
+            for doc in routing_docs
+        ),
+        "inferred_support_edge_count": sum(
+            _normalize_nonnegative_int(doc.get("inferred_support_edge_count"))
+            for doc in routing_docs
+        ),
         "merged_from_node_ids": sorted({seed.primary_node_id for seed in group}),
+        "workflow_promotion_blocked_by_evidence": any(
+            bool(doc.get("workflow_promotion_blocked_by_evidence")) for doc in routing_docs
+        ),
     }
+    merged["tri_state_support_ratio"] = _safe_ratio(
+        merged["tri_state_support_count"],
+        merged["support_entity_count"],
+    )
     matched_keywords = sorted(
         {
             keyword
@@ -486,3 +593,9 @@ def _normalize_nonnegative_int(value: Any) -> int:
     if isinstance(value, int):
         return max(value, 0)
     return 0
+
+
+def _safe_ratio(numerator: int, denominator: int) -> float:
+    if denominator <= 0:
+        return 0.0
+    return round(float(numerator) / float(denominator), 4)
