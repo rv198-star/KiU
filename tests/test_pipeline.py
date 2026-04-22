@@ -1423,6 +1423,9 @@ class CandidatePipelineTests(unittest.TestCase):
             review_doc = json.loads(
                 (run_root / "reports" / "three-layer-review.json").read_text(encoding="utf-8")
             )
+            self.assertGreaterEqual(review_doc["source_bundle"]["score_100"], 85.0)
+            self.assertIn("graph_report_present", review_doc["source_bundle"]["notes"])
+            self.assertIn("provenance_graph_complete", review_doc["source_bundle"]["notes"])
             self.assertGreater(review_doc["usage_outputs"]["score_100"], 0.0)
 
     def test_build_source_chunks_cli_emits_valid_chunks_for_fixture_source(self) -> None:

@@ -31,7 +31,10 @@ def review_generated_run(
         if _belongs_to_run(doc, run_root)
     ]
 
-    source_bundle = _score_source_bundle(source_report)
+    source_bundle = _score_source_bundle(
+        report=source_report,
+        source_bundle_path=source_bundle_path,
+    )
     generated_bundle = _score_generated_bundle(
         generated_report=generated_report,
         production_quality=production_quality,
@@ -58,16 +61,111 @@ def review_generated_run(
     }
 
 
-def _score_source_bundle(report: dict[str, Any]) -> dict[str, Any]:
+def _score_source_bundle(
+    *,
+    report: dict[str, Any],
+    source_bundle_path: str | Path,
+) -> dict[str, Any]:
     errors = report.get("errors", [])
     warnings = report.get("warnings", [])
     graph = report.get("graph", {})
     shared = report.get("shared_assets", {})
     manifest = report.get("manifest", {})
     skills = report.get("skills", [])
+    artifact_doc = _inspect_source_bundle_artifacts(
+        source_bundle_path=source_bundle_path,
+        manifest=manifest,
+    )
+    source_bundle_kind = _detect_source_bundle_kind(
+        manifest=manifest,
+        skills=skills,
+        artifact_doc=artifact_doc,
+    )
 
     structural_cleanliness = max(0.0, 1.0 - 0.25 * len(errors))
     warning_cleanliness = max(0.0, 1.0 - 0.10 * len(warnings))
+    notes: list[str] = []
+
+    if source_bundle_kind == "raw_book_source_bundle":
+        node_prov = _ratio(
+            [
+                artifact_doc["provenance"]["nodes"]["source_file_ratio"],
+                artifact_doc["provenance"]["nodes"]["source_location_ratio"],
+                artifact_doc["provenance"]["nodes"]["extraction_kind_ratio"],
+            ]
+        )
+        edge_prov = _ratio(
+            [
+                artifact_doc["provenance"]["edges"]["source_file_ratio"],
+                artifact_doc["provenance"]["edges"]["source_location_ratio"],
+                artifact_doc["provenance"]["edges"]["extraction_kind_ratio"],
+                artifact_doc["provenance"]["edges"]["confidence_ratio"],
+            ]
+        )
+        provenance_factor = _ratio([node_prov, edge_prov])
+        extraction_kind_counts = artifact_doc["provenance"]["extraction_kind_counts"]
+        tri_state_ratio = min(
+            len([key for key, value in extraction_kind_counts.items() if value > 0]) / 3.0,
+            1.0,
+        )
+        graph_navigation_factor = _ratio(
+            [
+                1.0 if graph.get("community_count", 0) > 0 else 0.0,
+                1.0 if artifact_doc["graph_report_present"] else 0.0,
+            ]
+        )
+        ingestion_factor = _ratio(
+            [
+                1.0 if artifact_doc["source_snapshot_present"] else 0.0,
+                1.0 if artifact_doc["source_chunks_present"] else 0.0,
+            ]
+        )
+        evidence_pool_factor = _ratio(
+            [
+                1.0 if shared.get("trace_count", 0) > 0 else 0.0,
+                1.0 if shared.get("evaluation_count", 0) > 0 else 0.0,
+            ]
+        )
+        score = round(
+            100.0
+            * (
+                0.25 * structural_cleanliness
+                + 0.05 * warning_cleanliness
+                + 0.30 * provenance_factor
+                + 0.10 * tri_state_ratio
+                + 0.10 * graph_navigation_factor
+                + 0.10 * ingestion_factor
+                + 0.10 * evidence_pool_factor
+            ),
+            1,
+        )
+        if not errors and not warnings:
+            notes.append("validator_clean")
+        if artifact_doc["graph_report_present"]:
+            notes.append("graph_report_present")
+        if provenance_factor == 1.0:
+            notes.append("provenance_graph_complete")
+        if ingestion_factor == 1.0:
+            notes.append("source_ingestion_trace_present")
+        if tri_state_ratio < 1.0:
+            notes.append("tri_state_coverage_partial")
+        if evidence_pool_factor == 1.0:
+            notes.append("shared_evidence_pool_present")
+        return {
+            "score_100": score,
+            "errors": len(errors),
+            "warnings": len(warnings),
+            "skill_count": len(manifest.get("skills", [])),
+            "graph": graph,
+            "shared_assets": shared,
+            "source_bundle_kind": source_bundle_kind,
+            "provenance": artifact_doc["provenance"],
+            "graph_report_present": artifact_doc["graph_report_present"],
+            "source_chunks_present": artifact_doc["source_chunks_present"],
+            "source_snapshot_present": artifact_doc["source_snapshot_present"],
+            "notes": notes,
+        }
+
     graph_factor = _ratio(
         [
             1.0 if graph.get("node_count", 0) > 0 else 0.0,
@@ -94,11 +192,24 @@ def _score_source_bundle(report: dict[str, Any]) -> dict[str, Any]:
         ),
         1,
     )
-    notes: list[str] = []
     if not errors and not warnings:
         notes.append("validator_clean")
     if shared.get("trace_count", 0) > 0 and shared.get("evaluation_count", 0) > 0:
         notes.append("shared_evidence_pool_present")
+    if artifact_doc["graph_report_present"]:
+        notes.append("graph_report_present")
+    if _ratio(
+        [
+            artifact_doc["provenance"]["nodes"]["source_file_ratio"],
+            artifact_doc["provenance"]["nodes"]["source_location_ratio"],
+            artifact_doc["provenance"]["nodes"]["extraction_kind_ratio"],
+            artifact_doc["provenance"]["edges"]["source_file_ratio"],
+            artifact_doc["provenance"]["edges"]["source_location_ratio"],
+            artifact_doc["provenance"]["edges"]["extraction_kind_ratio"],
+            artifact_doc["provenance"]["edges"]["confidence_ratio"],
+        ]
+    ) == 1.0:
+        notes.append("provenance_graph_complete")
 
     return {
         "score_100": score,
@@ -107,6 +218,11 @@ def _score_source_bundle(report: dict[str, Any]) -> dict[str, Any]:
         "skill_count": len(manifest.get("skills", [])),
         "graph": graph,
         "shared_assets": shared,
+        "source_bundle_kind": source_bundle_kind,
+        "provenance": artifact_doc["provenance"],
+        "graph_report_present": artifact_doc["graph_report_present"],
+        "source_chunks_present": artifact_doc["source_chunks_present"],
+        "source_snapshot_present": artifact_doc["source_snapshot_present"],
         "maturity_factor": round(maturity_factor, 4),
         "notes": notes,
     }
@@ -262,6 +378,108 @@ def _load_json(path: Path) -> dict[str, Any]:
         return {}
     loaded = json.loads(path.read_text(encoding="utf-8"))
     return loaded if isinstance(loaded, dict) else {}
+
+
+def _inspect_source_bundle_artifacts(
+    *,
+    source_bundle_path: str | Path,
+    manifest: dict[str, Any],
+) -> dict[str, Any]:
+    root = Path(source_bundle_path)
+    graph_meta = manifest.get("graph", {}) if isinstance(manifest.get("graph"), dict) else {}
+    graph_path = root / graph_meta.get("path", "graph/graph.json")
+    graph_doc = _load_json(graph_path)
+    nodes = [node for node in graph_doc.get("nodes", []) if isinstance(node, dict)]
+    edges = [edge for edge in graph_doc.get("edges", []) if isinstance(edge, dict)]
+    graph_report_meta = (
+        manifest.get("graph_report", {})
+        if isinstance(manifest.get("graph_report"), dict)
+        else {}
+    )
+    graph_report_path = root / graph_report_meta.get("path", "GRAPH_REPORT.md")
+    source_chunks_path = root / "ingestion" / "source-chunks-v0.1.json"
+    sources_root = root / "sources"
+    return {
+        "graph_report_present": graph_report_path.exists(),
+        "source_chunks_present": source_chunks_path.exists(),
+        "source_snapshot_present": sources_root.exists() and any(sources_root.glob("*")),
+        "provenance": {
+            "nodes": _graph_entity_stats(nodes, entity_type="node"),
+            "edges": _graph_entity_stats(edges, entity_type="edge"),
+            "extraction_kind_counts": _count_extraction_kinds(graph_doc),
+        },
+    }
+
+
+def _detect_source_bundle_kind(
+    *,
+    manifest: dict[str, Any],
+    skills: list[dict[str, Any]],
+    artifact_doc: dict[str, Any],
+) -> str:
+    bundle_id = str(manifest.get("bundle_id", ""))
+    if (
+        not skills
+        and (
+            bundle_id.endswith("-source-v0.6")
+            or artifact_doc.get("source_chunks_present")
+            or artifact_doc.get("source_snapshot_present")
+        )
+    ):
+        return "raw_book_source_bundle"
+    return "published_source_bundle"
+
+
+def _graph_entity_stats(entities: list[dict[str, Any]], *, entity_type: str) -> dict[str, Any]:
+    count = len(entities)
+    if count == 0:
+        return {
+            "count": 0,
+            "source_file_ratio": 0.0,
+            "source_location_ratio": 0.0,
+            "extraction_kind_ratio": 0.0,
+            "confidence_ratio": 0.0 if entity_type == "edge" else None,
+        }
+    stats = {
+        "count": count,
+        "source_file_ratio": _safe_ratio(
+            sum(1 for entity in entities if entity.get("source_file")),
+            count,
+        ),
+        "source_location_ratio": _safe_ratio(
+            sum(1 for entity in entities if entity.get("source_location")),
+            count,
+        ),
+        "extraction_kind_ratio": _safe_ratio(
+            sum(1 for entity in entities if entity.get("extraction_kind")),
+            count,
+        ),
+    }
+    if entity_type == "edge":
+        stats["confidence_ratio"] = _safe_ratio(
+            sum(1 for entity in entities if entity.get("confidence") is not None),
+            count,
+        )
+    return stats
+
+
+def _count_extraction_kinds(graph_doc: dict[str, Any]) -> dict[str, int]:
+    counts = {
+        "EXTRACTED": 0,
+        "INFERRED": 0,
+        "AMBIGUOUS": 0,
+    }
+    for entity in [*graph_doc.get("nodes", []), *graph_doc.get("edges", [])]:
+        kind = entity.get("extraction_kind")
+        if kind in counts:
+            counts[kind] += 1
+    return counts
+
+
+def _safe_ratio(numerator: int | float | None, denominator: int | float | None) -> float:
+    if numerator is None or denominator in (None, 0):
+        return 0.0
+    return float(numerator) / float(denominator)
 
 
 def _ratio(values: list[float]) -> float:
