@@ -279,6 +279,39 @@ def build_heuristic_extraction_result(source_chunks_doc: dict[str, Any]) -> dict
                 }
             )
 
+        if _has_counter_example_cue(chunk_text):
+            counter_example_id = f"counter-example::{_safe_id(chunk_id)}"
+            add_node(
+                {
+                    "id": counter_example_id,
+                    "type": "counter_example_signal",
+                    "label": _excerpt(chunk_text),
+                    "section_title": section_title,
+                    "source_file": chunk.get("source_file", source_file),
+                    "source_location": {
+                        "line_start": line_start,
+                        "line_end": line_end,
+                    },
+                    "extraction_kind": "EXTRACTED",
+                    "extractor_kind": "counter-example",
+                }
+            )
+            edges.append(
+                {
+                    "id": f"counter-example-from::{evidence_id}->{counter_example_id}",
+                    "type": "flags_counter_example",
+                    "from": evidence_id,
+                    "to": counter_example_id,
+                    "source_file": chunk.get("source_file", source_file),
+                    "source_location": {
+                        "line_start": line_start,
+                        "line_end": line_end,
+                    },
+                    "extraction_kind": "EXTRACTED",
+                    "confidence": 1.0,
+                }
+            )
+
         for term in _extract_terms(chunk_text):
             term_id = f"term::{_safe_id(term.lower())}"
             add_node(
@@ -461,6 +494,13 @@ def _excerpt(text: str, max_chars: int = 72) -> str:
 def _has_case_cue(text: str) -> bool:
     cues = ("例如", "比如", "案例", "故事", "trace")
     return any(cue in text for cue in cues)
+
+
+def _has_counter_example_cue(text: str) -> bool:
+    cues = ("反例", "误区", "失败", "错误", "不能", "不要", "只剩")
+    if any(cue in text for cue in cues):
+        return True
+    return bool(re.search(r"如果[^。；\n]{0,36}(错误|失败|偏离|带到)", text))
 
 
 def _extract_terms(text: str) -> list[str]:

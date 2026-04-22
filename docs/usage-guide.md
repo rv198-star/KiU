@@ -57,6 +57,57 @@ python3 scripts/generate_candidates.py \
 如果你需要改成另一处固定目录，设置 `KIU_LOCAL_OUTPUT_ROOT=/your/path` 即可。
 只有在你明确希望写到仓库内路径时，才传 `--output-root generated` 之类的显式覆盖。
 
+## v0.6 Reference Benchmark
+
+`v0.6` 开始，KiU 可以把本地 reference pack 纳入统一评估，但它们仍然只是
+`benchmark/reference`，不会进入默认生产链。
+
+对已发布 bundle 做 same-source 对照：
+
+```bash
+python3 scripts/benchmark_reference_pack.py \
+  --kiu-bundle bundles/poor-charlies-almanack-v0.1 \
+  --reference-pack /tmp/kiu-reference-poor-charlies-almanack-skill \
+  --alignment-file benchmarks/alignments/poor-charlies-vs-cangjie.yaml \
+  --comparison-scope same-source
+```
+
+对 raw-book pipeline 的 source bundle + generated run 做结构对照：
+
+```bash
+python3 scripts/benchmark_reference_pack.py \
+  --kiu-bundle /tmp/kiu-local-artifacts/book-pipeline/sources/<source-id>/bundle \
+  --run-root /tmp/kiu-local-artifacts/book-pipeline/generated/<bundle-id>/<run-id> \
+  --reference-pack /tmp/kiu-reference-poor-charlies-almanack-skill
+```
+
+输出会同时写：
+
+- `reference-benchmark.json`
+- `reference-benchmark.md`
+
+当前固定的对照维度：
+
+- `output_count`
+- `coverage`
+- `actionability`
+- `evidence_traceability`
+- `workflow_vs_agentic_boundary`
+- `real_usage_quality`
+
+same-source 深评时，额外看：
+
+- `concept_alignment`
+- `kiu_review`
+- `reference_review`
+- `artifact_score_delta_100`
+
+当前固定的内部评分卡：
+
+- `KiU foundation retained`
+- `Graphify core absorbed`
+- `cangjie core absorbed`
+
 ## v0.4 Design Notes
 
 `v0.4.x` 的定位不是“KiU 全部假设已经验证完成”，而是把单 domain 的生产线先做扎实。当前设计重点有四条：

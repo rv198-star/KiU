@@ -637,7 +637,7 @@ class CandidatePipelineTests(unittest.TestCase):
                         "section": "Challenge Price With Value",
                         "line_start": 6,
                         "line_end": 8,
-                        "chunk_text": "估值的目的是用独立价值去挑战价格。例如，市场热度不能替代基本价值（fundamental value）。",
+                        "chunk_text": "估值的目的是用独立价值去挑战价格。例如，市场热度不能替代基本价值（fundamental value）。反例是只看涨幅和热度就上调估值，这会把价格偷偷塞回价值模型。",
                         "token_estimate": 40,
                         "language": "zh-CN",
                     }
@@ -673,11 +673,15 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertIn("evidence", extractor_kinds)
             self.assertIn("case", extractor_kinds)
             self.assertIn("term", extractor_kinds)
+            self.assertIn("counter-example", extractor_kinds)
             self.assertTrue(
                 any(edge["type"] == "supported_by_evidence" for edge in extraction_result["edges"])
             )
             self.assertTrue(
                 any(edge["type"] == "mentions_term" for edge in extraction_result["edges"])
+            )
+            self.assertTrue(
+                any(edge["type"] == "flags_counter_example" for edge in extraction_result["edges"])
             )
 
     def test_extract_graph_candidates_cli_supports_llm_assisted_with_mock_provider(self) -> None:
@@ -922,6 +926,182 @@ class CandidatePipelineTests(unittest.TestCase):
         self.assertEqual(
             seeds[0].metadata["routing_evidence"]["workflow_cues"],
             2,
+        )
+
+    def test_mine_candidate_seeds_merges_duplicate_candidate_ids_and_preserves_support(self) -> None:
+        bundle = SimpleNamespace(
+            profile={
+                "seed_node_types": ["counter_example_signal"],
+                "candidate_kinds": {
+                    "general_agentic": {
+                        "workflow_certainty": "medium",
+                        "context_certainty": "high",
+                    },
+                    "workflow_script": {
+                        "workflow_certainty": "high",
+                        "context_certainty": "high",
+                    },
+                },
+                "routing_rules": [
+                    {
+                        "when": {
+                            "workflow_certainty": "high",
+                            "context_certainty": "high",
+                        },
+                        "recommended_execution_mode": "workflow_script",
+                        "disposition": "workflow_script_candidate",
+                    },
+                    {
+                        "when": {
+                            "workflow_certainty": "medium",
+                            "context_certainty": "high",
+                        },
+                        "recommended_execution_mode": "llm_agentic",
+                        "disposition": "skill_candidate",
+                    },
+                ],
+            },
+            skills={},
+            manifest={
+                "bundle_id": "synthetic-extraction-bundle",
+                "graph": {"graph_hash": "sha256:synthetic"},
+            },
+        )
+        graph = normalize_graph(
+            {
+                "graph_version": "kiu.graph/v0.2",
+                "source_snapshot": "synthetic-source",
+                "graph_hash": "sha256:synthetic",
+                "nodes": [
+                    {
+                        "id": "counter-example::0002",
+                        "type": "counter_example_signal",
+                        "label": "Blindly Shipping Requirement Lists",
+                        "candidate_id": "problem-first-requirements-analysis-counter-example",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 12, "line_end": 13},
+                        "extraction_kind": "EXTRACTED",
+                        "routing_hints": {
+                            "context_cues": 1,
+                            "matched_keywords": ["反例"],
+                            "evidence_chunk_ids": ["synthetic:0002"],
+                        },
+                    },
+                    {
+                        "id": "counter-example::0003",
+                        "type": "counter_example_signal",
+                        "label": "Symptoms-Only Ticket Intake",
+                        "candidate_id": "problem-first-requirements-analysis-counter-example",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 20, "line_end": 21},
+                        "extraction_kind": "EXTRACTED",
+                        "routing_hints": {
+                            "context_cues": 1,
+                            "matched_keywords": ["误判"],
+                            "evidence_chunk_ids": ["synthetic:0003"],
+                        },
+                    },
+                    {
+                        "id": "evidence::0002",
+                        "type": "chunk_evidence",
+                        "label": "只看需求列表而不先确认问题，会让方案从一开始就跑偏。",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 14, "line_end": 16},
+                        "extraction_kind": "EXTRACTED",
+                    },
+                    {
+                        "id": "evidence::0003",
+                        "type": "chunk_evidence",
+                        "label": "症状驱动的工单整理会掩盖真实目标，后续设计无法对准业务问题。",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 22, "line_end": 24},
+                        "extraction_kind": "EXTRACTED",
+                    },
+                    {
+                        "id": "evidence::0004",
+                        "type": "chunk_evidence",
+                        "label": "反例越多，越能逼出触发条件和边界。",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 25, "line_end": 26},
+                        "extraction_kind": "EXTRACTED",
+                    },
+                ],
+                "edges": [
+                    {
+                        "id": "supported-by::counter-example::0002->evidence::0002",
+                        "type": "supported_by_evidence",
+                        "from": "counter-example::0002",
+                        "to": "evidence::0002",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 14, "line_end": 16},
+                        "extraction_kind": "EXTRACTED",
+                        "confidence": 1.0,
+                    },
+                    {
+                        "id": "supported-by::counter-example::0003->evidence::0003",
+                        "type": "supported_by_evidence",
+                        "from": "counter-example::0003",
+                        "to": "evidence::0003",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 22, "line_end": 24},
+                        "extraction_kind": "EXTRACTED",
+                        "confidence": 1.0,
+                    },
+                    {
+                        "id": "supported-by::counter-example::0003->evidence::0004",
+                        "type": "supported_by_evidence",
+                        "from": "counter-example::0003",
+                        "to": "evidence::0004",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 25, "line_end": 26},
+                        "extraction_kind": "EXTRACTED",
+                        "confidence": 1.0,
+                    },
+                ],
+                "communities": [
+                    {
+                        "id": "community::counter-examples",
+                        "label": "Counter Examples",
+                        "node_ids": [
+                            "counter-example::0002",
+                            "counter-example::0003",
+                            "evidence::0002",
+                            "evidence::0003",
+                            "evidence::0004",
+                        ],
+                    }
+                ],
+            }
+        )
+
+        seeds = mine_candidate_seeds(bundle, graph)
+
+        self.assertEqual(len(seeds), 1)
+        self.assertEqual(
+            seeds[0].candidate_id,
+            "problem-first-requirements-analysis-counter-example",
+        )
+        self.assertEqual(seeds[0].primary_node_id, "counter-example::0003")
+        self.assertEqual(
+            seeds[0].supporting_node_ids,
+            [
+                "counter-example::0002",
+                "evidence::0002",
+                "evidence::0003",
+                "evidence::0004",
+            ],
+        )
+        self.assertEqual(
+            seeds[0].metadata["seed"]["merged_primary_node_ids"],
+            ["counter-example::0002", "counter-example::0003"],
+        )
+        self.assertEqual(
+            seeds[0].metadata["routing_evidence"]["inference_mode"],
+            "merged_seed_support",
+        )
+        self.assertEqual(
+            seeds[0].metadata["routing_evidence"]["evidence_chunk_ids"],
+            ["synthetic:0002", "synthetic:0003"],
         )
 
     def test_scaffold_extraction_bundle_cli_connects_extracted_graph_to_candidate_pipeline(self) -> None:
@@ -1186,8 +1366,15 @@ class CandidatePipelineTests(unittest.TestCase):
             metrics = json.loads((run_root / "reports" / "metrics.json").read_text(encoding="utf-8"))
             self.assertGreaterEqual(metrics["summary"]["workflow_script_candidates"], 2)
 
+            manifest = yaml.safe_load(
+                (run_root / "bundle" / "manifest.yaml").read_text(encoding="utf-8")
+            )
+            skill_ids = [entry["skill_id"] for entry in manifest["skills"]]
+            self.assertEqual(len(skill_ids), len(set(skill_ids)))
+
             review_doc = json.loads(review_path.read_text(encoding="utf-8"))
             self.assertIn("overall_score_100", review_doc)
+            self.assertGreaterEqual(review_doc["generated_bundle"]["skill_count"], 2)
             self.assertGreaterEqual(review_doc["generated_bundle"]["workflow_candidate_count"], 2)
 
     def test_run_book_pipeline_cli_emits_non_placeholder_candidate_and_usage_review(self) -> None:

@@ -14,7 +14,7 @@ from kiu_graph.migrate import canonical_graph_hash
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_SEED_NODE_TYPES = ["principle_signal", "control_signal"]
+DEFAULT_SEED_NODE_TYPES = ["principle_signal", "control_signal", "counter_example_signal"]
 DEFAULT_CANDIDATE_KINDS = {
     "general_agentic": {
         "workflow_certainty": "medium",
@@ -187,7 +187,7 @@ def _hydrate_graph_with_skill_seeds(
             continue
         if node.get("type") not in DEFAULT_SEED_NODE_TYPES:
             continue
-        candidate_id = _slugify(str(node.get("label", node["id"])))
+        candidate_id = _derive_candidate_id(node)
         title = _humanize_title(candidate_id)
         descriptors = _collect_descriptors(
             bundle_root=bundle_root,
@@ -240,6 +240,7 @@ def _hydrate_graph_with_skill_seeds(
                 ],
             },
         }
+        node["candidate_id"] = candidate_id
         node["skill_seed"] = skill_seed
         seed_specs.append(
             {
@@ -634,6 +635,15 @@ def _read_snippet(
         if line.strip()
     )
     return excerpt[:220] if len(excerpt) > 220 else excerpt
+
+
+def _derive_candidate_id(node: dict[str, Any]) -> str:
+    node_type = str(node.get("type", ""))
+    if node_type == "counter_example_signal":
+        section_title = str(node.get("section_title") or "").strip()
+        if section_title:
+            return _slugify(f"{section_title}-counter-example")
+    return _slugify(str(node.get("label", node["id"])))
 
 
 def _slugify(text: str) -> str:

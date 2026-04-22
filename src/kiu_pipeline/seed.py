@@ -41,7 +41,12 @@ def mine_candidate_seeds(
             profile=profile,
         )
         metadata = derive_candidate_metadata(
-            candidate_id=override.get("candidate_id") or gold_match_hint or _slugify(node["label"]),
+            candidate_id=(
+                override.get("candidate_id")
+                or node.get("candidate_id")
+                or gold_match_hint
+                or _slugify(node["label"])
+            ),
             seed_node_id=node["id"],
             candidate_kind=candidate_kind,
             graph_hash=bundle.manifest["graph"]["graph_hash"],
@@ -74,8 +79,12 @@ def mine_candidate_seeds(
                 seed_content=seed_content,
             )
         )
-    seeds.sort(key=lambda seed: (-seed.score, seed.candidate_id))
-    return seeds[: profile.get("max_candidates", len(seeds))]
+    merged_seeds = _merge_duplicate_candidate_seeds(
+        bundle=bundle,
+        seeds=seeds,
+    )
+    merged_seeds.sort(key=lambda seed: (-seed.score, seed.candidate_id))
+    return merged_seeds[: profile.get("max_candidates", len(merged_seeds))]
 
 
 def derive_candidate_metadata(
@@ -255,6 +264,195 @@ def _collect_support(node_id: str, graph: NormalizedGraph) -> dict[str, list[str
         "community_ids": sorted(set(community_ids)),
         "evidence_support_count": evidence_support_count,
     }
+
+
+def _merge_duplicate_candidate_seeds(
+    *,
+    bundle: SourceBundle,
+    seeds: list[CandidateSeed],
+) -> list[CandidateSeed]:
+    grouped: dict[str, list[CandidateSeed]] = {}
+    for seed in seeds:
+        grouped.setdefault(seed.candidate_id, []).append(seed)
+
+    merged_seeds: list[CandidateSeed] = []
+    for group in grouped.values():
+        if len(group) == 1:
+            merged_seeds.append(group[0])
+            continue
+        merged_seeds.append(_merge_seed_group(bundle=bundle, group=group))
+    return merged_seeds
+
+
+def _merge_seed_group(
+    *,
+    bundle: SourceBundle,
+    group: list[CandidateSeed],
+) -> CandidateSeed:
+    candidate_kind = _select_merged_candidate_kind(group)
+    primary_seed = _select_primary_seed(group, candidate_kind=candidate_kind)
+    merged_primary_node_ids = sorted({seed.primary_node_id for seed in group})
+    supporting_node_ids = sorted(
+        {
+            node_id
+            for seed in group
+            for node_id in [*seed.supporting_node_ids, seed.primary_node_id]
+            if node_id != primary_seed.primary_node_id
+        }
+    )
+    supporting_edge_ids = sorted(
+        {
+            edge_id
+            for seed in group
+            for edge_id in seed.supporting_edge_ids
+        }
+    )
+    community_ids = sorted(
+        {
+            community_id
+            for seed in group
+            for community_id in seed.community_ids
+        }
+    )
+    source_skill = next((seed.source_skill for seed in group if seed.source_skill), None)
+    gold_match_hint = next((seed.gold_match_hint for seed in group if seed.gold_match_hint), None)
+    routing_evidence = _merge_routing_evidence(group, candidate_kind=candidate_kind)
+    metadata = derive_candidate_metadata(
+        candidate_id=primary_seed.candidate_id,
+        seed_node_id=primary_seed.primary_node_id,
+        candidate_kind=candidate_kind,
+        graph_hash=bundle.manifest["graph"]["graph_hash"],
+        bundle_id=bundle.manifest["bundle_id"],
+        routing_profile=bundle.profile,
+        supporting_node_ids=supporting_node_ids,
+        supporting_edge_ids=supporting_edge_ids,
+        community_ids=community_ids,
+        gold_match_hint=gold_match_hint,
+        drafting_mode=primary_seed.metadata.get("drafting_mode", "deterministic"),
+        routing_evidence=routing_evidence,
+    )
+    metadata["seed"]["merged_primary_node_ids"] = merged_primary_node_ids
+    metadata["seed"]["merged_candidate_count"] = len(group)
+
+    score = (
+        len(source_skill.trace_refs) if source_skill else 0
+    ) + len(supporting_edge_ids) + len(community_ids) + int(
+        routing_evidence.get("workflow_cues", 0) or 0
+    )
+    return CandidateSeed(
+        candidate_id=primary_seed.candidate_id,
+        candidate_kind=candidate_kind,
+        primary_node_id=primary_seed.primary_node_id,
+        supporting_node_ids=supporting_node_ids,
+        supporting_edge_ids=supporting_edge_ids,
+        community_ids=community_ids,
+        gold_match_hint=gold_match_hint,
+        source_skill=source_skill,
+        score=score,
+        metadata=metadata,
+        seed_content=_merge_seed_content(group, preferred=primary_seed),
+    )
+
+
+def _select_merged_candidate_kind(group: list[CandidateSeed]) -> str:
+    if any(
+        seed.candidate_kind == "workflow_script"
+        or seed.metadata.get("disposition") == "workflow_script_candidate"
+        for seed in group
+    ):
+        return "workflow_script"
+    return max(group, key=lambda seed: seed.score).candidate_kind
+
+
+def _select_primary_seed(
+    group: list[CandidateSeed],
+    *,
+    candidate_kind: str,
+) -> CandidateSeed:
+    prefer_workflow = candidate_kind == "workflow_script"
+    return min(
+        group,
+        key=lambda seed: (
+            0
+            if prefer_workflow
+            and (
+                seed.candidate_kind == "workflow_script"
+                or seed.metadata.get("disposition") == "workflow_script_candidate"
+            )
+            else 1,
+            -seed.score,
+            0 if seed.source_skill else 1,
+            seed.primary_node_id,
+        ),
+    )
+
+
+def _merge_routing_evidence(
+    group: list[CandidateSeed],
+    *,
+    candidate_kind: str,
+) -> dict[str, Any]:
+    routing_docs = [
+        doc
+        for seed in group
+        if isinstance(seed.metadata.get("routing_evidence"), dict)
+        for doc in [seed.metadata["routing_evidence"]]
+    ]
+    if not routing_docs:
+        return {
+            "inference_mode": "merged_seed_support",
+            "selected_candidate_kind": candidate_kind,
+            "merged_from_node_ids": sorted({seed.primary_node_id for seed in group}),
+        }
+
+    merged = {
+        "inference_mode": "merged_seed_support",
+        "selected_candidate_kind": candidate_kind,
+        "workflow_cues": max(
+            _normalize_nonnegative_int(doc.get("workflow_cues")) for doc in routing_docs
+        ),
+        "context_cues": max(
+            _normalize_nonnegative_int(doc.get("context_cues")) for doc in routing_docs
+        ),
+        "evidence_support_count": sum(
+            _normalize_nonnegative_int(doc.get("evidence_support_count")) for doc in routing_docs
+        ),
+        "merged_from_node_ids": sorted({seed.primary_node_id for seed in group}),
+    }
+    matched_keywords = sorted(
+        {
+            keyword
+            for doc in routing_docs
+            for keyword in doc.get("matched_keywords", [])
+            if isinstance(keyword, str) and keyword
+        }
+    )
+    if matched_keywords:
+        merged["matched_keywords"] = matched_keywords
+    evidence_chunk_ids = sorted(
+        {
+            chunk_id
+            for doc in routing_docs
+            for chunk_id in doc.get("evidence_chunk_ids", [])
+            if isinstance(chunk_id, str) and chunk_id
+        }
+    )
+    if evidence_chunk_ids:
+        merged["evidence_chunk_ids"] = evidence_chunk_ids
+    return merged
+
+
+def _merge_seed_content(
+    group: list[CandidateSeed],
+    *,
+    preferred: CandidateSeed,
+) -> dict[str, Any]:
+    if preferred.seed_content:
+        return preferred.seed_content
+    for seed in group:
+        if seed.seed_content:
+            return seed.seed_content
+    return {}
 
 
 def _matches_rule(

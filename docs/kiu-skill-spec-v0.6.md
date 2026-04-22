@@ -124,3 +124,52 @@ The migration must update:
 
 The two markdown books are independent source lines for source/extraction validation,
 not mixed into a single skill bundle.
+
+## Reference Benchmark Contract
+
+`v0.6` adds a local benchmark entrypoint so KiU artifacts can be scored against local
+reference packs without turning those packs into hidden upstream inputs.
+
+Canonical entrypoint:
+
+```bash
+python scripts/benchmark_reference_pack.py \
+  --kiu-bundle bundles/poor-charlies-almanack-v0.1 \
+  --reference-pack /tmp/kiu-reference-poor-charlies-almanack-skill \
+  --alignment-file benchmarks/alignments/poor-charlies-vs-cangjie.yaml \
+  --comparison-scope same-source
+```
+
+Optional generated-run mode:
+
+```bash
+python scripts/benchmark_reference_pack.py \
+  --kiu-bundle /tmp/kiu-local-artifacts/book-pipeline/sources/<source-id>/bundle \
+  --run-root /tmp/kiu-local-artifacts/book-pipeline/generated/<bundle-id>/<run-id> \
+  --reference-pack /tmp/kiu-reference-poor-charlies-almanack-skill
+```
+
+The benchmark report must keep these dimensions separate:
+
+- `output_count`
+- `coverage`
+- `actionability`
+- `evidence_traceability`
+- `workflow_vs_agentic_boundary`
+- `real_usage_quality`
+
+For quality-first same-source review, the benchmark may also emit:
+
+- `concept_alignment`
+- aligned `kiu_review`
+- aligned `reference_review`
+- per-pair artifact score delta
+
+It also emits an internal scorecard for:
+
+- `KiU foundation retained`
+- `Graphify core absorbed`
+- `cangjie core absorbed`
+
+This benchmark is audit-only. Local reference packs remain `reference/benchmark`
+artifacts, not default production inputs.
