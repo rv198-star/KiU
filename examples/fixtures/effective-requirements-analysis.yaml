@@ -4,13 +4,13 @@ domain: requirements-analysis
 inherits: default
 language: zh-CN
 bundle_version: 0.1.0
-source_markdown: examples/有效需求分析（第2版）.md
+source_markdown: examples/sources/effective-requirements-analysis-source.md
 nodes:
   - id: n_problem_first_requirements
     label: Problem-First Requirements Analysis
     candidate_id: problem-first-requirements-analysis
-    line_start: 100
-    line_end: 128
+    line_start: 5
+    line_end: 13
     skill_seed:
       title: 问题先行需求分析
       contract:
@@ -132,8 +132,8 @@ nodes:
   - id: n_business_subsystem_decomposition
     label: Business-First Subsystem Decomposition
     candidate_id: business-subsystem-decomposition
-    line_start: 1438
-    line_end: 1506
+    line_start: 15
+    line_end: 23
     skill_seed:
       title: 业务优先子系统拆分
       contract:
@@ -254,8 +254,8 @@ nodes:
   - id: n_business_interface_analysis
     label: Business Interface Analysis
     candidate_id: business-interface-analysis
-    line_start: 1692
-    line_end: 1738
+    line_start: 25
+    line_end: 30
     skill_seed:
       title: 业务接口分析
       contract:

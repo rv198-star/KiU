@@ -4,13 +4,13 @@ domain: financial-statement-analysis
 inherits: default
 language: zh-CN
 bundle_version: 0.1.0
-source_markdown: examples/财务报表分析_Markdown版.md
+source_markdown: examples/sources/financial-statement-analysis-source.md
 nodes:
   - id: n_business_not_ticker
     label: Buy The Business Not The Ticker
     candidate_id: buy-the-business-not-the-ticker
-    line_start: 1167
-    line_end: 1197
+    line_start: 5
+    line_end: 12
     skill_seed:
       title: 买的是企业不是代码
       contract:
@@ -131,8 +131,8 @@ nodes:
   - id: n_challenge_price_with_value
     label: Challenge Price With Value
     candidate_id: challenge-price-with-value
-    line_start: 1199
-    line_end: 1210
+    line_start: 14
+    line_end: 21
     skill_seed:
       title: 用价值挑战价格
       contract:
@@ -254,8 +254,8 @@ nodes:
   - id: n_lock_onto_accounting_value
     label: Lock Onto Accounting Value
     candidate_id: lock-onto-accounting-value
-    line_start: 1215
-    line_end: 1237
+    line_start: 23
+    line_end: 28
     skill_seed:
       title: 锁定会计价值锚点
       contract:
