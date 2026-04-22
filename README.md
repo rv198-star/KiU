@@ -26,6 +26,10 @@ python3 scripts/show_profile.py bundles/poor-charlies-almanack-v0.1
 python3 -m unittest tests/test_validator.py
 ```
 
+If validation returns an error such as
+`circle-of-competence: rationale_below_density_threshold (...)`,
+the published skill text is below the domain profile's hard density floor and must be revised before release.
+
 Build a refinement-scheduled candidate bundle:
 
 ```bash

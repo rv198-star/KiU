@@ -6,7 +6,7 @@ skill_id: circle-of-competence
 title: Circle of Competence
 status: published
 bundle_version: 0.1.0
-skill_revision: 2
+skill_revision: 3
 ```
 
 ## Contract
@@ -47,10 +47,10 @@ boundary:
 ```
 
 ## Rationale
-This skill turns "stay in your circle" into an explicit refusal contract. It should push users toward `study_more` or `decline` whenever the understanding gap is material relative to the decision size.
+This skill turns "stay in your circle" into a refusal protocol rather than a vibe-based humility slogan. The evaluator has to test what the user can actually explain about the business model, unit economics, industry structure, management incentives, and failure modes, then compare that demonstrated depth with the amount of capital and irreversibility at stake. If the explanation stays at product familiarity, social proof, or borrowed confidence, the correct output is `study_more` or `decline`, not a softened yes.[^anchor:circle-source-note] The dotcom refusal trace shows that saying no is a positive judgment when the knowledge gap is real, and the shared surface-familiarity evaluation shows why brand recognition is not evidence of investable understanding.[^anchor:circle-trace] [^anchor:circle-eval]
 
 ## Evidence Summary
-The core evidence comes from the local source note plus three canonical traces: dotcom refusal, Google omission, and crypto rejection. See `anchors.yaml` for the graph snapshot binding and file-level evidence anchors.
+The strongest evidence chain combines the circle source note, the dotcom refusal trace, and the shared surface-familiarity evaluation. Together they show that the skill is calibrated to reject action when explanation depth is thin, even if the story feels familiar or socially validated.[^anchor:circle-source-note] [^trace:canonical/dotcom-refusal.yaml] [^anchor:circle-eval]
 
 ## Relations
 ```yaml
@@ -76,4 +76,4 @@ Representative cases:
 KiU Test is green and the full v0.1 shared evaluation corpus is now attached. The published summary covers four real-decision cases, four adversarial traps, and two OOD refusals, with the main failure mode still centered on surface familiarity masquerading as expertise. See `eval/summary.yaml`.
 
 ## Revision Summary
-Revision 2 closes the v0.1 publication loop: tightened exclusions for passive indexing, preserved the graph/source anchor binding, and expanded the attached eval set to full-release scale. See `iterations/revisions.yaml`.
+Revision 3 is the v0.3.1 hard-gate repair: the rationale and evidence text were densified to published quality, and the eval summary now binds the full shared corpus through release-scale glob references. See `iterations/revisions.yaml`.

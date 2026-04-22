@@ -25,7 +25,7 @@ bundle/
 └── sources/
 ```
 
-`manifest.yaml` must include `domain`, and `automation.yaml` is now expected to inherit from a domain profile.
+`manifest.yaml` must include `domain`, and `automation.yaml` uses `inherits:` to select the domain profile it extends.
 
 ## Domain Profile Model
 
@@ -66,7 +66,7 @@ Unknown symbols are validator errors. Empty definitions or missing examples are 
 
 ## Content Density
 
-v0.3 introduces warning-level density checks so a skill cannot pass purely on structure.
+v0.3 introduces density checks so a skill cannot pass purely on structure.
 
 The validator checks:
 
@@ -79,7 +79,14 @@ Anchor references use KiU footnote-style markers such as:
 - `[^anchor:circle-source-note]`
 - `[^trace:canonical/dotcom-refusal.yaml]`
 
-Density failures warn in v0.3 and are designed to become harder gates in later versions.
+### Density Hard Gate
+
+`content_density.published_requirement` controls how density failures are handled:
+
+- `soft`: density failures stay as warnings
+- `hard`: published skills fail validation when rationale or evidence density falls below the profile threshold
+
+The default profile keeps this setting at `soft`. The investing profile uses `hard`, which means a published investing skill must clear both the rationale density floor and the evidence-summary anchor floor to remain valid.
 
 ## Published Skill Gates
 
@@ -136,7 +143,7 @@ The v0.3 validator now checks:
 - trigger registry coverage
 - relation target existence
 - double anchors
-- density warnings
+- density warnings or published hard-gate errors
 - published minimum eval counts
 - published revision-loop requirement
 - generated candidate preflight requirements

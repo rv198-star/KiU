@@ -1,6 +1,7 @@
 import hashlib
 import json
 import re
+from glob import glob
 from pathlib import Path
 from typing import Any
 
@@ -43,6 +44,7 @@ DEFAULT_VALIDATION_PROFILE = {
         "out_of_distribution": 2,
     },
     "content_density": {
+        "published_requirement": "soft",
         "rationale": {
             "warning_min_chars": 180,
             "min_anchor_refs": 1,
@@ -232,7 +234,14 @@ def _validate_skill(
         skill_errors,
         known_skill_ids,
     )
-    _validate_density(skill_id, sections, skill_warnings, profile)
+    _validate_density(
+        skill_id,
+        status,
+        sections,
+        skill_errors,
+        skill_warnings,
+        profile,
+    )
 
     anchors = _load_yaml(skill_dir / "anchors.yaml", skill_errors, f"{skill_id}: anchors")
     _validate_anchors(
@@ -247,8 +256,9 @@ def _validate_skill(
         status=status,
     )
 
+    eval_summary_path = skill_dir / "eval" / "summary.yaml"
     eval_summary = _load_yaml(
-        skill_dir / "eval" / "summary.yaml",
+        eval_summary_path,
         skill_errors,
         f"{skill_id}: eval summary",
     )
@@ -258,6 +268,8 @@ def _validate_skill(
         skill_errors,
         manifest.get("bundle_version"),
         identity.get("skill_revision"),
+        eval_summary_path,
+        profile,
     )
 
     revisions = _load_yaml(
@@ -465,6 +477,8 @@ def _validate_eval_summary(
     errors: list[str],
     bundle_version: str | None,
     skill_revision: int | None,
+    summary_path: Path,
+    profile: dict[str, Any],
 ) -> tuple[bool, dict[str, int]]:
     if not summary:
         return False, {}
@@ -485,8 +499,19 @@ def _validate_eval_summary(
     ):
         if subset_name not in subsets:
             errors.append(f"{skill_id}: eval summary missing subset {subset_name}")
+    coverage_mode = summary.get("references", {}).get("coverage_mode")
     subset_counts = {
-        subset_name: _subset_case_count(subsets.get(subset_name, {}))
+        subset_name: _subset_case_count(
+            skill_id=skill_id,
+            subset_name=subset_name,
+            subset=subsets.get(subset_name, {}),
+            summary_path=summary_path,
+            errors=errors,
+            coverage_mode=coverage_mode,
+            minimum_required=int(
+                profile.get("min_eval_cases_for_published", {}).get(subset_name, 0)
+            ),
+        )
         for subset_name in (
             "real_decisions",
             "synthetic_adversarial",
@@ -597,6 +622,8 @@ def _load_trigger_registry(
             warnings.append(
                 f"trigger registry: trigger_symbol_missing_negative_examples {symbol}"
             )
+    if not registry:
+        warnings.append("bundle: trigger registry is empty; trigger validation coverage is weakened")
     return registry
 
 
@@ -638,10 +665,14 @@ def _validate_trigger_symbol_list(
 
 def _validate_density(
     skill_id: str,
+    status: str | None,
     sections: dict[str, str],
+    errors: list[str],
     warnings: list[str],
     profile: dict[str, Any],
 ) -> None:
+    density_mode = profile.get("content_density", {}).get("published_requirement", "soft")
+    sink = errors if status == "published" and density_mode == "hard" else warnings
     rationale_cfg = profile.get("content_density", {}).get("rationale", {})
     rationale_text = sections.get("Rationale", "")
     rationale_chars = _dense_char_count(rationale_text)
@@ -649,7 +680,7 @@ def _validate_density(
     warning_min_chars = int(rationale_cfg.get("warning_min_chars", 180))
     min_anchor_refs = int(rationale_cfg.get("min_anchor_refs", 1))
     if rationale_chars < warning_min_chars or rationale_anchor_refs < min_anchor_refs:
-        warnings.append(
+        sink.append(
             f"{skill_id}: rationale_below_density_threshold "
             f"(chars={rationale_chars}, min_chars={warning_min_chars}, "
             f"anchor_refs={rationale_anchor_refs}, min_anchor_refs={min_anchor_refs})"
@@ -660,7 +691,7 @@ def _validate_density(
     evidence_anchor_refs = _count_anchor_refs(evidence_text)
     evidence_min_anchor_refs = int(evidence_cfg.get("min_anchor_refs", 1))
     if evidence_anchor_refs < evidence_min_anchor_refs:
-        warnings.append(
+        sink.append(
             f"{skill_id}: evidence_summary_missing_anchors "
             f"(anchor_refs={evidence_anchor_refs}, min_anchor_refs={evidence_min_anchor_refs})"
         )
@@ -676,19 +707,86 @@ def _count_anchor_refs(text: str) -> int:
     return len(re.findall(r"\[\^(?:anchor|trace):[^\]]+\]", text))
 
 
-def _subset_case_count(subset: dict[str, Any]) -> int:
+def _subset_case_count(
+    *,
+    skill_id: str,
+    subset_name: str,
+    subset: dict[str, Any],
+    summary_path: Path,
+    errors: list[str],
+    coverage_mode: str | None,
+    minimum_required: int,
+) -> int:
     if not isinstance(subset, dict):
         return 0
+    resolved_cases = _resolve_subset_cases(
+        skill_id=skill_id,
+        subset_name=subset_name,
+        subset=subset,
+        summary_path=summary_path,
+        errors=errors,
+    )
     total = subset.get("total")
     if total is not None:
         try:
-            return int(total)
+            parsed_total = int(total)
         except (TypeError, ValueError):
             return 0
-    cases = subset.get("cases")
-    if isinstance(cases, list):
-        return len(cases)
-    return 0
+        if parsed_total != len(resolved_cases):
+            errors.append(
+                f"{skill_id}: {subset_name} total={parsed_total} does not match "
+                f"resolved_cases={len(resolved_cases)}"
+            )
+
+    if coverage_mode == "shared_corpus_full_release":
+        expected_pattern = f"../../../evaluation/{subset_name}/*.yaml"
+        raw_cases = subset.get("cases", [])
+        if raw_cases != [expected_pattern]:
+            errors.append(
+                f"{skill_id}: {subset_name} shared_corpus_full_release cases must be "
+                f"[{expected_pattern}]"
+            )
+        if len(resolved_cases) < minimum_required:
+            errors.append(
+                f"{skill_id}: {subset_name} shared_corpus_full_release resolves to "
+                f"{len(resolved_cases)} cases, requires at least {minimum_required}"
+            )
+
+    return len(resolved_cases)
+
+
+def _resolve_subset_cases(
+    *,
+    skill_id: str,
+    subset_name: str,
+    subset: dict[str, Any],
+    summary_path: Path,
+    errors: list[str],
+) -> list[str]:
+    raw_cases = subset.get("cases", [])
+    if not isinstance(raw_cases, list):
+        errors.append(f"{skill_id}: {subset_name} cases must be a list")
+        return []
+
+    summary_dir = summary_path.parent
+    resolved_cases: list[str] = []
+    for entry in raw_cases:
+        if not isinstance(entry, str):
+            errors.append(
+                f"{skill_id}: {subset_name} contains non-string case entry {entry!r}"
+            )
+            continue
+        if any(char in entry for char in "*?[]"):
+            matches = sorted(glob(str(summary_dir / entry)))
+            if not matches:
+                errors.append(
+                    f"{skill_id}: {subset_name} cases pattern matched 0 files: {entry}"
+                )
+                continue
+            resolved_cases.extend(str(Path(match).resolve()) for match in matches)
+            continue
+        resolved_cases.append(entry)
+    return resolved_cases
 
 
 def _detect_relation_cycles(skills: list[dict[str, Any]], warnings: list[str]) -> None:

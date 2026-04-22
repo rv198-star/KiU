@@ -6,7 +6,7 @@ skill_id: opportunity-cost-of-the-next-best-idea
 title: Opportunity Cost of the Next Best Idea
 status: published
 bundle_version: 0.1.0
-skill_revision: 2
+skill_revision: 3
 ```
 
 ## Contract
@@ -47,10 +47,10 @@ boundary:
 ```
 
 ## Rationale
-This skill stops isolated idea evaluation from hijacking capital allocation. A new idea has to beat a live next-best option after friction and foregone compounding are counted.
+This skill prevents capital allocation from being judged in isolation. Every new idea must be compared against a live next-best use of capital after tax, friction, compounding runway, and attention cost are included; otherwise the user is really comparing the new idea to cash or to nothing at all. If the benchmark is missing or obviously weaker than the current best alternative, the skill should redirect the user back to explicit ranking rather than letting novelty win by default.[^anchor:opportunity-source-note] The Costco next-best trace and the adversarial no-benchmark evaluation both show that most bad switches happen not because the new idea is terrible, but because the old alternative was never kept alive as a real comparator.[^anchor:opportunity-trace] [^anchor:opportunity-eval]
 
 ## Evidence Summary
-The core anchors are the opportunity-cost source note plus the Costco benchmark trace, with Google omission and Dexter Shoe retained as supporting scenarios. Graph anchors bind the skill to the capital-allocation community.
+The evidence chain ties the opportunity-cost source note to the Costco benchmark trace and the no-benchmark adversarial evaluation. Together they show that benchmark discipline is what stops story-driven redeployment and keeps the skill anchored in live alternatives rather than abstract enthusiasm.[^anchor:opportunity-source-note] [^trace:canonical/costco-next-best-idea.yaml] [^anchor:opportunity-eval]
 
 ## Relations
 ```yaml
@@ -76,4 +76,4 @@ Representative cases:
 The full v0.1 evaluation corpus is attached and published. The dominant failure mode remains users evaluating a new idea against cash or vibes rather than against a live next-best benchmark. See `eval/summary.yaml`.
 
 ## Revision Summary
-Revision 2 promotes the skill to `published` after adding a third benchmark trace and expanding the attached evaluation set to release scale. See `iterations/revisions.yaml`.
+Revision 3 is the v0.3.1 hard-gate repair: the rationale and evidence text now make the live-benchmark contract explicit, and the eval summary binds the full shared corpus through release-scale glob references. See `iterations/revisions.yaml`.

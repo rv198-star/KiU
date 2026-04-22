@@ -6,7 +6,7 @@ skill_id: bias-self-audit
 title: Bias Self Audit
 status: published
 bundle_version: 0.1.0
-skill_revision: 2
+skill_revision: 3
 ```
 
 ## Contract
@@ -47,10 +47,10 @@ boundary:
 ```
 
 ## Rationale
-The skill exists to force an explicit anti-bias pass before irreversible commitments. It should name the likely bias cluster and prescribe mitigations rather than merely reminding the user to "be careful."
+This skill exists to convert "watch your biases" from empty hygiene language into a required audit step before commitment. The evaluator should name the likely distortion cluster, tie it to incentives, identity, sunk cost, or social proof, and then require a concrete countermeasure such as disconfirming evidence, an outside base rate, or a reduced position. If the user cannot specify what bias is currently active, the safe assumption is that confidence has outrun self-observation.[^anchor:bias-source-note] The US Air regret trace and the shared surface-familiarity adversarial case both show that a persuasive story can hide ego, imitation, or attachment until the decision is already effectively locked in.[^anchor:bias-trace] [^anchor:bias-eval]
 
 ## Evidence Summary
-The strongest anchors are the bias source note, the US Air regret trace, and the shared TSLA surface-familiarity adversarial case. Graph anchors place the skill in both the boundary-discipline and error-avoidance evidence neighborhoods.
+The strongest evidence chain combines the bias source note, the US Air anti-pattern trace, and the adversarial familiarity case. Together they show that the skill is strongest when it forces named distortions and counter-measures before an irreversible commitment, not after the narrative has already taken over.[^anchor:bias-source-note] [^trace:canonical/us-air-regret.yaml] [^anchor:bias-eval]
 
 ## Relations
 ```yaml
@@ -76,4 +76,4 @@ Representative cases:
 The full v0.1 evaluation corpus is attached and published. The remaining calibration question is not whether the skill is ready to ship, but how strict later versions should become around low-stakes refusals. See `eval/summary.yaml`.
 
 ## Revision Summary
-Revision 2 promotes the skill to `published` after adding a stronger incentive-bias trace and expanding the evaluation set to release scale. See `iterations/revisions.yaml`.
+Revision 3 is the v0.3.1 hard-gate repair: the rationale and evidence text now make the audit contract explicit, and the eval summary binds the full shared corpus through release-scale glob references. See `iterations/revisions.yaml`.
