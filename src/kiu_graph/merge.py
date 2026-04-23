@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+from .inference import derive_cross_bundle_inferred_edges
+from .migrate import canonical_graph_hash
 
 
 def merge_bundle_graphs(bundle_paths: list[str | Path]) -> dict[str, Any]:
@@ -77,7 +79,8 @@ def _merge_graph_docs(bundle_docs: list[dict[str, Any]]) -> dict[str, Any]:
         "edges": merged_edges,
         "communities": merged_communities,
     }
-    merged_doc["graph_hash"] = _canonical_graph_hash(merged_doc)
+    merged_doc["edges"].extend(derive_cross_bundle_inferred_edges(merged_doc))
+    merged_doc["graph_hash"] = canonical_graph_hash(merged_doc)
     return merged_doc
 
 
@@ -113,15 +116,6 @@ def _namespace_community(bundle_id: str, community: dict[str, Any]) -> dict[str,
 
 def _namespace_id(bundle_id: str, source_id: str) -> str:
     return f"{bundle_id}::{source_id}"
-
-
-def _canonical_graph_hash(graph_doc: dict[str, Any]) -> str:
-    canonical_doc = dict(graph_doc)
-    canonical_doc.pop("graph_hash", None)
-    encoded = json.dumps(canonical_doc, sort_keys=True, ensure_ascii=False).encode("utf-8")
-    return "sha256:" + hashlib.sha256(encoded).hexdigest()
-
-
 def _load_yaml(path: Path) -> dict[str, Any]:
     loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
     return loaded or {}

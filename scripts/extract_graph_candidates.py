@@ -13,13 +13,10 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from kiu_pipeline.extraction import (
-    apply_llm_extraction_patch,
-    build_empty_extraction_result,
-    build_heuristic_extraction_result,
-    build_section_heading_extraction_result,
     validate_extraction_result_doc,
     validate_source_chunks_doc,
 )
+from kiu_pipeline.extractor_runtime import build_extraction_result_with_audit
 
 
 def parse_args() -> argparse.Namespace:
@@ -57,23 +54,16 @@ def main() -> int:
         print(json.dumps({"errors": source_errors}, ensure_ascii=False, indent=2))
         return 1
 
-    if args.deterministic_pass == "section-headings":
-        extraction_result = build_section_heading_extraction_result(source_chunks)
-    elif args.deterministic_pass == "heuristic-extractors":
-        extraction_result = build_heuristic_extraction_result(source_chunks)
-    else:
-        extraction_result = build_empty_extraction_result(source_chunks)
-
-    if args.drafting_mode == "llm-assisted":
-        try:
-            extraction_result = apply_llm_extraction_patch(
-                source_chunks_doc=source_chunks,
-                extraction_result=extraction_result,
-                token_budget=args.llm_budget_tokens,
-            )
-        except Exception as exc:
-            print(json.dumps({"errors": [str(exc)]}, ensure_ascii=False, indent=2))
-            return 1
+    try:
+        extraction_result = build_extraction_result_with_audit(
+            source_chunks_doc=source_chunks,
+            deterministic_pass=args.deterministic_pass,
+            drafting_mode=args.drafting_mode,
+            llm_budget_tokens=args.llm_budget_tokens,
+        )
+    except Exception as exc:
+        print(json.dumps({"errors": [str(exc)]}, ensure_ascii=False, indent=2))
+        return 1
 
     result_errors = validate_extraction_result_doc(extraction_result)
     if result_errors:

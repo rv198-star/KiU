@@ -19,6 +19,9 @@ if str(SRC) not in sys.path:
 from kiu_validator.core import validate_bundle
 
 
+PUBLISHED_INVESTING_REVISION = 5
+
+
 class BundleValidationTests(unittest.TestCase):
     maxDiff = None
 
@@ -202,7 +205,7 @@ class BundleValidationTests(unittest.TestCase):
         )
 
         self.assertEqual(circle["status"], "published")
-        self.assertEqual(circle["skill_revision"], 4)
+        self.assertEqual(circle["skill_revision"], PUBLISHED_INVESTING_REVISION)
         self.assertGreaterEqual(circle["revision_entry_count"], 2)
         self.assertTrue(circle["has_revision_loop"])
 
@@ -232,8 +235,8 @@ class BundleValidationTests(unittest.TestCase):
             if skill["skill_id"] == "circle-of-competence"
         )
 
-        self.assertEqual(circle["skill_revision"], 4)
-        self.assertEqual(circle["revision_entry_count"], 4)
+        self.assertEqual(circle["skill_revision"], PUBLISHED_INVESTING_REVISION)
+        self.assertEqual(circle["revision_entry_count"], PUBLISHED_INVESTING_REVISION)
         self.assertEqual(
             set(circle["relations"]["constrained_by"]),
             {"margin-of-safety-sizing"},
@@ -250,7 +253,7 @@ class BundleValidationTests(unittest.TestCase):
         self.assertIn("[^trace:canonical/dotcom-refusal.yaml]", skill_doc)
         self.assertIn("[^trace:canonical/google-omission.yaml]", skill_doc)
         self.assertIn("[^trace:canonical/crypto-rejection.yaml]", skill_doc)
-        self.assertIn("Revision 4", skill_doc)
+        self.assertIn(f"Revision {PUBLISHED_INVESTING_REVISION}", skill_doc)
 
         eval_summary = self._load_yaml(
             self.bundle_path
@@ -259,7 +262,7 @@ class BundleValidationTests(unittest.TestCase):
             / "eval"
             / "summary.yaml"
         )
-        self.assertEqual(eval_summary["skill_revision"], 4)
+        self.assertEqual(eval_summary["skill_revision"], PUBLISHED_INVESTING_REVISION)
         self.assertGreaterEqual(len(eval_summary["key_failure_modes"]), 2)
 
         revisions = self._load_yaml(
@@ -269,10 +272,17 @@ class BundleValidationTests(unittest.TestCase):
             / "iterations"
             / "revisions.yaml"
         )
-        self.assertEqual(revisions["current_revision"], 4)
-        self.assertEqual(len(revisions["history"]), 4)
+        self.assertEqual(revisions["current_revision"], PUBLISHED_INVESTING_REVISION)
+        self.assertEqual(len(revisions["history"]), PUBLISHED_INVESTING_REVISION)
 
     def test_all_published_investing_skills_are_v04_content_rewrites(self) -> None:
+        expected_revisions = {
+            "circle-of-competence": 5,
+            "invert-the-problem": 5,
+            "margin-of-safety-sizing": 5,
+            "bias-self-audit": 5,
+            "opportunity-cost-of-the-next-best-idea": 4,
+        }
         expected_trace_refs = {
             "circle-of-competence": [
                 "[^trace:canonical/dotcom-refusal.yaml]",
@@ -305,26 +315,27 @@ class BundleValidationTests(unittest.TestCase):
 
         for skill in report["skills"]:
             skill_id = skill["skill_id"]
-            self.assertEqual(skill["skill_revision"], 4, skill_id)
+            expected_revision = expected_revisions[skill_id]
+            self.assertEqual(skill["skill_revision"], expected_revision, skill_id)
 
             skill_doc = (
                 self.bundle_path / "skills" / skill_id / "SKILL.md"
             ).read_text(encoding="utf-8")
-            self.assertIn("Revision 4", skill_doc, skill_id)
+            self.assertIn(f"Revision {expected_revision}", skill_doc, skill_id)
             for trace_ref in expected_trace_refs[skill_id]:
                 self.assertIn(trace_ref, skill_doc, f"{skill_id}: missing {trace_ref}")
 
             eval_summary = self._load_yaml(
                 self.bundle_path / "skills" / skill_id / "eval" / "summary.yaml"
             )
-            self.assertEqual(eval_summary["skill_revision"], 4, skill_id)
+            self.assertEqual(eval_summary["skill_revision"], expected_revision, skill_id)
             self.assertGreaterEqual(len(eval_summary["key_failure_modes"]), 2, skill_id)
 
             revisions = self._load_yaml(
                 self.bundle_path / "skills" / skill_id / "iterations" / "revisions.yaml"
             )
-            self.assertEqual(revisions["current_revision"], 4, skill_id)
-            self.assertEqual(len(revisions["history"]), 4, skill_id)
+            self.assertEqual(revisions["current_revision"], expected_revision, skill_id)
+            self.assertEqual(len(revisions["history"]), expected_revision, skill_id)
 
     def test_density_hard_gate_blocks_publish(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -655,7 +666,7 @@ class BundleValidationTests(unittest.TestCase):
             self._replace_skill_text(
                 tmp_bundle,
                 "circle-of-competence",
-                "skill_revision: 4",
+                f"skill_revision: {PUBLISHED_INVESTING_REVISION}",
                 "skill_revision: 1",
             )
 
@@ -854,7 +865,7 @@ class BundleValidationTests(unittest.TestCase):
             self._replace_skill_text(
                 tmp_bundle,
                 "circle-of-competence",
-                "skill_revision: 4",
+                f"skill_revision: {PUBLISHED_INVESTING_REVISION}",
                 "skill_revision: 1",
             )
 

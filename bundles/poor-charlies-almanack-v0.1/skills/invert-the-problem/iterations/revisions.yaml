@@ -1,6 +1,6 @@
 skill_id: invert-the-problem
 bundle_version: 0.1.0
-current_revision: 4
+current_revision: 5
 history:
 - revision: 1
   date: 2026-04-21
@@ -40,7 +40,20 @@ history:
     boundary checks.
   - Rewrote evidence summary to name three canonical inversion traces directly.
   - Expanded eval failure modes and bumped release metadata to revision 4.
+- revision: 5
+  date: 2026-04-23
+  summary: Manual v0.5.1 usage uplift. Rewrote the published spec into Chinese
+    action-facing inversion guidance to close the same-scenario benchmark gap; this
+    was hand-authored, not a refinement_scheduler loop result.
+  graph_hash: sha256:43c2de3f3e41d415870e7944ef715e55540a6890a454a8f270bd21a6b1cac65e
+  effective_status: published
+  evidence_changes:
+  - Added direct Chinese trigger phrases such as "漏掉了什么重要的东西", "方案太乐观",
+    "最坏的情况", and "系统性找茬".
+  - Reworked the usage and evaluation summaries around explicit failure maps, avoid
+    rules, and first preventive actions.
+  - Clarified non-trigger boundaries for concept queries, pure brainstorming, and
+    lower-stakes edge cases without broadening the skill boundary.
 open_gaps:
-- Extend inversion dispatch into future non-investing domain bundles instead of overloading
-  this one.
+- Continue improving edge-case calibration for lower-stakes planning scenarios.
 - Run a real refinement_scheduler pass before describing this skill as loop-driven.

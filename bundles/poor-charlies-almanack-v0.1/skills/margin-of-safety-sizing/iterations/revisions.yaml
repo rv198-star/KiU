@@ -1,6 +1,6 @@
 skill_id: margin-of-safety-sizing
 bundle_version: 0.1.0
-current_revision: 4
+current_revision: 5
 history:
 - revision: 1
   date: 2026-04-21
@@ -39,6 +39,20 @@ history:
     preservation.
   - Rewrote evidence summary to name three canonical sizing traces directly.
   - Expanded eval failure modes and bumped release metadata to revision 4.
+- revision: 5
+  date: 2026-04-23
+  summary: Manual v0.5.1 usage uplift. Rewrote the published spec into Chinese
+    action-facing sizing guidance to close the same-scenario benchmark gap; this
+    was hand-authored, not a refinement_scheduler loop result.
+  graph_hash: sha256:43c2de3f3e41d415870e7944ef715e55540a6890a454a8f270bd21a6b1cac65e
+  effective_status: published
+  evidence_changes:
+  - Added direct Chinese trigger phrases around price reasonableness, margin of
+    safety, market panic, pricing power, and whether a project is worth funding.
+  - Expanded the usage summary with a sizing-first output template anchored to downside,
+    liquidity, irreversibility, and capital-at-risk constraints.
+  - Clarified non-trigger boundaries for short-term trading, concept queries, pure
+    scale analysis, franchise edge cases, and crypto-style speculative assets.
 open_gaps:
 - Add future cases that separate temporary volatility from permanent impairment across
   new corpora.

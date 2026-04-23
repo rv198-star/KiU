@@ -438,6 +438,9 @@ def validate_extraction_result_doc(doc: dict[str, Any]) -> list[str]:
         edges = []
     if not isinstance(warnings, list):
         errors.append("extraction_result: warnings must be a list")
+    extractor_run_log = doc.get("extractor_run_log")
+    if extractor_run_log is not None and not isinstance(extractor_run_log, list):
+        errors.append("extraction_result: extractor_run_log must be a list")
 
     for index, node in enumerate(nodes):
         label = f"extraction_result.nodes[{index}]"
@@ -463,6 +466,24 @@ def validate_extraction_result_doc(doc: dict[str, Any]) -> list[str]:
         confidence = edge.get("confidence")
         if not isinstance(confidence, (int, float)) or not (0.0 <= float(confidence) <= 1.0):
             errors.append(f"{label}: invalid confidence")
+
+    if isinstance(extractor_run_log, list):
+        for index, stage in enumerate(extractor_run_log):
+            label = f"extraction_result.extractor_run_log[{index}]"
+            if not isinstance(stage, dict):
+                errors.append(f"{label}: must be an object")
+                continue
+            for field in ("stage_id", "extractor_kind", "pass_kind", "prompt_key"):
+                if not isinstance(stage.get(field), str) or not stage[field]:
+                    errors.append(f"{label}: missing {field}")
+            for field in ("input_chunk_ids", "output_node_ids", "output_edge_ids"):
+                value = stage.get(field)
+                if not isinstance(value, list):
+                    errors.append(f"{label}: {field} must be a list")
+                    continue
+                for item_index, item in enumerate(value):
+                    if not isinstance(item, str) or not item:
+                        errors.append(f"{label}: {field}[{item_index}] must be a non-empty string")
 
     return errors
 

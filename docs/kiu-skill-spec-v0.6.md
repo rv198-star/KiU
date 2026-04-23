@@ -10,6 +10,35 @@ The main line for this version is:
 
 `raw book -> source chunks -> extraction results -> graph -> distillation -> routing -> review`
 
+## Book Overview v0.1
+
+Canonical bundle locations:
+
+- `BOOK_OVERVIEW.md`
+- `ingestion/book-overview-v0.1.json`
+
+`Book Overview` is the source-level context contract between ingestion and extraction.
+It exists to give later extractors and reviewers a stable whole-book frame without
+smuggling in routing decisions.
+
+Required fields:
+
+- `schema_version = kiu.book-overview/v0.1`
+- `source_id`
+- `source_file`
+- `language`
+- `chunk_count`
+- `chapter_count`
+- `section_count`
+- `chapter_map`
+- `thesis_summary`
+- `boundary_warnings`
+- `domain_tags`
+- `extraction_context`
+
+This artifact may summarize source structure, dominant theses, and boundary warnings,
+but it must not assign `workflow_script` / `llm_agentic` execution modes.
+
 ## Source Chunks v0.1
 
 Canonical schema: `schemas/source-chunks-v0.1.json`

@@ -67,6 +67,10 @@ def _append_trace_reference(skill_markdown: str, trace_ref: str) -> str:
     if trace_ref in usage_summary:
         return skill_markdown
 
+    if "Representative cases:" in usage_summary:
+        rendered_usage = usage_summary.rstrip() + f"\n- `{trace_ref}`"
+        return replace_markdown_section(skill_markdown, "Usage Summary", rendered_usage)
+
     trace_refs = re.findall(r"traces/[\w./-]+\.yaml", usage_summary)
     trace_refs.append(trace_ref)
     usage_notes = _extract_usage_notes(usage_summary)

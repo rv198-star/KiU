@@ -5,6 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from kiu_pipeline.reference_benchmark import _resolve_alignment_pairs
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -74,7 +76,98 @@ def _write_alignment_file(root: Path) -> Path:
     return path
 
 
+def _write_generated_run_alignment_file(root: Path) -> Path:
+    path = root / "generated-run-alignment.yaml"
+    path.write_text(
+        "\n".join(
+            [
+                "schema_version: kiu.reference-alignment/v0.1",
+                "alignment_id: generated-run-test-alignment",
+                "pairs:",
+                "  - kiu_skill_id: business-first-subsystem-decomposition",
+                "    reference_skill_id: business-first-subsystem-decomposition",
+                "    relationship: direct_match",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+def _write_competing_alignment_file(root: Path) -> Path:
+    path = root / "competing-alignment.yaml"
+    path.write_text(
+        "\n".join(
+            [
+                "schema_version: kiu.reference-alignment/v0.1",
+                "alignment_id: competing-alignment",
+                "pairs:",
+                "  - kiu_skill_id: margin-of-safety-sizing",
+                "    reference_skill_id: value-assessment",
+                "    relationship: partial_overlap",
+                "  - kiu_skill_id: value-assessment",
+                "    reference_skill_id: value-assessment",
+                "    relationship: direct_match",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
 class ReferenceBenchmarkCliTests(unittest.TestCase):
+    def test_alignment_pairs_match_generated_source_note_skill_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            alignment_path = _write_alignment_file(tmp_root)
+
+            pairs = _resolve_alignment_pairs(
+                kiu_reviews={"circle-of-competence-source-note": {"title": "circle"}},
+                reference_reviews={"circle-of-competence": {"title": "circle"}},
+                alignment_file=alignment_path,
+            )
+
+            self.assertEqual(len(pairs), 1)
+            self.assertEqual(pairs[0]["kiu_skill_id"], "circle-of-competence-source-note")
+            self.assertEqual(pairs[0]["reference_skill_id"], "circle-of-competence")
+
+    def test_alignment_pairs_prefer_direct_match_over_partial_overlap_for_same_reference(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            alignment_path = _write_competing_alignment_file(tmp_root)
+
+            pairs = _resolve_alignment_pairs(
+                kiu_reviews={
+                    "margin-of-safety-sizing-source-note": {"title": "margin"},
+                    "value-assessment-source-note": {"title": "value"},
+                },
+                reference_reviews={"value-assessment": {"title": "value"}},
+                alignment_file=alignment_path,
+            )
+
+            self.assertEqual(len(pairs), 1)
+            self.assertEqual(pairs[0]["kiu_skill_id"], "value-assessment-source-note")
+            self.assertEqual(pairs[0]["reference_skill_id"], "value-assessment")
+            self.assertEqual(pairs[0]["relationship"], "direct_match")
+
+    def test_alignment_pairs_fall_back_to_partial_overlap_when_direct_match_is_absent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            alignment_path = _write_competing_alignment_file(tmp_root)
+
+            pairs = _resolve_alignment_pairs(
+                kiu_reviews={"margin-of-safety-sizing-source-note": {"title": "margin"}},
+                reference_reviews={"value-assessment": {"title": "value"}},
+                alignment_file=alignment_path,
+            )
+
+            self.assertEqual(len(pairs), 1)
+            self.assertEqual(pairs[0]["kiu_skill_id"], "margin-of-safety-sizing-source-note")
+            self.assertEqual(pairs[0]["reference_skill_id"], "value-assessment")
+            self.assertEqual(pairs[0]["relationship"], "partial_overlap")
+
     def test_reference_benchmark_cli_emits_bundle_comparison_report(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_root = Path(tmp_dir)
@@ -123,6 +216,11 @@ class ReferenceBenchmarkCliTests(unittest.TestCase):
                 payload["comparison"]["workflow_vs_agentic_boundary"]["kiu_explicit_boundary"]
             )
             self.assertEqual(payload["concept_alignment"]["summary"]["matched_pair_count"], 2)
+            self.assertIn("unmatched_kiu_skill_count", payload["concept_alignment"]["summary"])
+            self.assertIn(
+                "unmatched_reference_skill_count",
+                payload["concept_alignment"]["summary"],
+            )
             self.assertGreater(
                 payload["concept_alignment"]["summary"]["kiu_average_artifact_score_100"],
                 0.0,
@@ -132,10 +230,15 @@ class ReferenceBenchmarkCliTests(unittest.TestCase):
             self.assertIn("reference_review", first_pair)
             self.assertIn("overall_artifact_score_100", first_pair["kiu_review"])
             self.assertIn("overall_artifact_score_100", first_pair["reference_review"])
+            self.assertGreaterEqual(first_pair["kiu_review"]["actionability_100"], 80.0)
             self.assertIn("kiu_foundation_retained_100", payload["scorecard"])
             self.assertIn("graphify_core_absorbed_100", payload["scorecard"])
             self.assertIn("cangjie_core_absorbed_100", payload["scorecard"])
-            self.assertTrue(output_path.with_suffix(".md").exists())
+            markdown_path = output_path.with_suffix(".md")
+            self.assertTrue(markdown_path.exists())
+            markdown = markdown_path.read_text(encoding="utf-8")
+            self.assertIn("Unmatched KiU skills", markdown)
+            self.assertIn("Unmatched reference skills", markdown)
 
     def test_reference_benchmark_cli_includes_generated_run_metrics(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -200,6 +303,13 @@ class ReferenceBenchmarkCliTests(unittest.TestCase):
             )
             self.assertTrue(
                 payload["comparison"]["workflow_vs_agentic_boundary"]["kiu_boundary_preserved"]
+            )
+            self.assertTrue(payload["generated_run"]["verification_gate_present"])
+            self.assertGreater(
+                payload["comparison"]["workflow_vs_agentic_boundary"][
+                    "kiu_workflow_verification_ready_ratio"
+                ],
+                0.0,
             )
             self.assertGreater(
                 payload["comparison"]["real_usage_quality"]["kiu_usage_score_100"],
@@ -337,6 +447,112 @@ class ReferenceBenchmarkCliTests(unittest.TestCase):
             self.assertIn("reference_review", first_case)
             self.assertIn("overall_score_100", first_case["kiu_review"])
             self.assertIn("verdict", first_case["reference_review"])
+            self.assertIn("failure_analysis", first_case["kiu_review"])
+            self.assertIn("tags", first_case["kiu_review"]["failure_analysis"])
+            self.assertIn("severity", first_case["kiu_review"]["failure_analysis"])
+            self.assertIn("repair_targets", first_case["kiu_review"]["failure_analysis"])
+            self.assertIn("repair_owners", first_case["kiu_review"]["failure_analysis"])
+            self.assertIn("primary_gap", first_case["kiu_review"]["failure_analysis"])
+            self.assertIn("failure_tag_counts", first_pair["kiu_usage_review"])
+            self.assertIn("top_failure_modes", first_pair["kiu_usage_review"])
+            self.assertIn("repair_owner_counts", first_pair["kiu_usage_review"])
+            self.assertIn("failure_tag_counts", payload["same_scenario_usage"]["summary"])
+            self.assertIn("top_failure_modes", payload["same_scenario_usage"]["summary"])
+            self.assertIn("repair_owner_counts", payload["same_scenario_usage"]["summary"])
+            self.assertIn("weighted_pass_rate_delta", payload["same_scenario_usage"]["summary"])
+            self.assertIn("usage_winner", payload["same_scenario_usage"]["summary"])
+            self.assertIn(
+                "same_scenario_weighted_pass_rate_delta",
+                payload["comparison"]["real_usage_quality"],
+            )
+            markdown = output_path.with_suffix(".md").read_text(encoding="utf-8")
+            self.assertIn("Top failure modes", markdown)
+            self.assertIn("Repair targets", markdown)
+            self.assertIn("Upstream owners", markdown)
+            self.assertIn("Weighted pass-rate delta", markdown)
+            self.assertIn("Usage winner", markdown)
+
+    def test_reference_benchmark_cli_uses_generated_bundle_for_concept_alignment_when_run_root_present(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            output_root = tmp_root / "artifacts"
+            reference_root = _write_reference_pack(
+                tmp_root / "reference-generated-run",
+                ["business-first-subsystem-decomposition"],
+            )
+            _write_test_prompts(
+                reference_root / "business-first-subsystem-decomposition",
+                {
+                    "skill": "business-first-subsystem-decomposition",
+                    "version": "0.1.0",
+                    "test_cases": [
+                        {
+                            "id": "should-trigger-01",
+                            "type": "should_trigger",
+                            "prompt": "这个需求讨论总是在按前端、后端、数据库拆，但业务职责边界一直说不清。",
+                            "expected_behavior": "应激活 business-first-subsystem-decomposition，把系统切分依据拉回业务职责和责任边界。",
+                            "notes": "真实需求拆分场景。",
+                        }
+                    ],
+                    "minimum_pass_rate": 0.8,
+                },
+            )
+            alignment_path = _write_generated_run_alignment_file(tmp_root)
+
+            pipeline = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "run_book_pipeline.py"),
+                    "--input",
+                    str(ROOT / "examples" / "sources" / "effective-requirements-analysis-source.md"),
+                    "--bundle-id",
+                    "demo-source-bundle",
+                    "--source-id",
+                    "effective-requirements-analysis",
+                    "--run-id",
+                    "generated-alignment-smoke",
+                    "--output-root",
+                    str(output_root),
+                    "--max-chars",
+                    "240",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(pipeline.returncode, 0, pipeline.stdout + pipeline.stderr)
+            pipeline_payload = json.loads(pipeline.stdout)
+
+            output_path = tmp_root / "generated-alignment-benchmark.json"
+            benchmark = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "benchmark_reference_pack.py"),
+                    "--kiu-bundle",
+                    pipeline_payload["source_bundle_root"],
+                    "--run-root",
+                    pipeline_payload["run_root"],
+                    "--reference-pack",
+                    str(reference_root),
+                    "--alignment-file",
+                    str(alignment_path),
+                    "--comparison-scope",
+                    "same-source",
+                    "--output",
+                    str(output_path),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(benchmark.returncode, 0, benchmark.stdout + benchmark.stderr)
+
+            payload = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload["concept_alignment"]["summary"]["matched_pair_count"], 1)
+            self.assertEqual(payload["same_scenario_usage"]["summary"]["matched_pair_count"], 1)
+            self.assertEqual(payload["same_scenario_usage"]["summary"]["scenario_count"], 1)
 
 
 if __name__ == "__main__":

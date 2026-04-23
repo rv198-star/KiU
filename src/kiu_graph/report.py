@@ -47,9 +47,18 @@ def generate_graph_report(graph_doc: dict[str, Any]) -> str:
         f"- nodes: `{len(nodes)}`",
         f"- edges: `{len(edges)}`",
         f"- communities: `{len(communities)}`",
-        "",
-        "## God Nodes",
     ]
+    bundle_count = graph_doc.get("bundle_count")
+    if bundle_count is not None:
+        lines.append(f"- bundle_count: `{bundle_count}`")
+    source_bundles = graph_doc.get("source_bundles", [])
+    if source_bundles:
+        rendered_bundles = ", ".join(
+            f"`{bundle_id}`" for bundle_id in source_bundles if bundle_id
+        )
+        if rendered_bundles:
+            lines.append(f"- source_bundles: {rendered_bundles}")
+    lines.extend(["", "## God Nodes"])
     if god_nodes:
         for index, node in enumerate(god_nodes, start=1):
             lines.append(
@@ -88,6 +97,23 @@ def generate_graph_report(graph_doc: dict[str, Any]) -> str:
         for edge in surprising_edges:
             from_node = nodes[edge["from"]]
             to_node = nodes[edge["to"]]
+            extras = []
+            if edge.get("cross_bundle"):
+                extras.append("cross_bundle=`true`")
+            shared_concepts = [
+                concept
+                for concept in edge.get("shared_concepts", [])
+                if isinstance(concept, str) and concept
+            ]
+            if shared_concepts:
+                extras.append(f"concepts=`{', '.join(shared_concepts)}`")
+            support_refs = [
+                ref
+                for ref in edge.get("support_refs", [])
+                if isinstance(ref, str) and ref
+            ]
+            if support_refs:
+                extras.append(f"support_refs=`{len(support_refs)}`")
             lines.append(
                 (
                     f"- **{from_node.get('label', edge['from'])}** -> "
@@ -95,6 +121,7 @@ def generate_graph_report(graph_doc: dict[str, Any]) -> str:
                     f"type=`{edge.get('type', 'unknown')}` | "
                     f"kind=`{edge.get('extraction_kind', 'unknown')}` | "
                     f"confidence=`{edge.get('confidence', 0.0)}`"
+                    + (f" | {' | '.join(extras)}" if extras else "")
                 )
             )
     else:
@@ -123,6 +150,7 @@ def _find_surprising_connections(
         interesting.append(edge)
     interesting.sort(
         key=lambda edge: (
+            -int(bool(edge.get("cross_bundle"))),
             -float(edge.get("confidence", 0.0) or 0.0),
             str(nodes[edge["from"]].get("label", edge["from"])),
             str(nodes[edge["to"]].get("label", edge["to"])),

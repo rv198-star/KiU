@@ -57,9 +57,9 @@ python3 scripts/generate_candidates.py \
 如果你需要改成另一处固定目录，设置 `KIU_LOCAL_OUTPUT_ROOT=/your/path` 即可。
 只有在你明确希望写到仓库内路径时，才传 `--output-root generated` 之类的显式覆盖。
 
-## v0.6 Reference Benchmark
+## v0.5.1 Cangjie Gap-Closure Benchmark
 
-`v0.6` 开始，KiU 可以把本地 reference pack 纳入统一评估，但它们仍然只是
+`v0.5.1` 起，KiU 用本地 reference pack 收口 `cangjie-skill` 对照线，但它们仍然只是
 `benchmark/reference`，不会进入默认生产链。
 
 对已发布 bundle 做 same-source 对照：
@@ -102,11 +102,64 @@ same-source 深评时，额外看：
 - `reference_review`
 - `artifact_score_delta_100`
 
+same-scenario usage 现在还会额外输出诊断字段：
+
+- case-level `failure_analysis`
+- pair-level `top_failure_modes`
+- run-level `repair_targets`
+- run-level `upstream owners`
+
+这些字段用于把 usage 失败反推到 `contract / drafting / extraction / seed_verification / routing`
+等责任层，而不是只看一个 usage 分数。
+
+`v0.5.1` 的 release gate 不是“artifact 领先即可”，而是必须同时满足：
+
+- `artifact_score_delta_100 > 0`
+- same-scenario `average_usage_delta >= 0.0`
+- same-scenario `kiu_weighted_pass_rate > reference_weighted_pass_rate`
+- `workflow_vs_agentic_boundary` 保持稳定，不能靠误降 skill 来刷赢 benchmark
+
+如果 usage 只是打平或者落后，即使 artifact 层领先，也不能宣称已经补齐
+`cangjie-skill` 这条版本目标。
+
 当前固定的内部评分卡：
 
 - `KiU foundation retained`
 - `Graphify core absorbed`
 - `cangjie core absorbed`
+
+这里的版本分工固定为：
+
+- `v0.5.0`：foundation closure
+- `v0.5.1`：`cangjie-skill` gap closure
+- `v0.6`：`Graphify` alignment line
+
+## Behavior-Aware Review Gate
+
+当前 `three-layer-review.json` 不再只给分，也会给行为化发布判断：
+
+```bash
+python3 scripts/review_generated_run.py \
+  --run-root /tmp/kiu-local-artifacts/generated/<bundle-id>/<run-id> \
+  --source-bundle bundles/poor-charlies-almanack-v0.1
+```
+
+CLI 输出现在会包含：
+
+- `release_gate_overall_ready`
+- `release_gate_reasons`
+
+写入到 `reports/three-layer-review.json` 的结构则额外包含：
+
+- `usage_outputs.failure_tag_counts`
+- `usage_outputs.usage_gate_ready`
+- `release_gate.source_bundle_ready`
+- `release_gate.generated_bundle_ready`
+- `release_gate.usage_gate_ready`
+- `release_gate.overall_ready`
+
+这意味着一个 run 即使 artifact 分数还可以，只要 usage 层暴露出明显的
+`boundary_leak`、`next_step_blunt` 或 usage score 低于门槛，release gate 也会拦截。
 
 ## v0.4 Design Notes
 

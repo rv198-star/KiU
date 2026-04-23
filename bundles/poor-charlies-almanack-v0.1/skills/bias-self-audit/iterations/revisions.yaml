@@ -1,6 +1,6 @@
 skill_id: bias-self-audit
 bundle_version: 0.1.0
-current_revision: 4
+current_revision: 5
 history:
 - revision: 1
   date: 2026-04-21
@@ -42,7 +42,21 @@ history:
     slowdown.
   - Rewrote evidence summary to name three canonical audit traces directly.
   - Expanded eval failure modes and bumped release metadata to revision 4.
+- revision: 5
+  date: 2026-04-23
+  summary: Manual v0.5.1 usage uplift. Rewrote the published spec into Chinese
+    action-facing anti-bias guidance to close the same-scenario benchmark gap; this
+    was hand-authored, not a refinement_scheduler loop result.
+  graph_hash: sha256:43c2de3f3e41d415870e7944ef715e55540a6890a454a8f270bd21a6b1cac65e
+  effective_status: published
+  evidence_changes:
+  - Added direct trigger phrases such as "不可能错", "反面意见我都不想听了",
+    "大家都同意", and "已经收集了很多支持数据".
+  - Reworked the usage summary around thesis naming, bias naming, counter-evidence
+    search, and mitigation actions.
+  - Clarified non-trigger boundaries for early-stage data collection, urgent incidents,
+    and indecision without a formed thesis.
 open_gaps:
-- Refine low-stakes refusal calibration in later bundle versions without weakening
-  the current published contract.
+- Continue tightening low-stakes refusal calibration without weakening the current
+  published contract.
 - Run a real refinement_scheduler pass before describing this skill as loop-driven.

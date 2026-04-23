@@ -24,3 +24,8 @@ pairs:
     relationship: partial_overlap
     notes:
       - KiU isolates sizing discipline while reference packs it into valuation
+  - kiu_skill_id: value-assessment
+    reference_skill_id: value-assessment
+    relationship: direct_match
+    notes:
+      - Prefer this pair when KiU generates an explicit valuation parent skill; otherwise fall back to sizing as partial overlap

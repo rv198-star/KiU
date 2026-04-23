@@ -1,6 +1,6 @@
 skill_id: circle-of-competence
 bundle_version: 0.1.0
-current_revision: 4
+current_revision: 5
 history:
 - revision: 1
   date: 2026-04-21
@@ -43,7 +43,21 @@ history:
     language.
   - Rewrote evidence summary to bind three canonical traces explicitly and clarified
     failure modes in eval metadata.
+- revision: 5
+  date: 2026-04-23
+  summary: Manual v0.5.1 usage uplift. Rewrote the published spec into Chinese
+    action-facing guidance to close the same-scenario benchmark gap against the
+    cangjie reference pack; this was hand-authored, not a refinement_scheduler loop result.
+  graph_hash: sha256:43c2de3f3e41d415870e7944ef715e55540a6890a454a8f270bd21a6b1cac65e
+  effective_status: published
+  evidence_changes:
+  - Added Chinese trigger phrases such as "我可以学", "应该差不多", "大家都说",
+    and "说不清楚" to the published rationale and usage guidance.
+  - Expanded boundary and evaluation summaries with explicit non-trigger and edge-case
+    rulings for concept queries, in-circle experts, and transferable-skill scenarios.
+  - Kept the existing evidence anchors intact while making next-step outputs more
+    action-facing for benchmarked usage.
 open_gaps:
-- Propagate the same v0.4 evidence density and relation depth to the other published
-  investing skills.
+- Continue tightening non-trigger boundary phrasing and edge-case handling across
+  the full investing bundle.
 - Run a real refinement_scheduler pass before describing this skill as loop-driven.

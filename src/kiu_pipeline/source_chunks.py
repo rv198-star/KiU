@@ -215,4 +215,4 @@ def _to_repo_relative(path: Path) -> str:
     try:
         return resolved.relative_to(REPO_ROOT).as_posix()
     except ValueError:
-        return path.name
+        return resolved.as_posix()

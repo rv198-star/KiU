@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .models import CandidateSeed, NormalizedGraph, SourceBundle
+from .verification_gate import assess_candidate_seed, summarize_seed_verification
 
 
 DEFAULT_WORKFLOW_TYPE_HINTS = {"control_principle", "control_signal"}
@@ -24,6 +25,110 @@ def mine_candidate_seeds(
     *,
     drafting_mode: str = "deterministic",
 ) -> list[CandidateSeed]:
+    assessment = mine_candidate_seed_assessment(
+        bundle,
+        graph,
+        drafting_mode=drafting_mode,
+    )
+    return assessment["accepted"]
+
+
+def mine_candidate_seed_assessment(
+    bundle: SourceBundle,
+    graph: NormalizedGraph,
+    *,
+    drafting_mode: str = "deterministic",
+) -> dict[str, Any]:
+    seeds = _mine_candidate_seed_candidates(
+        bundle,
+        graph,
+        drafting_mode=drafting_mode,
+    )
+    accepted: list[CandidateSeed] = []
+    rejected: list[dict[str, Any]] = []
+    for seed in seeds:
+        verification = assess_candidate_seed(
+            seed=seed,
+            bundle=bundle,
+            graph=graph,
+        )
+        routing_evidence = seed.metadata.setdefault("routing_evidence", {})
+        routing_evidence["verification_passed"] = verification["passed"]
+        routing_evidence["verification_workflow_ready"] = verification["workflow_ready"]
+        routing_evidence["verification_overall_score"] = verification["overall_score"]
+        routing_evidence["workflow_promotion_blocked_by_verification"] = False
+        if seed.candidate_kind == "workflow_script" and not verification["workflow_ready"]:
+            routing_evidence["workflow_promotion_blocked_by_verification"] = True
+            routing_evidence["selected_candidate_kind"] = "general_agentic"
+            _reapply_candidate_kind_metadata(
+                seed=seed,
+                bundle=bundle,
+                candidate_kind="general_agentic",
+            )
+        seed.metadata["verification"] = verification
+        if verification["passed"]:
+            accepted.append(seed)
+        else:
+            rejected.append(
+                {
+                    "candidate_id": seed.candidate_id,
+                    "candidate_kind": seed.candidate_kind,
+                    "disposition": seed.metadata.get("disposition"),
+                    "reasons": verification["reasons"],
+                    "verification": verification,
+                }
+            )
+    accepted = accepted[: bundle.profile.get("max_candidates", len(accepted))]
+    summary = summarize_seed_verification(
+        accepted=accepted,
+        rejected=rejected,
+    )
+    return {
+        "accepted": accepted,
+        "rejected": rejected,
+        "summary": summary,
+    }
+
+
+def _reapply_candidate_kind_metadata(
+    *,
+    seed: CandidateSeed,
+    bundle: SourceBundle,
+    candidate_kind: str,
+) -> None:
+    existing_metadata = dict(seed.metadata)
+    existing_seed_doc = dict(existing_metadata.get("seed", {}))
+    routing_evidence = dict(existing_metadata.get("routing_evidence", {}))
+    updated_metadata = derive_candidate_metadata(
+        candidate_id=seed.candidate_id,
+        seed_node_id=seed.primary_node_id,
+        candidate_kind=candidate_kind,
+        graph_hash=existing_metadata["source_graph_hash"],
+        bundle_id=existing_metadata["source_bundle_id"],
+        routing_profile=bundle.profile,
+        supporting_node_ids=existing_seed_doc.get("supporting_node_ids", seed.supporting_node_ids),
+        supporting_edge_ids=existing_seed_doc.get("supporting_edge_ids", seed.supporting_edge_ids),
+        community_ids=existing_seed_doc.get("community_ids", seed.community_ids),
+        gold_match_hint=seed.gold_match_hint,
+        drafting_mode=existing_metadata.get("drafting_mode", "deterministic"),
+        routing_evidence=routing_evidence,
+    )
+    if "merged_primary_node_ids" in existing_seed_doc:
+        updated_metadata["seed"]["merged_primary_node_ids"] = existing_seed_doc["merged_primary_node_ids"]
+    if "merged_candidate_count" in existing_seed_doc:
+        updated_metadata["seed"]["merged_candidate_count"] = existing_seed_doc["merged_candidate_count"]
+    if "verification" in existing_metadata:
+        updated_metadata["verification"] = existing_metadata["verification"]
+    seed.candidate_kind = candidate_kind
+    seed.metadata = updated_metadata
+
+
+def _mine_candidate_seed_candidates(
+    bundle: SourceBundle,
+    graph: NormalizedGraph,
+    *,
+    drafting_mode: str = "deterministic",
+) -> list[CandidateSeed]:
     profile = bundle.profile
     seed_node_types = set(profile.get("seed_node_types", ["skill_principle"]))
     seeds: list[CandidateSeed] = []
@@ -31,9 +136,6 @@ def mine_candidate_seeds(
         if node.get("type") not in seed_node_types:
             continue
         override = profile.get("seed_overrides", {}).get(node["id"], {})
-        gold_match_hint = override.get("gold_match_hint")
-        source_skill = bundle.skills.get(gold_match_hint) if gold_match_hint else None
-        seed_content = override.get("skill_seed") or node.get("skill_seed", {})
         support = _collect_support(node["id"], graph)
         candidate_kind, routing_evidence = _resolve_candidate_kind(
             node=node,
@@ -41,51 +143,200 @@ def mine_candidate_seeds(
             support=support,
             profile=profile,
         )
-        metadata = derive_candidate_metadata(
-            candidate_id=(
-                override.get("candidate_id")
-                or node.get("candidate_id")
-                or gold_match_hint
-                or _slugify(node["label"])
-            ),
-            seed_node_id=node["id"],
-            candidate_kind=candidate_kind,
-            graph_hash=bundle.manifest["graph"]["graph_hash"],
-            bundle_id=bundle.manifest["bundle_id"],
-            routing_profile=profile,
-            supporting_node_ids=support["supporting_node_ids"],
-            supporting_edge_ids=support["supporting_edge_ids"],
-            community_ids=support["community_ids"],
-            gold_match_hint=gold_match_hint,
-            drafting_mode=drafting_mode,
+        base_candidate_id = (
+            override.get("candidate_id")
+            or node.get("candidate_id")
+            or override.get("gold_match_hint")
+            or _slugify(node["label"])
+        )
+        base_seed_content = override.get("skill_seed") or node.get("skill_seed", {})
+        for spec in _resolve_candidate_specs(
+            bundle=bundle,
+            node=node,
+            override=override,
+            base_candidate_id=base_candidate_id,
+            base_candidate_kind=candidate_kind,
+            base_seed_content=base_seed_content,
             routing_evidence=routing_evidence,
-        )
-        score = (
-            len(source_skill.trace_refs) if source_skill else 0
-        ) + len(support["supporting_edge_ids"]) + len(support["community_ids"]) + int(
-            routing_evidence.get("workflow_cues", 0) or 0
-        )
-        seeds.append(
-            CandidateSeed(
-                candidate_id=metadata["candidate_id"],
-                candidate_kind=candidate_kind,
-                primary_node_id=node["id"],
+        ):
+            gold_match_hint = spec.get("gold_match_hint")
+            source_skill = _resolve_source_skill(
+                bundle=bundle,
+                candidate_id=spec["candidate_id"],
+                gold_match_hint=gold_match_hint,
+            )
+            metadata = derive_candidate_metadata(
+                candidate_id=spec["candidate_id"],
+                seed_node_id=node["id"],
+                candidate_kind=spec["candidate_kind"],
+                graph_hash=bundle.manifest["graph"]["graph_hash"],
+                bundle_id=bundle.manifest["bundle_id"],
+                routing_profile=profile,
                 supporting_node_ids=support["supporting_node_ids"],
                 supporting_edge_ids=support["supporting_edge_ids"],
                 community_ids=support["community_ids"],
                 gold_match_hint=gold_match_hint,
-                source_skill=source_skill,
-                score=score,
-                metadata=metadata,
-                seed_content=seed_content,
+                drafting_mode=drafting_mode,
+                routing_evidence=spec["routing_evidence"],
             )
-        )
+            if spec.get("derived_from_candidate_id"):
+                metadata["seed"]["derived_from_candidate_id"] = spec["derived_from_candidate_id"]
+                metadata["seed"]["derivation_mode"] = spec.get(
+                    "derivation_mode",
+                    "additional_candidate",
+                )
+            score = _candidate_seed_score(
+                seed_content=spec["seed_content"],
+                source_skill=source_skill,
+                support=support,
+                routing_evidence=spec["routing_evidence"],
+            )
+            seeds.append(
+                CandidateSeed(
+                    candidate_id=metadata["candidate_id"],
+                    candidate_kind=spec["candidate_kind"],
+                    primary_node_id=node["id"],
+                    supporting_node_ids=support["supporting_node_ids"],
+                    supporting_edge_ids=support["supporting_edge_ids"],
+                    community_ids=support["community_ids"],
+                    gold_match_hint=gold_match_hint,
+                    source_skill=source_skill,
+                    score=score,
+                    metadata=metadata,
+                    seed_content=spec["seed_content"],
+                )
+            )
     merged_seeds = _merge_duplicate_candidate_seeds(
         bundle=bundle,
         seeds=seeds,
     )
     merged_seeds.sort(key=lambda seed: (-seed.score, seed.candidate_id))
-    return merged_seeds[: profile.get("max_candidates", len(merged_seeds))]
+    return merged_seeds
+
+
+def _resolve_candidate_specs(
+    *,
+    bundle: SourceBundle,
+    node: dict[str, Any],
+    override: dict[str, Any],
+    base_candidate_id: str,
+    base_candidate_kind: str,
+    base_seed_content: dict[str, Any],
+    routing_evidence: dict[str, Any],
+) -> list[dict[str, Any]]:
+    specs = [
+        {
+            "candidate_id": base_candidate_id,
+            "candidate_kind": base_candidate_kind,
+            "gold_match_hint": override.get("gold_match_hint"),
+            "seed_content": base_seed_content,
+            "routing_evidence": dict(routing_evidence),
+        }
+    ]
+    additional_candidate_docs = []
+    node_seed_content = node.get("skill_seed", {})
+    if isinstance(node_seed_content, dict):
+        additional_candidate_docs.extend(
+            item
+            for item in node_seed_content.get("additional_candidates", [])
+            if isinstance(item, dict)
+        )
+    additional_candidate_docs.extend(
+        item
+        for item in override.get("additional_candidates", [])
+        if isinstance(item, dict)
+    )
+    for item in additional_candidate_docs:
+        candidate_id = item.get("candidate_id") or item.get("gold_match_hint")
+        if not isinstance(candidate_id, str) or not candidate_id:
+            continue
+        candidate_kind = item.get("candidate_kind") or base_candidate_kind
+        if not isinstance(candidate_kind, str) or not candidate_kind:
+            candidate_kind = base_candidate_kind
+        derived_seed_content = _build_additional_seed_content(
+            item=item,
+            candidate_id=candidate_id,
+            fallback_seed_content=base_seed_content,
+        )
+        derived_routing_evidence = dict(routing_evidence)
+        derived_routing_evidence["derivation_mode"] = "additional_candidate"
+        derived_routing_evidence["derived_from_candidate_id"] = base_candidate_id
+        derived_routing_evidence["selected_candidate_kind"] = candidate_kind
+        specs.append(
+            {
+                "candidate_id": candidate_id,
+                "candidate_kind": candidate_kind,
+                "gold_match_hint": item.get("gold_match_hint"),
+                "seed_content": derived_seed_content,
+                "routing_evidence": derived_routing_evidence,
+                "derived_from_candidate_id": base_candidate_id,
+                "derivation_mode": "additional_candidate",
+            }
+        )
+    return specs
+
+
+def _build_additional_seed_content(
+    *,
+    item: dict[str, Any],
+    candidate_id: str,
+    fallback_seed_content: dict[str, Any],
+) -> dict[str, Any]:
+    skill_seed = item.get("skill_seed")
+    if isinstance(skill_seed, dict) and skill_seed:
+        return dict(skill_seed)
+
+    derived = dict(fallback_seed_content) if isinstance(fallback_seed_content, dict) else {}
+    for key in (
+        "title",
+        "contract",
+        "relations",
+        "rationale",
+        "evidence_summary",
+        "trace_refs",
+        "usage_notes",
+        "scenario_families",
+        "eval_summary",
+        "revision_seed",
+    ):
+        if key in item:
+            derived[key] = item[key]
+    derived["title"] = derived.get("title") or _titleize(candidate_id)
+    return derived
+
+
+def _resolve_source_skill(
+    *,
+    bundle: SourceBundle,
+    candidate_id: str,
+    gold_match_hint: str | None,
+):
+    if gold_match_hint and gold_match_hint in bundle.skills:
+        return bundle.skills[gold_match_hint]
+    return bundle.skills.get(candidate_id)
+
+
+def _candidate_seed_score(
+    *,
+    seed_content: dict[str, Any],
+    source_skill: Any,
+    support: dict[str, list[str] | int],
+    routing_evidence: dict[str, Any],
+) -> int:
+    trace_ref_count = (
+        len(source_skill.trace_refs)
+        if source_skill
+        else len(
+            [
+                item
+                for item in seed_content.get("trace_refs", [])
+                if isinstance(item, str) and item
+            ]
+        )
+    )
+    return trace_ref_count + len(support["supporting_edge_ids"]) + len(
+        support["community_ids"]
+    ) + int(routing_evidence.get("workflow_cues", 0) or 0)
 
 
 def derive_candidate_metadata(
@@ -228,18 +479,34 @@ def _infer_candidate_kind(
         if isinstance(keyword, str) and keyword
     ]
     matched_keywords = sorted(set([*matched_keywords, *label_matches]))
+    matched_keyword_count = len(matched_keywords)
 
     workflow_signal_total = workflow_cues + len(label_matches)
+    has_multi_signal_workflow_hint = matched_keyword_count >= 2
+    workflow_requires_multi_signal = (
+        workflow_signal_total >= max(min_workflow_cues, 2)
+        and (
+            context_cues >= max(min_context_cues, 2)
+            or has_multi_signal_workflow_hint
+        )
+        and (
+            extracted_evidence_support_count >= 2
+            or has_multi_signal_workflow_hint
+        )
+    )
     workflow_promotion_blocked_by_evidence = (
         tri_state_support_ratio > max_tri_state_support_ratio
         and tri_state_support_count > extracted_evidence_support_count
     )
     selected_candidate_kind = default_candidate_kind
-    if node.get("type") in type_hints and not workflow_promotion_blocked_by_evidence:
+    if (
+        node.get("type") in type_hints
+        and workflow_requires_multi_signal
+        and not workflow_promotion_blocked_by_evidence
+    ):
         selected_candidate_kind = "workflow_script"
     elif (
-        workflow_signal_total >= min_workflow_cues
-        and context_cues >= min_context_cues
+        workflow_requires_multi_signal
         and extracted_evidence_support_count > 0
         and not workflow_promotion_blocked_by_evidence
     ):
@@ -249,6 +516,7 @@ def _infer_candidate_kind(
         "inference_mode": "extraction_derived",
         "selected_candidate_kind": selected_candidate_kind,
         "workflow_cues": workflow_cues,
+        "workflow_signal_total": workflow_signal_total,
         "context_cues": context_cues,
         "evidence_support_count": evidence_support_count,
         "extracted_evidence_support_count": extracted_evidence_support_count,
@@ -268,6 +536,9 @@ def _infer_candidate_kind(
             support.get("inferred_support_edge_count")
         ),
         "workflow_promotion_blocked_by_evidence": workflow_promotion_blocked_by_evidence,
+        "workflow_requires_multi_signal": workflow_requires_multi_signal,
+        "has_multi_signal_workflow_hint": has_multi_signal_workflow_hint,
+        "matched_keyword_count": matched_keyword_count,
         "matched_keywords": matched_keywords,
     }
     evidence_chunk_ids = [

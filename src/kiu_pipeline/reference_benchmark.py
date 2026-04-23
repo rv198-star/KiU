@@ -40,11 +40,13 @@ def benchmark_reference_pack(
 
     concept_alignment = _build_concept_alignment(
         kiu_bundle=kiu_bundle,
+        generated_run=generated_run,
         reference_pack=reference_pack,
         alignment_file=alignment_file,
     )
     same_scenario_usage = _build_same_scenario_usage(
         bundle_root=bundle_root,
+        generated_run=generated_run,
         reference_root=reference_root,
         concept_alignment=concept_alignment,
     )
@@ -198,11 +200,33 @@ def _scan_generated_run(run_root: Path, source_bundle_path: Path) -> dict[str, A
         if (run_root / "workflow_candidates").exists()
         else 0
     )
+    verification_summary_path = reports_root / "verification-summary.json"
+    verification_summary = (
+        json.loads(verification_summary_path.read_text(encoding="utf-8"))
+        if verification_summary_path.exists()
+        else {}
+    )
+    generated_bundle_root = run_root / "bundle"
+    generated_bundle_skill_reviews: dict[str, Any] = {}
+    if generated_bundle_root.exists():
+        try:
+            generated_bundle = load_source_bundle(generated_bundle_root)
+        except Exception:
+            generated_bundle = None
+        if generated_bundle is not None:
+            for skill in generated_bundle.skills.values():
+                generated_bundle_skill_reviews[skill.skill_id] = _review_kiu_skill(skill)
     return {
         "path": str(run_root),
+        "generated_bundle_path": str(generated_bundle_root),
         "skill_count": int(review_doc.get("generated_bundle", {}).get("skill_count", 0) or 0),
         "workflow_candidate_count": workflow_count,
         "workflow_boundary_preserved": workflow_count == 0 or workflow_count == workflow_dirs,
+        "verification_gate_present": bool(verification_summary),
+        "workflow_verification_ready_ratio": _workflow_verification_ready_ratio(
+            verification_summary=verification_summary,
+            workflow_candidate_count=workflow_count,
+        ),
         "overall_score_100": review_doc.get("overall_score_100"),
         "usage_score_100": review_doc.get("usage_outputs", {}).get("score_100"),
         "minimum_production_quality": production_quality.get("minimum_production_quality"),
@@ -214,6 +238,7 @@ def _scan_generated_run(run_root: Path, source_bundle_path: Path) -> dict[str, A
             "tri_state_effectiveness",
             {},
         ),
+        "generated_bundle_skill_reviews": generated_bundle_skill_reviews,
         "pipeline_artifacts": _discover_pipeline_artifacts(
             source_bundle_path=source_bundle_path,
             run_root=run_root,
@@ -383,6 +408,11 @@ def _build_comparison(
             "kiu_workflow_candidate_count": generated_run.get("workflow_candidate_count")
             if generated_run is not None
             else None,
+            "kiu_workflow_verification_ready_ratio": generated_run.get(
+                "workflow_verification_ready_ratio"
+            )
+            if generated_run is not None
+            else None,
             "reference_explicit_boundary": reference_pack.get("workflow_boundary", {}).get(
                 "explicit_boundary",
                 False,
@@ -400,6 +430,16 @@ def _build_comparison(
             "same_scenario_average_delta_100": same_scenario_summary.get(
                 "average_usage_score_delta_100"
             ),
+            "kiu_same_scenario_weighted_pass_rate": same_scenario_summary.get(
+                "kiu_weighted_pass_rate"
+            ),
+            "reference_same_scenario_weighted_pass_rate": same_scenario_summary.get(
+                "reference_weighted_pass_rate"
+            ),
+            "same_scenario_weighted_pass_rate_delta": same_scenario_summary.get(
+                "weighted_pass_rate_delta"
+            ),
+            "same_scenario_usage_winner": same_scenario_summary.get("usage_winner"),
             "same_scenario_matched_pair_count": same_scenario_summary.get("matched_pair_count"),
             "same_scenario_case_count": same_scenario_summary.get("scenario_count"),
             "concept_aligned_pair_count": concept_alignment.get("summary", {}).get("matched_pair_count"),
@@ -415,10 +455,13 @@ def _build_comparison(
 def _build_concept_alignment(
     *,
     kiu_bundle: dict[str, Any],
+    generated_run: dict[str, Any] | None,
     reference_pack: dict[str, Any],
     alignment_file: str | Path | None,
 ) -> dict[str, Any]:
     kiu_reviews = dict(kiu_bundle.get("skill_reviews", {}))
+    if not kiu_reviews and generated_run is not None:
+        kiu_reviews = dict(generated_run.get("generated_bundle_skill_reviews", {}))
     reference_reviews = dict(reference_pack.get("skill_reviews", {}))
     alignment_pairs = _resolve_alignment_pairs(
         kiu_reviews=kiu_reviews,
@@ -480,6 +523,10 @@ def _build_concept_alignment(
             )
             if matched_pairs
             else 0.0,
+            "unmatched_kiu_skill_count": len(set(kiu_reviews) - matched_kiu_ids),
+            "unmatched_reference_skill_count": len(
+                set(reference_reviews) - matched_reference_ids
+            ),
         },
     }
 
@@ -487,11 +534,19 @@ def _build_concept_alignment(
 def _build_same_scenario_usage(
     *,
     bundle_root: Path,
+    generated_run: dict[str, Any] | None,
     reference_root: Path,
     concept_alignment: dict[str, Any],
 ) -> dict[str, Any]:
+    effective_bundle_root = bundle_root
+    if generated_run is not None:
+        generated_bundle_path = generated_run.get("generated_bundle_path")
+        if isinstance(generated_bundle_path, str) and generated_bundle_path:
+            generated_bundle_root = Path(generated_bundle_path)
+            if generated_bundle_root.exists():
+                effective_bundle_root = generated_bundle_root
     try:
-        source_bundle = load_source_bundle(bundle_root)
+        source_bundle = load_source_bundle(effective_bundle_root)
     except Exception as exc:
         return {
             "matched_pairs": [],
@@ -503,6 +558,12 @@ def _build_same_scenario_usage(
                 "average_usage_score_delta_100": 0.0,
                 "kiu_weighted_pass_rate": 0.0,
                 "reference_weighted_pass_rate": 0.0,
+                "failure_tag_counts": {},
+                "top_failure_modes": [],
+                "repair_target_counts": {},
+                "dominant_repair_targets": [],
+                "critical_case_count": 0,
+                "major_case_count": 0,
             },
             "notes": [f"failed_to_load_kiu_bundle:{exc.__class__.__name__}"],
         }
@@ -632,6 +693,51 @@ def _build_same_scenario_usage(
                 _safe_ratio(reference_credit_total, scenario_total),
                 4,
             ),
+            "weighted_pass_rate_delta": round(
+                _safe_ratio(kiu_credit_total, scenario_total)
+                - _safe_ratio(reference_credit_total, scenario_total),
+                4,
+            )
+            if scenario_total
+            else 0.0,
+            "usage_winner": _usage_winner(
+                kiu_score=_average(kiu_case_scores),
+                reference_score=_average(reference_case_scores),
+                kiu_pass_rate=_safe_ratio(kiu_credit_total, scenario_total),
+                reference_pass_rate=_safe_ratio(reference_credit_total, scenario_total),
+            ),
+            "failure_tag_counts": _aggregate_failure_counts(
+                pair.get("kiu_usage_review", {}).get("failure_tag_counts", {})
+                for pair in matched_pairs
+            ),
+            "top_failure_modes": _aggregate_top_items(
+                pair.get("kiu_usage_review", {}).get("failure_tag_counts", {})
+                for pair in matched_pairs
+            ),
+            "repair_target_counts": _aggregate_failure_counts(
+                pair.get("kiu_usage_review", {}).get("repair_target_counts", {})
+                for pair in matched_pairs
+            ),
+            "dominant_repair_targets": _aggregate_top_items(
+                pair.get("kiu_usage_review", {}).get("repair_target_counts", {})
+                for pair in matched_pairs
+            ),
+            "repair_owner_counts": _aggregate_failure_counts(
+                pair.get("kiu_usage_review", {}).get("repair_owner_counts", {})
+                for pair in matched_pairs
+            ),
+            "dominant_repair_owners": _aggregate_top_items(
+                pair.get("kiu_usage_review", {}).get("repair_owner_counts", {})
+                for pair in matched_pairs
+            ),
+            "critical_case_count": sum(
+                int(pair.get("kiu_usage_review", {}).get("critical_case_count", 0) or 0)
+                for pair in matched_pairs
+            ),
+            "major_case_count": sum(
+                int(pair.get("kiu_usage_review", {}).get("major_case_count", 0) or 0)
+                for pair in matched_pairs
+            ),
         },
         "notes": notes,
     }
@@ -650,6 +756,14 @@ def _build_scorecard(
     boundary_preserved = (
         1.0 if generated_run and generated_run.get("workflow_boundary_preserved") else 0.0
     )
+    verification_gate = (
+        1.0 if generated_run and generated_run.get("verification_gate_present") else 0.0
+    )
+    workflow_verification_ready = (
+        min(float(generated_run.get("workflow_verification_ready_ratio", 0.0) or 0.0), 1.0)
+        if generated_run is not None
+        else 0.0
+    )
     quality_gate = 0.0
     review_score = 0.0
     if generated_run is not None:
@@ -659,11 +773,13 @@ def _build_scorecard(
     foundation_score = round(
         100.0
         * (
-            0.35 * structural_cleanliness
+            0.30 * structural_cleanliness
             + 0.20 * boundary_explicit
-            + 0.20 * boundary_preserved
-            + 0.15 * quality_gate
-            + 0.10 * review_score
+            + 0.15 * boundary_preserved
+            + 0.10 * verification_gate
+            + 0.10 * workflow_verification_ready
+            + 0.10 * quality_gate
+            + 0.05 * review_score
         ),
         1,
     )
@@ -725,9 +841,11 @@ def _build_scorecard(
     stage_presence_ratio = _average(
         [
             1.0 if pipeline_artifacts.get("raw_source_present") else 0.0,
+            1.0 if pipeline_artifacts.get("book_overview_present") else 0.0,
             1.0 if pipeline_artifacts.get("source_chunks_present") else 0.0,
             1.0 if pipeline_artifacts.get("extraction_result_present") else 0.0,
             1.0 if pipeline_artifacts.get("graph_present") else 0.0,
+            1.0 if pipeline_artifacts.get("verification_summary_present") else 0.0,
             1.0 if generated_run is not None else 0.0,
         ]
     )
@@ -768,6 +886,8 @@ def _build_scorecard(
                 "structural_cleanliness": round(structural_cleanliness, 4),
                 "boundary_explicit_ratio": boundary_explicit,
                 "boundary_preserved_ratio": boundary_preserved,
+                "verification_gate_ratio": verification_gate,
+                "workflow_verification_ready_ratio": workflow_verification_ready,
                 "quality_gate_ratio": round(quality_gate, 4),
                 "review_score_ratio": round(review_score, 4),
             },
@@ -861,6 +981,9 @@ def _evaluate_kiu_usage_case(
         if isinstance(contract.get("judgment_schema"), dict)
         else {}
     )
+    scenario_families = getattr(skill, "scenario_families", {})
+    if not isinstance(scenario_families, dict):
+        scenario_families = {}
     trigger_text = "\n".join(
         [
             skill.skill_id,
@@ -868,12 +991,20 @@ def _evaluate_kiu_usage_case(
             yaml.safe_dump(trigger, sort_keys=True, allow_unicode=True),
             str(skill.sections.get("Rationale", "")),
             str(skill.sections.get("Evidence Summary", "")),
+            _render_scenario_family_text(
+                scenario_families,
+                buckets=("should_trigger",),
+            ),
         ]
     )
     boundary_text = "\n".join(
         [
             yaml.safe_dump(boundary, sort_keys=True, allow_unicode=True),
             str(skill.sections.get("Revision Summary", "")),
+            _render_scenario_family_text(
+                scenario_families,
+                buckets=("should_not_trigger", "edge_case", "refusal"),
+            ),
         ]
     )
     action_text = "\n".join(
@@ -881,6 +1012,10 @@ def _evaluate_kiu_usage_case(
             yaml.safe_dump(judgment_schema, sort_keys=True, allow_unicode=True),
             str(skill.sections.get("Usage Summary", "")),
             str(skill.sections.get("Evaluation Summary", "")),
+            _render_scenario_family_text(
+                scenario_families,
+                buckets=("should_trigger", "edge_case", "refusal"),
+            ),
         ]
     )
     return _evaluate_usage_case(
@@ -1075,6 +1210,22 @@ def _evaluate_usage_case(
         threshold_100=threshold,
         strict=(case_type == "should_not_trigger"),
     )
+    failure_analysis = _build_failure_analysis(
+        case_type=case_type,
+        verdict=verdict,
+        threshold_100=threshold,
+        overall_score_100=overall,
+        trigger_ratio=trigger_ratio,
+        boundary_ratio=boundary_ratio,
+        next_action_ratio=next_action_ratio,
+        core_overlap=core_overlap,
+        boundary_overlap=boundary_overlap,
+        action_overlap=action_overlap,
+        supports_do_not_fire=supports_do_not_fire,
+        supports_edge=supports_edge,
+        concept_query=concept_query,
+        concept_query_boundary=concept_query_boundary,
+    )
     review_notes = [
         f"alignment_strength:{round(alignment_strength, 2)}",
         "concept_query_case" if concept_query else "",
@@ -1090,6 +1241,7 @@ def _evaluate_usage_case(
         "next_action_specificity_100": round(100.0 * next_action_ratio, 1),
         "verdict": verdict,
         "credit": credit,
+        "failure_analysis": failure_analysis,
         "notes": [note for note in review_notes if note],
     }
 
@@ -1110,6 +1262,32 @@ def _summarize_usage_case_reviews(
         if item.get("type") == "should_not_trigger"
     )
     pass_rate = _safe_ratio(credit_total, scenario_count)
+    failure_tag_counts = _aggregate_failure_counts(
+        item.get("failure_analysis", {}).get("tag_counts", {})
+        if isinstance(item.get("failure_analysis"), dict)
+        else {}
+        for item in case_reviews
+    )
+    repair_target_counts = _aggregate_failure_counts(
+        item.get("failure_analysis", {}).get("repair_target_counts", {})
+        if isinstance(item.get("failure_analysis"), dict)
+        else {}
+        for item in case_reviews
+    )
+    repair_owner_counts = _aggregate_failure_counts(
+        item.get("failure_analysis", {}).get("repair_owner_counts", {})
+        if isinstance(item.get("failure_analysis"), dict)
+        else {}
+        for item in case_reviews
+    )
+    severity_counts = _aggregate_failure_counts(
+        (
+            {str(item.get("failure_analysis", {}).get("severity", "none")): 1}
+            if isinstance(item.get("failure_analysis"), dict)
+            else {}
+        )
+        for item in case_reviews
+    )
     return {
         "overall_score_100": round(
             _average([item.get("overall_score_100") for item in case_reviews]),
@@ -1128,6 +1306,15 @@ def _summarize_usage_case_reviews(
             and pass_rate >= minimum_pass_rate
             and strict_non_trigger_passed
         ),
+        "failure_tag_counts": failure_tag_counts,
+        "top_failure_modes": _aggregate_top_items([failure_tag_counts]),
+        "repair_target_counts": repair_target_counts,
+        "dominant_repair_targets": _aggregate_top_items([repair_target_counts]),
+        "repair_owner_counts": repair_owner_counts,
+        "dominant_repair_owners": _aggregate_top_items([repair_owner_counts]),
+        "severity_counts": severity_counts,
+        "critical_case_count": int(severity_counts.get("critical", 0) or 0),
+        "major_case_count": int(severity_counts.get("major", 0) or 0),
     }
 
 
@@ -1143,6 +1330,209 @@ def _usage_verdict(
     if score_100 >= partial_floor:
         return "partial", 0.0 if strict else 0.5
     return "fail", 0.0
+
+
+def _usage_winner(
+    *,
+    kiu_score: float,
+    reference_score: float,
+    kiu_pass_rate: float,
+    reference_pass_rate: float,
+) -> str:
+    if kiu_pass_rate > reference_pass_rate:
+        return "kiu"
+    if kiu_pass_rate < reference_pass_rate:
+        return "reference"
+    if kiu_score > reference_score:
+        return "kiu"
+    if kiu_score < reference_score:
+        return "reference"
+    return "tie"
+
+
+def _build_failure_analysis(
+    *,
+    case_type: str,
+    verdict: str,
+    threshold_100: float,
+    overall_score_100: float,
+    trigger_ratio: float,
+    boundary_ratio: float,
+    next_action_ratio: float,
+    core_overlap: float,
+    boundary_overlap: float,
+    action_overlap: float,
+    supports_do_not_fire: bool,
+    supports_edge: bool,
+    concept_query: bool,
+    concept_query_boundary: bool,
+) -> dict[str, Any]:
+    tags: list[str] = []
+    if case_type == "should_trigger" and trigger_ratio < 0.72:
+        tags.append("trigger_miss")
+    if (
+        case_type == "should_not_trigger"
+        and (
+            boundary_ratio < 0.75
+            or not supports_do_not_fire
+            or (concept_query and not concept_query_boundary)
+        )
+    ):
+        tags.append("boundary_leak")
+    if next_action_ratio < 0.62:
+        tags.append("next_step_blunt")
+    if case_type == "edge_case" and not supports_edge:
+        tags.append("edge_case_collapse")
+    if max(core_overlap, boundary_overlap, action_overlap) < 0.14:
+        tags.append("generic_reasoning")
+
+    primary_gap = _primary_failure_gap(
+        case_type=case_type,
+        tags=tags,
+        trigger_ratio=trigger_ratio,
+        boundary_ratio=boundary_ratio,
+        next_action_ratio=next_action_ratio,
+    )
+    score_gap_100 = round(max(threshold_100 - overall_score_100, 0.0), 1)
+    severity = _failure_severity(
+        case_type=case_type,
+        verdict=verdict,
+        tags=tags,
+        score_gap_100=score_gap_100,
+    )
+    repair_targets = _repair_targets_for_tags(tags, primary_gap=primary_gap)
+    repair_owners = _repair_owners_for_tags(tags, primary_gap=primary_gap)
+    return {
+        "tags": tags,
+        "tag_counts": {tag: 1 for tag in tags},
+        "severity": severity,
+        "repair_targets": repair_targets,
+        "repair_target_counts": {target: 1 for target in repair_targets},
+        "repair_owners": repair_owners,
+        "repair_owner_counts": {owner: 1 for owner in repair_owners},
+        "primary_gap": primary_gap,
+        "score_gap_100": score_gap_100,
+    }
+
+
+def _primary_failure_gap(
+    *,
+    case_type: str,
+    tags: list[str],
+    trigger_ratio: float,
+    boundary_ratio: float,
+    next_action_ratio: float,
+) -> str:
+    priority = [
+        "boundary_leak",
+        "trigger_miss",
+        "edge_case_collapse",
+        "next_step_blunt",
+        "generic_reasoning",
+    ]
+    for item in priority:
+        if item in tags:
+            return item
+    if case_type == "should_not_trigger":
+        return "boundary_leak" if boundary_ratio <= min(trigger_ratio, next_action_ratio) else "next_step_blunt"
+    if trigger_ratio <= min(boundary_ratio, next_action_ratio):
+        return "trigger_miss"
+    if next_action_ratio <= min(trigger_ratio, boundary_ratio):
+        return "next_step_blunt"
+    return "generic_reasoning"
+
+
+def _failure_severity(
+    *,
+    case_type: str,
+    verdict: str,
+    tags: list[str],
+    score_gap_100: float,
+) -> str:
+    if not tags and verdict == "pass":
+        return "none"
+    if (
+        (case_type == "should_not_trigger" and verdict == "fail")
+        or ("boundary_leak" in tags and score_gap_100 >= 10.0)
+        or score_gap_100 >= 25.0
+    ):
+        return "critical"
+    if verdict == "fail" or len(tags) >= 2 or score_gap_100 >= 12.0:
+        return "major"
+    return "minor"
+
+
+def _repair_targets_for_tags(tags: list[str], *, primary_gap: str) -> list[str]:
+    mapping = {
+        "trigger_miss": [
+            "contract.trigger.patterns",
+            "contract.intake.required",
+        ],
+        "boundary_leak": [
+            "contract.boundary.do_not_fire_when",
+            "contract.boundary.fails_when",
+        ],
+        "next_step_blunt": [
+            "contract.judgment_schema.output",
+            "usage_summary.representative_cases",
+        ],
+        "generic_reasoning": [
+            "evidence_summary.anchor_refs",
+            "usage_summary.representative_cases",
+        ],
+        "edge_case_collapse": [
+            "contract.boundary.fails_when",
+            "usage_summary.representative_cases",
+        ],
+    }
+    ordered_tags = list(tags) if tags else [primary_gap]
+    targets: list[str] = []
+    for tag in ordered_tags:
+        for target in mapping.get(tag, []):
+            if target not in targets:
+                targets.append(target)
+    return targets
+
+
+def _repair_owners_for_tags(tags: list[str], *, primary_gap: str) -> list[str]:
+    mapping = {
+        "trigger_miss": ["contract", "extraction"],
+        "boundary_leak": ["contract", "routing"],
+        "next_step_blunt": ["drafting", "contract"],
+        "generic_reasoning": ["extraction", "drafting"],
+        "edge_case_collapse": ["seed_verification", "contract"],
+    }
+    ordered_tags = list(tags) if tags else [primary_gap]
+    owners: list[str] = []
+    for tag in ordered_tags:
+        for owner in mapping.get(tag, []):
+            if owner not in owners:
+                owners.append(owner)
+    return owners
+
+
+def _aggregate_failure_counts(count_docs: Any) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for count_doc in count_docs:
+        if not isinstance(count_doc, dict):
+            continue
+        for key, value in count_doc.items():
+            if not isinstance(key, str) or not key:
+                continue
+            counts[key] = counts.get(key, 0) + int(value or 0)
+    return {
+        key: counts[key]
+        for key in sorted(counts, key=lambda item: (-counts[item], item))
+        if counts[key] > 0
+    }
+
+
+def _aggregate_top_items(count_docs: Any) -> list[dict[str, Any]]:
+    counts = _aggregate_failure_counts(count_docs)
+    return [
+        {"name": key, "count": value}
+        for key, value in counts.items()
+    ][:5]
 
 
 def _relationship_alignment_strength(relationship: str | None) -> float:
@@ -1193,6 +1583,38 @@ def _supports_decline_action(text: str) -> bool:
     )
 
 
+def _has_decision_action_field(output_schema: dict[str, Any]) -> bool:
+    return any(
+        field in output_schema
+        for field in (
+            "next_action",
+            "recommended_action",
+            "first_preventive_action",
+            "avoid_rules",
+        )
+    )
+
+
+def _has_diagnostic_action_field(output_schema: dict[str, Any]) -> bool:
+    return any(
+        field in output_schema
+        for field in (
+            "evidence_to_check",
+            "decline_reason",
+            "missing_knowledge",
+            "failure_modes",
+        )
+    )
+
+
+def _usage_summary_has_cases(text: str) -> bool:
+    summary = str(text or "")
+    return bool(
+        re.search(r"Representative cases:", summary)
+        or re.search(r"^\s*-\s+`", summary, flags=re.MULTILINE)
+    )
+
+
 def _supports_concept_query_boundary(text: str) -> bool:
     return _contains_any(
         text,
@@ -1235,6 +1657,47 @@ def _contains_any(text: str, patterns: tuple[str, ...]) -> bool:
     return any(pattern.lower() in lowered for pattern in patterns)
 
 
+def _render_scenario_family_text(
+    scenario_families: dict[str, Any],
+    *,
+    buckets: tuple[str, ...],
+) -> str:
+    lines: list[str] = []
+    for bucket in buckets:
+        items = scenario_families.get(bucket, [])
+        if not isinstance(items, list):
+            continue
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            scenario_id = str(item.get("scenario_id", f"{bucket}-scenario"))
+            summary = str(item.get("summary", "") or "").strip()
+            boundary_reason = str(item.get("boundary_reason", "") or "").strip()
+            next_action_shape = str(item.get("next_action_shape", "") or "").strip()
+            signals = [
+                str(signal).strip()
+                for signal in item.get("prompt_signals", [])
+                if str(signal).strip()
+            ]
+            anchor_refs = [
+                str(anchor).strip()
+                for anchor in item.get("anchor_refs", [])
+                if str(anchor).strip()
+            ]
+            lines.append(f"{bucket}:{scenario_id}")
+            if summary:
+                lines.append(summary)
+            if signals:
+                lines.append("signals: " + " ".join(signals))
+            if boundary_reason:
+                lines.append("boundary: " + boundary_reason)
+            if next_action_shape:
+                lines.append("next: " + next_action_shape)
+            if anchor_refs:
+                lines.append("anchors: " + " ".join(anchor_refs))
+    return "\n".join(lines)
+
+
 def _text_overlap_ratio(query_text: str, doc_text: str) -> float:
     query_tokens = _usage_tokens(query_text)
     doc_tokens = _usage_tokens(doc_text)
@@ -1269,6 +1732,11 @@ def _review_kiu_skill(skill: Any) -> dict[str, Any]:
         if isinstance(contract.get("judgment_schema"), dict)
         else {}
     )
+    output_schema = (
+        judgment_schema.get("output", {}).get("schema", {})
+        if isinstance(judgment_schema.get("output"), dict)
+        else {}
+    )
     anchors = skill.anchors or {}
     graph_anchor_sets = anchors.get("graph_anchor_sets", [])
     source_anchor_sets = anchors.get("source_anchor_sets", [])
@@ -1290,8 +1758,12 @@ def _review_kiu_skill(skill: Any) -> dict[str, Any]:
     actionability = 100.0 * _average(
         [
             1.0 if judgment_schema.get("output") else 0.0,
+            1.0 if len(output_schema) >= 3 else 0.0,
+            1.0 if _has_decision_action_field(output_schema) else 0.0,
+            1.0 if _has_diagnostic_action_field(output_schema) else 0.0,
             1.0 if skill.trace_refs else 0.0,
             1.0 if skill.sections.get("Usage Summary") else 0.0,
+            1.0 if _usage_summary_has_cases(skill.sections.get("Usage Summary", "")) else 0.0,
         ]
     )
     evidence_traceability = 100.0 * _average(
@@ -1439,7 +1911,25 @@ def _resolve_alignment_pairs(
     if alignment_file is not None:
         alignment_doc = yaml.safe_load(Path(alignment_file).read_text(encoding="utf-8")) or {}
         pairs = alignment_doc.get("pairs", [])
-        return [pair for pair in pairs if isinstance(pair, dict)]
+        resolved_pairs = []
+        for pair in pairs:
+            if not isinstance(pair, dict):
+                continue
+            kiu_skill_id = _resolve_alignment_skill_id(
+                requested_id=pair.get("kiu_skill_id"),
+                available_reviews=kiu_reviews,
+            )
+            reference_skill_id = _resolve_alignment_skill_id(
+                requested_id=pair.get("reference_skill_id"),
+                available_reviews=reference_reviews,
+            )
+            if kiu_skill_id is None or reference_skill_id is None:
+                continue
+            resolved_pair = dict(pair)
+            resolved_pair["kiu_skill_id"] = kiu_skill_id
+            resolved_pair["reference_skill_id"] = reference_skill_id
+            resolved_pairs.append(resolved_pair)
+        return _dedupe_alignment_pairs(resolved_pairs)
     exact_matches = sorted(set(kiu_reviews) & set(reference_reviews))
     return [
         {
@@ -1450,6 +1940,62 @@ def _resolve_alignment_pairs(
         }
         for skill_id in exact_matches
     ]
+
+
+def _resolve_alignment_skill_id(
+    *,
+    requested_id: Any,
+    available_reviews: dict[str, Any],
+) -> str | None:
+    if not isinstance(requested_id, str) or not requested_id:
+        return None
+    if requested_id in available_reviews:
+        return requested_id
+
+    requested_base = _normalize_alignment_skill_id(requested_id)
+    matches = sorted(
+        skill_id
+        for skill_id in available_reviews
+        if _normalize_alignment_skill_id(skill_id) == requested_base
+    )
+    if len(matches) == 1:
+        return matches[0]
+    return None
+
+
+def _normalize_alignment_skill_id(skill_id: str) -> str:
+    normalized = str(skill_id or "")
+    for suffix in ("-source-note",):
+        if normalized.endswith(suffix):
+            return normalized[: -len(suffix)]
+    return normalized
+
+
+def _dedupe_alignment_pairs(pairs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    best_by_reference: dict[str, tuple[tuple[float, int, int], int]] = {}
+    for index, pair in enumerate(pairs):
+        reference_skill_id = pair.get("reference_skill_id")
+        if not isinstance(reference_skill_id, str) or not reference_skill_id:
+            continue
+        rank = _alignment_pair_rank(pair, index=index)
+        current = best_by_reference.get(reference_skill_id)
+        if current is None or rank > current[0]:
+            best_by_reference[reference_skill_id] = (rank, index)
+    selected_indexes = sorted(item[1] for item in best_by_reference.values())
+    return [pairs[index] for index in selected_indexes]
+
+
+def _alignment_pair_rank(pair: dict[str, Any], *, index: int) -> tuple[float, int, int]:
+    kiu_skill_id = str(pair.get("kiu_skill_id", "") or "")
+    reference_skill_id = str(pair.get("reference_skill_id", "") or "")
+    return (
+        _relationship_alignment_strength(pair.get("relationship")),
+        1
+        if _normalize_alignment_skill_id(kiu_skill_id)
+        == _normalize_alignment_skill_id(reference_skill_id)
+        else 0,
+        -index,
+    )
 
 
 def _has_explicit_workflow_boundary(profile: dict[str, Any]) -> bool:
@@ -1484,10 +2030,12 @@ def _discover_pipeline_artifacts(
     manifest = yaml.safe_load((source_bundle_path / "manifest.yaml").read_text(encoding="utf-8")) or {}
     graph_path = source_bundle_path / manifest.get("graph", {}).get("path", "graph/graph.json")
     source_snapshot_present = any((source_bundle_path / "sources").glob("*"))
+    book_overview_path = source_bundle_path / "BOOK_OVERVIEW.md"
     source_chunks_path = source_bundle_path / "ingestion" / "source-chunks-v0.1.json"
     bundle_id = str(manifest.get("bundle_id", ""))
     extraction_result_path = None
     intermediate_graph_path = None
+    verification_summary_path = run_root / "reports" / "verification-summary.json"
     extractor_kinds: set[str] = set()
     if bundle_id.endswith("-source-v0.6"):
         source_id = bundle_id.removesuffix("-source-v0.6")
@@ -1507,11 +2055,38 @@ def _discover_pipeline_artifacts(
                         extractor_kinds.add(_normalize_extractor_kind(extractor_kind))
     return {
         "raw_source_present": source_snapshot_present,
+        "book_overview_present": book_overview_path.exists(),
         "source_chunks_present": source_chunks_path.exists(),
         "extraction_result_present": extraction_result_path.exists() if extraction_result_path else False,
         "graph_present": graph_path.exists() or (intermediate_graph_path.exists() if intermediate_graph_path else False),
+        "verification_summary_present": verification_summary_path.exists(),
         "extractor_kinds": sorted(extractor_kinds),
     }
+
+
+def _workflow_verification_ready_ratio(
+    *,
+    verification_summary: dict[str, Any],
+    workflow_candidate_count: int,
+) -> float:
+    if workflow_candidate_count <= 0:
+        return 1.0
+    accepted = verification_summary.get("accepted", [])
+    if not isinstance(accepted, list) or not accepted:
+        return 0.0
+    workflow_total = 0
+    workflow_ready = 0
+    for item in accepted:
+        if not isinstance(item, dict):
+            continue
+        if item.get("disposition") != "workflow_script_candidate":
+            continue
+        workflow_total += 1
+        verification = item.get("verification", {})
+        if isinstance(verification, dict) and verification.get("workflow_ready"):
+            workflow_ready += 1
+    denominator = workflow_total if workflow_total > 0 else workflow_candidate_count
+    return round(_safe_ratio(workflow_ready, denominator), 4)
 
 
 def _normalize_extractor_kind(value: str) -> str:
@@ -1578,6 +2153,22 @@ def _render_markdown_report(report: dict[str, Any]) -> str:
     same_scenario_usage = report.get("same_scenario_usage", {})
     scorecard = report["scorecard"]
     generated_run = report.get("generated_run") or {}
+    same_scenario_summary = same_scenario_usage.get("summary", {})
+    top_failure_modes = ", ".join(
+        f"{item.get('name')} ({item.get('count')})"
+        for item in same_scenario_summary.get("top_failure_modes", [])
+        if isinstance(item, dict) and item.get("name")
+    ) or "none"
+    repair_targets = ", ".join(
+        f"{item.get('name')} ({item.get('count')})"
+        for item in same_scenario_summary.get("dominant_repair_targets", [])
+        if isinstance(item, dict) and item.get("name")
+    ) or "none"
+    repair_owners = ", ".join(
+        f"{item.get('name')} ({item.get('count')})"
+        for item in same_scenario_summary.get("dominant_repair_owners", [])
+        if isinstance(item, dict) and item.get("name")
+    ) or "none"
     return "\n".join(
         [
             "# Reference Benchmark Report",
@@ -1603,6 +2194,8 @@ def _render_markdown_report(report: dict[str, Any]) -> str:
             f"- Matched pairs: `{concept_alignment['summary']['matched_pair_count']}`",
             f"- KiU aligned artifact score: `{concept_alignment['summary']['kiu_average_artifact_score_100']}`",
             f"- Reference aligned artifact score: `{concept_alignment['summary']['reference_average_artifact_score_100']}`",
+            f"- Unmatched KiU skills: `{concept_alignment['summary']['unmatched_kiu_skill_count']}`",
+            f"- Unmatched reference skills: `{concept_alignment['summary']['unmatched_reference_skill_count']}`",
             "",
             "## Same-Scenario Usage",
             "",
@@ -1611,6 +2204,13 @@ def _render_markdown_report(report: dict[str, Any]) -> str:
             f"- KiU usage score: `{same_scenario_usage.get('summary', {}).get('kiu_average_usage_score_100')}`",
             f"- Reference usage score: `{same_scenario_usage.get('summary', {}).get('reference_average_usage_score_100')}`",
             f"- Average delta: `{same_scenario_usage.get('summary', {}).get('average_usage_score_delta_100')}`",
+            f"- KiU weighted pass rate: `{same_scenario_usage.get('summary', {}).get('kiu_weighted_pass_rate')}`",
+            f"- Reference weighted pass rate: `{same_scenario_usage.get('summary', {}).get('reference_weighted_pass_rate')}`",
+            f"- Weighted pass-rate delta: `{same_scenario_usage.get('summary', {}).get('weighted_pass_rate_delta')}`",
+            f"- Usage winner: `{same_scenario_usage.get('summary', {}).get('usage_winner')}`",
+            f"- Top failure modes: `{top_failure_modes}`",
+            f"- Repair targets: `{repair_targets}`",
+            f"- Upstream owners: `{repair_owners}`",
             "",
             "## Scorecard",
             "",

@@ -189,6 +189,7 @@ def _render_skill_candidate(
     skill_dir = bundle_root / "skills" / seed.candidate_id
     (skill_dir / "eval").mkdir(parents=True, exist_ok=True)
     (skill_dir / "iterations").mkdir(parents=True, exist_ok=True)
+    (skill_dir / "usage").mkdir(parents=True, exist_ok=True)
 
     anchors = build_candidate_anchors(
         source_bundle=source_bundle,
@@ -208,6 +209,9 @@ def _render_skill_candidate(
     revisions = _build_revision_log(source_bundle, seed, skill_revision)
     _write_yaml(skill_dir / "iterations" / "revisions.yaml", revisions)
 
+    scenario_families = _scenario_families_for_seed(seed)
+    _write_yaml(skill_dir / "usage" / "scenarios.yaml", scenario_families)
+
     skill_markdown = build_candidate_skill_markdown(
         source_bundle=source_bundle,
         seed=seed,
@@ -219,6 +223,13 @@ def _render_skill_candidate(
     (skill_dir / "SKILL.md").write_text(skill_markdown, encoding="utf-8")
 
     _write_yaml(skill_dir / "candidate.yaml", seed.metadata)
+
+
+def _scenario_families_for_seed(seed: CandidateSeed) -> dict[str, Any]:
+    if seed.source_skill and seed.source_skill.scenario_families:
+        return seed.source_skill.scenario_families
+    scenario_families = seed.seed_content.get("scenario_families", {})
+    return scenario_families if isinstance(scenario_families, dict) else {}
 
 
 def _render_workflow_candidate(

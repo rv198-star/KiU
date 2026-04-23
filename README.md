@@ -7,7 +7,8 @@ KiU v0.1 is a graph-first, evidence-backed skill bundle format with a complete r
 Current release framing:
 
 - `v0.5.0` closes the foundation line: multi-domain validation, cross-bundle graph merge, workflow-vs-agentic boundary enforcement, and three-layer review evidence.
-- Further quality gains now depend on collecting more real usage cases and feeding those results back into bundle/source/profile refinement.
+- `v0.5.1` is the active gap-closure line for `cangjie-skill`: same-source benchmark proof, same-scenario usage uplift, and honest version narrative correction.
+- `v0.6` is reserved for the `Graphify` alignment line rather than the `cangjie` closure line.
 
 Start here:
 

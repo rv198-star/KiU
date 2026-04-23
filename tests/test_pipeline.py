@@ -20,10 +20,11 @@ from kiu_pipeline.preflight import validate_generated_bundle
 from kiu_pipeline.seed import derive_candidate_metadata
 from kiu_pipeline.load import extract_yaml_section, parse_sections
 from kiu_pipeline.extraction import validate_extraction_result_doc, validate_source_chunks_doc
+from kiu_pipeline.extraction_bundle import scaffold_extraction_bundle
 from kiu_pipeline.local_paths import resolve_output_root
 from kiu_pipeline.normalize import normalize_graph
 from kiu_pipeline.regression import DEFAULT_V06_CHECK_IDS
-from kiu_pipeline.seed import mine_candidate_seeds
+from kiu_pipeline.seed import mine_candidate_seeds, mine_candidate_seed_assessment
 
 
 class CandidatePipelineTests(unittest.TestCase):
@@ -383,6 +384,40 @@ class CandidatePipelineTests(unittest.TestCase):
                 yaml.safe_dump(usage_doc, sort_keys=False, allow_unicode=True),
                 encoding="utf-8",
             )
+            weak_usage_doc = {
+                "review_case_id": "engineering-postmortem-weak-next-step",
+                "generated_run_root": str(run_root),
+                "skill_path": str(
+                    run_root / "bundle" / "skills" / "postmortem-blameless" / "SKILL.md"
+                ),
+                "input_scenario": {
+                    "incident_summary": "团队想直接总结经验，但没有明确时间线，也没有系统诱因证据。",
+                },
+                "firing_assessment": {
+                    "should_fire": True,
+                    "why_this_skill_fired": [
+                        "大家在泛泛讨论复盘。",
+                    ],
+                },
+                "boundary_check": {
+                    "status": "warning",
+                    "notes": ["时间线还不完整。"],
+                },
+                "structured_output": {
+                    "verdict": "review_more",
+                    "next_action": "collect_more_info",
+                },
+                "analysis_summary": "先再看看。",
+                "quality_assessment": {
+                    "contract_fit": "weak",
+                    "evidence_alignment": [],
+                    "caveats": ["缺少可执行下一步。"],
+                },
+            }
+            (usage_root / "weak.yaml").write_text(
+                yaml.safe_dump(weak_usage_doc, sort_keys=False, allow_unicode=True),
+                encoding="utf-8",
+            )
             foreign_usage_doc = dict(usage_doc)
             foreign_usage_doc["review_case_id"] = "foreign-case"
             foreign_usage_doc["generated_run_root"] = str(output_root / "foreign" / "run")
@@ -408,6 +443,9 @@ class CandidatePipelineTests(unittest.TestCase):
             )
 
             self.assertEqual(review.returncode, 0, review.stdout + review.stderr)
+            review_cli_payload = json.loads(review.stdout)
+            self.assertIn("release_gate_overall_ready", review_cli_payload)
+            self.assertIn("release_gate_reasons", review_cli_payload)
 
             report_path = run_root / "reports" / "three-layer-review.json"
             self.assertTrue(report_path.exists())
@@ -420,11 +458,27 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertIn("score_100", report["generated_bundle"])
             self.assertIn("score_100", report["usage_outputs"])
             self.assertEqual(report["generated_bundle"]["workflow_candidate_count"], 1)
-            self.assertEqual(report["usage_outputs"]["sample_count"], 1)
+            self.assertEqual(report["usage_outputs"]["sample_count"], 2)
+            self.assertIn("failure_tag_counts", report["usage_outputs"])
+            self.assertIn("usage_gate_ready", report["usage_outputs"])
+            self.assertIn("release_gate", report)
+            self.assertIn("overall_ready", report["release_gate"])
+            self.assertIn("reasons", report["release_gate"])
+            self.assertFalse(report["release_gate"]["overall_ready"])
+            self.assertIn("usage_gate_not_ready", report["release_gate"]["reasons"])
             self.assertIn(
                 "workflow_boundary_preserved",
                 report["generated_bundle"]["notes"],
             )
+
+            production_quality = json.loads(
+                (run_root / "reports" / "production-quality.json").read_text(encoding="utf-8")
+            )
+            self.assertTrue(production_quality["artifact_release_ready"])
+            self.assertFalse(production_quality["behavior_release_ready"])
+            self.assertFalse(production_quality["release_ready"])
+            self.assertIn("usage_gate_not_ready", production_quality["release_gate_reasons"])
+            self.assertIn("next_step_quality_weak", production_quality["release_gate_reasons"])
 
     def test_v06_regression_baseline_cli_runs_selected_checks_and_emits_report(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -551,6 +605,139 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertEqual(extraction_result["edges"], [])
             self.assertEqual(extraction_result["warnings"], [])
 
+    def test_scaffold_extraction_bundle_adds_value_assessment_parent_candidate_for_margin_family(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_path = tmp_root / "source.md"
+            source_path.write_text(
+                "# Demo Source\n\n估值的核心是用价值去挑战价格，再决定是否投入资本。\n",
+                encoding="utf-8",
+            )
+            source_chunks_path = tmp_root / "source-chunks.json"
+            source_chunks_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "kiu.source-chunks/v0.1",
+                        "bundle_id": "demo-source-bundle",
+                        "source_id": "demo-source",
+                        "source_file": str(source_path),
+                        "language": "zh-CN",
+                        "chunks": [
+                            {
+                                "chunk_id": "chunk-001",
+                                "source_id": "demo-source",
+                                "source_file": str(source_path),
+                                "chapter": "第1章",
+                                "section": "1.1",
+                                "line_start": 1,
+                                "line_end": 3,
+                                "chunk_text": "估值的核心是用价值去挑战价格，再决定是否投入资本。",
+                                "token_estimate": 24,
+                                "language": "zh-CN",
+                            }
+                        ],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            graph_path = tmp_root / "graph.json"
+            graph_path.write_text(
+                json.dumps(
+                    {
+                        "graph_version": "kiu.graph/v0.2",
+                        "source_snapshot": "demo-source",
+                        "graph_hash": "sha256:demo",
+                        "nodes": [
+                            {
+                                "id": "principle::0001",
+                                "type": "principle_signal",
+                                "label": "Margin Of Safety Sizing Source Note",
+                                "source_file": str(source_path),
+                                "source_location": {"line_start": 2, "line_end": 2},
+                                "extraction_kind": "EXTRACTED",
+                            },
+                            {
+                                "id": "evidence::0001",
+                                "type": "chunk_evidence",
+                                "label": "估值的核心是用价值去挑战价格，再决定是否投入资本。",
+                                "source_file": str(source_path),
+                                "source_location": {"line_start": 2, "line_end": 2},
+                                "extraction_kind": "EXTRACTED",
+                            },
+                        ],
+                        "edges": [
+                            {
+                                "id": "supported-by::principle::0001->evidence::0001",
+                                "type": "supported_by_evidence",
+                                "from": "principle::0001",
+                                "to": "evidence::0001",
+                                "source_file": str(source_path),
+                                "source_location": {"line_start": 2, "line_end": 2},
+                                "extraction_kind": "EXTRACTED",
+                                "confidence": 1.0,
+                            }
+                        ],
+                        "communities": [],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            bundle_root = scaffold_extraction_bundle(
+                source_chunks_path=source_chunks_path,
+                graph_path=graph_path,
+                output_root=tmp_root / "source-bundle",
+                inherits_from="default",
+            )
+
+            bundle_graph = json.loads((bundle_root / "graph" / "graph.json").read_text(encoding="utf-8"))
+            principle_node = next(node for node in bundle_graph["nodes"] if node["id"] == "principle::0001")
+            additional_candidates = principle_node["skill_seed"].get("additional_candidates", [])
+
+            self.assertEqual(len(additional_candidates), 1)
+            self.assertEqual(
+                additional_candidates[0]["candidate_id"],
+                "value-assessment-source-note",
+            )
+            self.assertEqual(
+                additional_candidates[0]["skill_seed"]["title"],
+                "Value Assessment Source Note",
+            )
+            self.assertEqual(
+                additional_candidates[0]["skill_seed"]["contract"]["judgment_schema"]["output"]["schema"]["applicability_mode"],
+                "enum[full_valuation|partial_applicability|refuse]",
+            )
+            self.assertTrue(
+                any(
+                    "尚未利用的提价能力" in note
+                    for note in additional_candidates[0]["skill_seed"]["usage_notes"]
+                )
+            )
+            self.assertTrue(
+                any(
+                    "长期持有" in note
+                    for note in additional_candidates[0]["skill_seed"]["usage_notes"]
+                )
+            )
+            self.assertTrue(
+                any(
+                    "scale-advantage-analysis" in note
+                    for note in additional_candidates[0]["skill_seed"]["usage_notes"]
+                )
+            )
+            self.assertTrue(
+                any(
+                    "能力圈检验" in note
+                    for note in additional_candidates[0]["skill_seed"]["usage_notes"]
+                )
+            )
+
     def test_extract_graph_candidates_cli_supports_section_headings_pass(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_root = Path(tmp_dir)
@@ -674,6 +861,32 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertIn("case", extractor_kinds)
             self.assertIn("term", extractor_kinds)
             self.assertIn("counter-example", extractor_kinds)
+            extractor_run_log = extraction_result.get("extractor_run_log")
+            self.assertIsInstance(extractor_run_log, list)
+            logged_extractors = {
+                stage.get("extractor_kind")
+                for stage in extractor_run_log
+                if isinstance(stage, dict)
+            }
+            self.assertTrue(
+                {
+                    "framework",
+                    "principle",
+                    "evidence",
+                    "case",
+                    "counter-example",
+                    "term",
+                }.issubset(logged_extractors)
+            )
+            framework_stage = next(
+                stage
+                for stage in extractor_run_log
+                if stage.get("extractor_kind") == "framework"
+            )
+            self.assertEqual(framework_stage["pass_kind"], "deterministic")
+            self.assertEqual(framework_stage["prompt_key"], "heuristic-framework")
+            self.assertEqual(framework_stage["input_chunk_ids"], ["chunk-001"])
+            self.assertTrue(framework_stage["output_node_ids"])
             extraction_kinds = {
                 entity.get("extraction_kind")
                 for entity in [*extraction_result["nodes"], *extraction_result["edges"]]
@@ -841,6 +1054,11 @@ class CandidatePipelineTests(unittest.TestCase):
             )
             self.assertIn("mock_llm_patch_applied", extraction_result["warnings"])
             self.assertEqual(extraction_result["llm_drafting"]["provider"], "mock")
+            llm_stage = extraction_result["extractor_run_log"][-1]
+            self.assertEqual(llm_stage["pass_kind"], "llm_patch")
+            self.assertEqual(llm_stage["extractor_kind"], "llm-patch")
+            self.assertEqual(llm_stage["prompt_key"], "llm-extraction-patch")
+            self.assertIn("llm::0001", llm_stage["output_node_ids"])
 
     def test_materialize_extraction_graph_cli_emits_graph_v02(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -1148,6 +1366,140 @@ class CandidatePipelineTests(unittest.TestCase):
             seeds[0].metadata["routing_evidence"]["workflow_promotion_blocked_by_evidence"]
         )
 
+    def test_mine_candidate_seeds_emits_additional_candidate_from_skill_seed(self) -> None:
+        bundle = SimpleNamespace(
+            profile={
+                "seed_node_types": ["principle_signal"],
+                "candidate_kinds": {
+                    "general_agentic": {
+                        "workflow_certainty": "medium",
+                        "context_certainty": "high",
+                    },
+                    "workflow_script": {
+                        "workflow_certainty": "high",
+                        "context_certainty": "high",
+                    },
+                },
+                "routing_rules": [
+                    {
+                        "when": {
+                            "workflow_certainty": "high",
+                            "context_certainty": "high",
+                        },
+                        "recommended_execution_mode": "workflow_script",
+                        "disposition": "workflow_script_candidate",
+                    },
+                    {
+                        "when": {
+                            "workflow_certainty": "medium",
+                            "context_certainty": "high",
+                        },
+                        "recommended_execution_mode": "llm_agentic",
+                        "disposition": "skill_candidate",
+                    },
+                ],
+            },
+            skills={},
+            manifest={
+                "bundle_id": "synthetic-extraction-bundle",
+                "graph": {"graph_hash": "sha256:synthetic"},
+            },
+        )
+        graph = normalize_graph(
+            {
+                "graph_version": "kiu.graph/v0.2",
+                "source_snapshot": "synthetic-source",
+                "graph_hash": "sha256:synthetic",
+                "nodes": [
+                    {
+                        "id": "principle::0004",
+                        "type": "principle_signal",
+                        "label": "Margin Of Safety Sizing Source Note",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 5, "line_end": 5},
+                        "extraction_kind": "EXTRACTED",
+                        "routing_hints": {
+                            "context_cues": 1,
+                            "matched_keywords": ["价格", "价值"],
+                            "evidence_chunk_ids": ["synthetic:0004"],
+                        },
+                        "skill_seed": {
+                            "title": "Margin Of Safety Sizing Source Note",
+                            "trace_refs": ["traces/canonical/margin.yaml"],
+                            "eval_summary": {
+                                "kiu_test": {
+                                    "trigger_test": "pass",
+                                    "fire_test": "pending",
+                                    "boundary_test": "pass",
+                                }
+                            },
+                            "additional_candidates": [
+                                {
+                                    "candidate_id": "value-assessment-source-note",
+                                    "skill_seed": {
+                                        "title": "Value Assessment Source Note",
+                                        "trace_refs": ["traces/canonical/value.yaml"],
+                                        "eval_summary": {
+                                            "kiu_test": {
+                                                "trigger_test": "pass",
+                                                "fire_test": "pending",
+                                                "boundary_test": "pass",
+                                            }
+                                        },
+                                    },
+                                }
+                            ],
+                        },
+                    },
+                    {
+                        "id": "evidence::0004",
+                        "type": "chunk_evidence",
+                        "label": "先评估价值，再判断价格是否有足够安全边际。",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 6, "line_end": 7},
+                        "extraction_kind": "EXTRACTED",
+                    },
+                ],
+                "edges": [
+                    {
+                        "id": "supported-by::principle::0004->evidence::0004",
+                        "type": "supported_by_evidence",
+                        "from": "principle::0004",
+                        "to": "evidence::0004",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 6, "line_end": 7},
+                        "extraction_kind": "EXTRACTED",
+                        "confidence": 1.0,
+                    }
+                ],
+                "communities": [],
+            }
+        )
+
+        seeds = mine_candidate_seeds(bundle, graph)
+        seed_map = {seed.candidate_id: seed for seed in seeds}
+
+        self.assertEqual(
+            set(seed_map),
+            {"margin-of-safety-sizing-source-note", "value-assessment-source-note"},
+        )
+        self.assertEqual(
+            seed_map["value-assessment-source-note"].primary_node_id,
+            "principle::0004",
+        )
+        self.assertEqual(
+            seed_map["value-assessment-source-note"].metadata["disposition"],
+            "skill_candidate",
+        )
+        self.assertEqual(
+            seed_map["value-assessment-source-note"].metadata["recommended_execution_mode"],
+            "llm_agentic",
+        )
+        self.assertEqual(
+            seed_map["value-assessment-source-note"].seed_content["title"],
+            "Value Assessment Source Note",
+        )
+
     def test_mine_candidate_seeds_merges_duplicate_candidate_ids_and_preserves_support(self) -> None:
         bundle = SimpleNamespace(
             profile={
@@ -1323,6 +1675,288 @@ class CandidatePipelineTests(unittest.TestCase):
             seeds[0].metadata["routing_evidence"]["evidence_chunk_ids"],
             ["synthetic:0002", "synthetic:0003"],
         )
+
+    def test_mine_candidate_seeds_downgrades_workflow_when_verification_not_ready(self) -> None:
+        bundle = SimpleNamespace(
+            profile={
+                "seed_node_types": ["principle_signal"],
+                "candidate_kinds": {
+                    "general_agentic": {
+                        "workflow_certainty": "medium",
+                        "context_certainty": "high",
+                    },
+                    "workflow_script": {
+                        "workflow_certainty": "high",
+                        "context_certainty": "high",
+                    },
+                },
+                "routing_rules": [
+                    {
+                        "when": {
+                            "workflow_certainty": "high",
+                            "context_certainty": "high",
+                        },
+                        "recommended_execution_mode": "workflow_script",
+                        "disposition": "workflow_script_candidate",
+                    },
+                    {
+                        "when": {
+                            "workflow_certainty": "medium",
+                            "context_certainty": "high",
+                        },
+                        "recommended_execution_mode": "llm_agentic",
+                        "disposition": "skill_candidate",
+                    },
+                ],
+            },
+            skills={},
+            manifest={
+                "bundle_id": "synthetic-extraction-bundle",
+                "graph": {"graph_hash": "sha256:synthetic"},
+            },
+        )
+        graph = normalize_graph(
+            {
+                "graph_version": "kiu.graph/v0.2",
+                "source_snapshot": "synthetic-source",
+                "graph_hash": "sha256:synthetic",
+                "nodes": [
+                    {
+                        "id": "principle::0010",
+                        "type": "principle_signal",
+                        "label": "Fast Checklist",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 5, "line_end": 5},
+                        "extraction_kind": "EXTRACTED",
+                        "routing_hints": {
+                            "workflow_cues": 3,
+                            "context_cues": 2,
+                            "matched_keywords": ["第一步", "清单"],
+                            "evidence_chunk_ids": ["synthetic:0010"],
+                        },
+                    },
+                    {
+                        "id": "evidence::0010",
+                        "type": "chunk_evidence",
+                        "label": "先检查输入，再决定是否执行后续步骤。",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 6, "line_end": 7},
+                        "extraction_kind": "EXTRACTED",
+                    },
+                ],
+                "edges": [
+                    {
+                        "id": "supported-by::principle::0010->evidence::0010",
+                        "type": "supported_by_evidence",
+                        "from": "principle::0010",
+                        "to": "evidence::0010",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 6, "line_end": 7},
+                        "extraction_kind": "EXTRACTED",
+                        "confidence": 1.0,
+                    }
+                ],
+                "communities": [],
+            }
+        )
+
+        seeds = mine_candidate_seeds(bundle, graph)
+
+        self.assertEqual(len(seeds), 1)
+        self.assertEqual(seeds[0].candidate_kind, "general_agentic")
+        self.assertEqual(seeds[0].metadata["recommended_execution_mode"], "llm_agentic")
+        self.assertEqual(seeds[0].metadata["disposition"], "skill_candidate")
+        self.assertTrue(
+            seeds[0].metadata["routing_evidence"]["workflow_promotion_blocked_by_verification"]
+        )
+        self.assertFalse(seeds[0].metadata["verification"]["workflow_ready"])
+
+    def test_mine_candidate_seeds_does_not_promote_single_checklist_cue_to_workflow(self) -> None:
+        bundle = SimpleNamespace(
+            profile={
+                "seed_node_types": ["principle_signal"],
+                "candidate_kinds": {
+                    "general_agentic": {
+                        "workflow_certainty": "medium",
+                        "context_certainty": "high",
+                    },
+                    "workflow_script": {
+                        "workflow_certainty": "high",
+                        "context_certainty": "high",
+                    },
+                },
+                "routing_rules": [
+                    {
+                        "when": {
+                            "workflow_certainty": "high",
+                            "context_certainty": "high",
+                        },
+                        "recommended_execution_mode": "workflow_script",
+                        "disposition": "workflow_script_candidate",
+                    },
+                    {
+                        "when": {
+                            "workflow_certainty": "medium",
+                            "context_certainty": "high",
+                        },
+                        "recommended_execution_mode": "llm_agentic",
+                        "disposition": "skill_candidate",
+                    },
+                ],
+            },
+            skills={},
+            manifest={
+                "bundle_id": "synthetic-extraction-bundle",
+                "graph": {"graph_hash": "sha256:synthetic"},
+            },
+        )
+        graph = normalize_graph(
+            {
+                "graph_version": "kiu.graph/v0.2",
+                "source_snapshot": "synthetic-source",
+                "graph_hash": "sha256:synthetic",
+                "nodes": [
+                    {
+                        "id": "principle::0011",
+                        "type": "principle_signal",
+                        "label": "Bias Audit Checklist Note",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 5, "line_end": 5},
+                        "extraction_kind": "EXTRACTED",
+                        "routing_hints": {
+                            "workflow_cues": 1,
+                            "context_cues": 1,
+                            "matched_keywords": ["checklist"],
+                            "evidence_chunk_ids": ["synthetic:0011"],
+                        },
+                    },
+                    {
+                        "id": "evidence::0011a",
+                        "type": "chunk_evidence",
+                        "label": "列出偏误清单，但仍需要判断当下情境是否真的适用。",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 6, "line_end": 7},
+                        "extraction_kind": "EXTRACTED",
+                    },
+                    {
+                        "id": "evidence::0011b",
+                        "type": "chunk_evidence",
+                        "label": "如果约束条件不完整，这类审计不能直接退化成脚本步骤。",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 8, "line_end": 9},
+                        "extraction_kind": "EXTRACTED",
+                    },
+                ],
+                "edges": [
+                    {
+                        "id": "supported-by::principle::0011->evidence::0011a",
+                        "type": "supported_by_evidence",
+                        "from": "principle::0011",
+                        "to": "evidence::0011a",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 6, "line_end": 7},
+                        "extraction_kind": "EXTRACTED",
+                        "confidence": 1.0,
+                    },
+                    {
+                        "id": "supported-by::principle::0011->evidence::0011b",
+                        "type": "supported_by_evidence",
+                        "from": "principle::0011",
+                        "to": "evidence::0011b",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 8, "line_end": 9},
+                        "extraction_kind": "EXTRACTED",
+                        "confidence": 1.0,
+                    },
+                ],
+                "communities": [],
+            }
+        )
+
+        seeds = mine_candidate_seeds(bundle, graph)
+
+        self.assertEqual(len(seeds), 1)
+        self.assertEqual(seeds[0].candidate_kind, "general_agentic")
+        self.assertEqual(seeds[0].metadata["recommended_execution_mode"], "llm_agentic")
+        self.assertEqual(seeds[0].metadata["disposition"], "skill_candidate")
+        self.assertFalse(
+            seeds[0].metadata["routing_evidence"]["workflow_requires_multi_signal"]
+        )
+
+    def test_mine_candidate_seed_assessment_rejects_weak_extraction_before_promotion(self) -> None:
+        bundle = SimpleNamespace(
+            profile={
+                "seed_node_types": ["principle_signal"],
+                "candidate_kinds": {
+                    "general_agentic": {
+                        "workflow_certainty": "medium",
+                        "context_certainty": "high",
+                    },
+                    "workflow_script": {
+                        "workflow_certainty": "high",
+                        "context_certainty": "high",
+                    },
+                },
+                "routing_rules": [
+                    {
+                        "when": {
+                            "workflow_certainty": "high",
+                            "context_certainty": "high",
+                        },
+                        "recommended_execution_mode": "workflow_script",
+                        "disposition": "workflow_script_candidate",
+                    },
+                    {
+                        "when": {
+                            "workflow_certainty": "medium",
+                            "context_certainty": "high",
+                        },
+                        "recommended_execution_mode": "llm_agentic",
+                        "disposition": "skill_candidate",
+                    },
+                ],
+            },
+            skills={},
+            manifest={
+                "bundle_id": "synthetic-extraction-bundle",
+                "graph": {"graph_hash": "sha256:synthetic"},
+            },
+        )
+        graph = normalize_graph(
+            {
+                "graph_version": "kiu.graph/v0.2",
+                "source_snapshot": "synthetic-source",
+                "graph_hash": "sha256:synthetic",
+                "nodes": [
+                    {
+                        "id": "principle::0009",
+                        "type": "principle_signal",
+                        "label": "Verbose Checklist Without Evidence",
+                        "source_file": "sources/synthetic.md",
+                        "source_location": {"line_start": 5, "line_end": 5},
+                        "extraction_kind": "EXTRACTED",
+                        "routing_hints": {
+                            "workflow_cues": 3,
+                            "context_cues": 1,
+                            "matched_keywords": ["步骤", "清单"],
+                            "evidence_chunk_ids": ["synthetic:0009"],
+                        },
+                    }
+                ],
+                "edges": [],
+                "communities": [],
+            }
+        )
+
+        assessment = mine_candidate_seed_assessment(bundle, graph)
+
+        self.assertEqual(assessment["summary"]["accepted_candidate_count"], 0)
+        self.assertEqual(assessment["summary"]["rejected_candidate_count"], 1)
+        self.assertEqual(mine_candidate_seeds(bundle, graph), [])
+        rejection = assessment["rejected"][0]
+        self.assertEqual(rejection["candidate_id"], "verbose-checklist-without-evidence")
+        self.assertIn("missing_extracted_evidence", rejection["reasons"])
+        self.assertFalse(rejection["verification"]["passed"])
 
     def test_scaffold_extraction_bundle_cli_connects_extracted_graph_to_candidate_pipeline(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -1594,8 +2228,18 @@ class CandidatePipelineTests(unittest.TestCase):
 
             review_doc = json.loads(review_path.read_text(encoding="utf-8"))
             self.assertIn("overall_score_100", review_doc)
-            self.assertGreaterEqual(review_doc["generated_bundle"]["skill_count"], 2)
+            self.assertGreaterEqual(review_doc["generated_bundle"]["skill_count"], 1)
             self.assertGreaterEqual(review_doc["generated_bundle"]["workflow_candidate_count"], 2)
+
+            verification_summary = json.loads(
+                (run_root / "reports" / "verification-summary.json").read_text(encoding="utf-8")
+            )
+            self.assertGreaterEqual(verification_summary["accepted_candidate_count"], 1)
+            self.assertIn("accepted", verification_summary)
+            rejection_log = yaml.safe_load(
+                (run_root / "reports" / "rejection-log.yaml").read_text(encoding="utf-8")
+            )
+            self.assertIn("rejected", rejection_log)
 
     def test_run_book_pipeline_cli_emits_non_placeholder_candidate_and_usage_review(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -1630,12 +2274,26 @@ class CandidatePipelineTests(unittest.TestCase):
             usage_root = run_root / "usage-review"
             usage_docs = sorted(usage_root.glob("*.yaml"))
             self.assertTrue(usage_docs)
+            usage_doc = yaml.safe_load(usage_docs[0].read_text(encoding="utf-8"))
+            structured_output = usage_doc["structured_output"]
+            self.assertNotIn(
+                structured_output["next_action"],
+                {
+                    "collect_more_info",
+                    "gather_more_info",
+                    "review_more",
+                    "review_source_evidence",
+                },
+            )
+            self.assertTrue(structured_output["evidence_to_check"])
+            self.assertIn("decline_reason", structured_output)
 
             production_quality = json.loads(
                 (run_root / "reports" / "production-quality.json").read_text(encoding="utf-8")
             )
             skill_report = production_quality["skills"][0]
             self.assertNotIn("placeholder_contract", skill_report["blockers"])
+            self.assertNotIn("generic_trigger_contract", skill_report["blockers"])
             self.assertNotIn("placeholder_rationale", skill_report["blockers"])
             self.assertNotIn("missing_trace_examples", skill_report["blockers"])
             self.assertGreaterEqual(skill_report["artifact_quality"], 0.55)
@@ -1657,6 +2315,106 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertGreater(tri_state_effectiveness["inferred_edge_reference_ratio"], 0.0)
             self.assertGreater(tri_state_effectiveness["ambiguous_node_reference_ratio"], 0.0)
             self.assertGreater(review_doc["usage_outputs"]["score_100"], 0.0)
+            self.assertEqual(
+                review_doc["usage_outputs"]["failure_tag_counts"].get("next_step_blunt", 0),
+                0,
+            )
+            self.assertNotIn("next_step_quality_weak", review_doc["release_gate"]["reasons"])
+            self.assertTrue(review_doc["release_gate"]["overall_ready"])
+
+            generated_manifest = yaml.safe_load(
+                (run_root / "bundle" / "manifest.yaml").read_text(encoding="utf-8")
+            )
+            first_skill_entry = generated_manifest["skills"][0]
+            first_skill_dir = run_root / "bundle" / first_skill_entry["path"]
+            first_skill_markdown = (first_skill_dir / "SKILL.md").read_text(encoding="utf-8")
+            contract = extract_yaml_section(parse_sections(first_skill_markdown).get("Contract", ""))
+            trigger = contract.get("trigger", {})
+            boundary = contract.get("boundary", {})
+            intake = contract.get("intake", {})
+            judgment_schema = contract.get("judgment_schema", {})
+            output_schema = judgment_schema.get("output", {}).get("schema", {})
+
+            for pattern in trigger.get("patterns", []):
+                self.assertNotIn("_needed", pattern)
+                self.assertNotIn("_decision_window", pattern)
+            for exclusion in trigger.get("exclusions", []):
+                self.assertNotIn("_out_of_scope", exclusion)
+            self.assertIn("concept_query_only", trigger.get("exclusions", []))
+            self.assertIn("scenario_missing_decision_context", boundary.get("do_not_fire_when", []))
+            self.assertIn("disconfirming_evidence_present", boundary.get("fails_when", []))
+
+            intake_names = [
+                item.get("name")
+                for item in intake.get("required", [])
+                if isinstance(item, dict)
+            ]
+            self.assertIn("disconfirming_evidence", intake_names)
+            self.assertIn("decision_scope", intake_names)
+            self.assertIn("evidence_to_check", output_schema)
+            self.assertIn("decline_reason", output_schema)
+
+            scenario_families_path = first_skill_dir / "usage" / "scenarios.yaml"
+            self.assertTrue(scenario_families_path.exists())
+            scenario_families = yaml.safe_load(
+                scenario_families_path.read_text(encoding="utf-8")
+            )
+            self.assertIn("should_trigger", scenario_families)
+            self.assertIn("should_not_trigger", scenario_families)
+            self.assertIn("edge_case", scenario_families)
+            self.assertIn("refusal", scenario_families)
+            self.assertIn("Scenario families:", first_skill_markdown)
+
+    def test_run_book_pipeline_cli_accepts_source_markdown_outside_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            output_root = tmp_root / "artifacts"
+            source_path = tmp_root / "external-source.md"
+            source_path.write_text(
+                (
+                    "# External Fixture Source\n\n"
+                    "## Decision Boundary Note\n\n"
+                    "Checklist discipline matters only when the scenario already contains a concrete decision and explicit constraints.\n\n"
+                    "## Failure-First Review\n\n"
+                    "Before acting, enumerate failure modes and refuse the move if the remaining downside is still unacceptable.\n"
+                ),
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "run_book_pipeline.py"),
+                    "--input",
+                    str(source_path),
+                    "--bundle-id",
+                    "external-source-bundle",
+                    "--source-id",
+                    "external-fixture",
+                    "--run-id",
+                    "outside-repo-source",
+                    "--output-root",
+                    str(output_root),
+                    "--max-chars",
+                    "220",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            payload = json.loads(result.stdout)
+            source_bundle_root = Path(payload["source_bundle_root"])
+            copied_source = source_bundle_root / "sources" / source_path.name
+            self.assertTrue(copied_source.exists())
+
+            source_chunks_doc = json.loads(
+                (source_bundle_root / "ingestion" / "source-chunks-v0.1.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(source_chunks_doc["source_file"], f"sources/{source_path.name}")
 
     def test_build_source_chunks_cli_emits_valid_chunks_for_fixture_source(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

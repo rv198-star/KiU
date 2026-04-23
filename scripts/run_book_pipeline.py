@@ -18,7 +18,7 @@ from kiu_pipeline.local_paths import resolve_output_root
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run the KiU v0.6 raw-book pipeline from markdown to review artifacts.",
+        description="Run the KiU v0.6 raw-book pipeline from markdown to BOOK_OVERVIEW, graph, and review artifacts.",
     )
     parser.add_argument("--input", required=True, help="Path to the source markdown file.")
     parser.add_argument("--bundle-id", required=True, help="Logical bundle id for source-chunks.")

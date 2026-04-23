@@ -160,6 +160,38 @@ class GraphMergeTests(unittest.TestCase):
             self.assertIn("extraction_kind", first_edge)
             self.assertIn("confidence", first_edge)
 
+    def test_merge_bundle_graphs_derives_cross_bundle_inferred_links(self) -> None:
+        merged = merge_bundle_graphs(
+            [
+                ROOT / "bundles" / "poor-charlies-almanack-v0.1",
+                ROOT / "bundles" / "engineering-postmortem-v0.1",
+            ]
+        )
+
+        inferred_edges = [
+            edge
+            for edge in merged["edges"]
+            if edge.get("cross_bundle")
+            and edge.get("extraction_kind") in {"INFERRED", "AMBIGUOUS"}
+        ]
+
+        self.assertGreater(len(inferred_edges), 0)
+        margin_to_blast = next(
+            (
+                edge
+                for edge in inferred_edges
+                if edge["from"] == "poor-charlies-almanack-v0.1::n_margin_principle"
+                and edge["to"] == "engineering-postmortem-v0.1::n_blast_radius_principle"
+            ),
+            None,
+        )
+        self.assertIsNotNone(margin_to_blast)
+        assert margin_to_blast is not None
+        self.assertLess(float(margin_to_blast["confidence"]), 1.0)
+        self.assertGreater(float(margin_to_blast["confidence"]), 0.0)
+        self.assertTrue(margin_to_blast.get("support_refs"))
+        self.assertIn("shared_concepts", margin_to_blast)
+
 
 if __name__ == "__main__":
     unittest.main()
