@@ -4,7 +4,7 @@
 
 ### Planned For 0.5.1
 - Correct the version narrative so `0.5.0` remains the foundation closure while `0.5.1` becomes the explicit `cangjie-skill` gap-closure patch.
-- Harden the same-source benchmark release gate so artifact lead alone is insufficient; same-scenario usage delta and weighted pass-rate superiority must also be proven.
+- Harden the same-source benchmark release gate so artifact lead alone is insufficient; `0.5.1` must show slight but explicit same-scenario superiority: positive usage delta, `usage_winner = kiu`, weighted pass-rate parity-or-better, and no boundary drift.
 - Archive a fresh Poor Charlie scorecard that records benchmark paths, usage deltas, and workflow-boundary preservation evidence for the `0.5.1` release decision.
 
 ## [0.5.0] - 2026-04-22

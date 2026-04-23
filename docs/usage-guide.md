@@ -115,12 +115,17 @@ same-scenario usage 现在还会额外输出诊断字段：
 `v0.5.1` 的 release gate 不是“artifact 领先即可”，而是必须同时满足：
 
 - `artifact_score_delta_100 > 0`
-- same-scenario `average_usage_delta >= 0.0`
-- same-scenario `kiu_weighted_pass_rate > reference_weighted_pass_rate`
+- same-scenario `average_usage_delta > 0.0`
+- same-scenario `usage_winner = kiu`
+- same-scenario `kiu_weighted_pass_rate >= reference_weighted_pass_rate`
 - `workflow_vs_agentic_boundary` 保持稳定，不能靠误降 skill 来刷赢 benchmark
 
-如果 usage 只是打平或者落后，即使 artifact 层领先，也不能宣称已经补齐
-`cangjie-skill` 这条版本目标。
+这个 gate 在 `2026-04-24` 被明确修订成“轻微但明确超越 reference”，原因是原先
+单独要求 `weighted_pass_rate` 严格大于 reference，在双方都达到 `1.0` 时会变成
+不可达条件。
+
+如果 usage 只是打平、落后，或者虽然 pass rate 打平但综合赢家仍不是 `kiu`，即使
+artifact 层领先，也不能宣称已经补齐 `cangjie-skill` 这条版本目标。
 
 当前固定的内部评分卡：
 
