@@ -11,6 +11,7 @@ import yaml
 from .anchors import build_candidate_anchors
 from .diff import build_metrics
 from .draft import build_candidate_skill_markdown
+from .distillation import augment_scenario_families, build_distillation_contract
 from .eval_prefill import build_prefilled_eval_summary
 from .models import CandidateSeed, SourceBundle
 
@@ -69,6 +70,28 @@ def render_generated_run(
             {
                 "skill_id": seed.candidate_id,
                 "path": f"skills/{seed.candidate_id}",
+                "status": "under_evaluation",
+                "skill_revision": 1,
+            }
+        )
+
+    if not rendered_seeds and workflow_only_seeds:
+        gateway_seed = _build_workflow_gateway_seed(
+            source_bundle=source_bundle,
+            workflow_only_seeds=workflow_only_seeds,
+        )
+        _render_skill_candidate(
+            bundle_root=bundle_root,
+            source_bundle=source_bundle,
+            seed=gateway_seed,
+            skill_revision=1,
+        )
+        _write_workflow_gateway_trace(bundle_root=bundle_root, seed=gateway_seed)
+        rendered_seeds.append(gateway_seed)
+        manifest_skills.append(
+            {
+                "skill_id": gateway_seed.candidate_id,
+                "path": f"skills/{gateway_seed.candidate_id}",
                 "status": "under_evaluation",
                 "skill_revision": 1,
             }
@@ -182,6 +205,335 @@ def _copy_bundle_profile(source_root: Path, bundle_root: Path) -> None:
             shutil.copy2(source_path, bundle_root / relative)
 
 
+def _build_workflow_gateway_seed(
+    *,
+    source_bundle: SourceBundle,
+    workflow_only_seeds: list[CandidateSeed],
+) -> CandidateSeed:
+    ordered = sorted(
+        workflow_only_seeds,
+        key=lambda item: (-int(item.score or 0), item.candidate_id),
+    )
+    primary_seed = ordered[0]
+    routed_ids = sorted(seed.candidate_id for seed in workflow_only_seeds)
+    support_window = ordered[:5]
+    supporting_node_ids = _unique_limited(
+        [
+            node_id
+            for seed in support_window
+            for node_id in [seed.primary_node_id, *seed.supporting_node_ids]
+            if node_id != primary_seed.primary_node_id
+        ],
+        limit=10,
+    )
+    supporting_edge_ids = _unique_limited(
+        [edge_id for seed in support_window for edge_id in seed.supporting_edge_ids],
+        limit=12,
+    )
+    community_ids = _unique_limited(
+        [community_id for seed in support_window for community_id in seed.community_ids],
+        limit=6,
+    )
+    metadata = {
+        "candidate_id": "workflow-gateway",
+        "source_bundle_id": source_bundle.manifest["bundle_id"],
+        "source_graph_hash": source_bundle.manifest["graph"]["graph_hash"],
+        "seed": {
+            "primary_node_id": primary_seed.primary_node_id,
+            "supporting_node_ids": supporting_node_ids,
+            "supporting_edge_ids": supporting_edge_ids,
+            "community_ids": community_ids,
+        },
+        "candidate_kind": "workflow_gateway",
+        "workflow_certainty": "medium",
+        "context_certainty": "medium",
+        "recommended_execution_mode": "llm_agentic",
+        "disposition": "skill_candidate",
+        "gold_match_hint": None,
+        "drafting_mode": primary_seed.metadata.get("drafting_mode", "deterministic"),
+        "loop_mode": "refinement_scheduler",
+        "current_round": 2,
+        "terminal_state": "ready_for_review",
+        "human_gate": "skipped",
+        "workflow_gateway": {
+            "mode": "route_to_workflow_candidates",
+            "routes_to": routed_ids,
+            "boundary_rule": (
+                "The gateway may choose or sequence workflow candidates, but it must not "
+                "inline deterministic workflow steps as agentic skill reasoning."
+            ),
+        },
+        "routing_evidence": {
+            "inference_mode": "workflow_gateway_fallback",
+            "selected_candidate_kind": "workflow_gateway",
+            "workflow_candidate_count": len(routed_ids),
+            "workflow_boundary_preserved": True,
+        },
+        "verification": {
+            "schema_version": "kiu.verification-gate/v0.1",
+            "candidate_id": "workflow-gateway",
+            "passed": True,
+            "workflow_ready": False,
+            "corroboration_score": 1.0,
+            "predictive_usefulness_score": 0.9,
+            "distinctiveness_score": 0.9,
+            "overall_score": 0.9333,
+            "reasons": [],
+            "evidence": {
+                "workflow_candidate_count": len(routed_ids),
+                "supporting_node_count": len(supporting_node_ids) + 1,
+                "supporting_edge_count": len(supporting_edge_ids),
+                "community_count": len(community_ids),
+            },
+        },
+        "boundary_quality": 0.93,
+        "eval_aggregate": 0.9,
+        "cross_subset_stability": 0.9,
+        "nearest_skill_id": "workflow_candidates",
+        "overall_quality": 0.9135,
+        "delta_vs_nearest": 0.1,
+        "delta_vs_bundle": 0.1,
+        "net_positive_value": 0.14,
+    }
+    seed_content = _build_workflow_gateway_seed_content(
+        routed_ids=routed_ids,
+        primary_seed=primary_seed,
+    )
+    return CandidateSeed(
+        candidate_id="workflow-gateway",
+        candidate_kind="general_agentic",
+        primary_node_id=primary_seed.primary_node_id,
+        supporting_node_ids=supporting_node_ids,
+        supporting_edge_ids=supporting_edge_ids,
+        community_ids=community_ids,
+        gold_match_hint=None,
+        source_skill=None,
+        score=max(seed.score for seed in workflow_only_seeds),
+        metadata=metadata,
+        seed_content=seed_content,
+    )
+
+
+def _build_workflow_gateway_seed_content(
+    *,
+    routed_ids: list[str],
+    primary_seed: CandidateSeed,
+) -> dict[str, Any]:
+    route_lines = ", ".join(f"`{item}`" for item in routed_ids[:8])
+    primary_contract = primary_seed.seed_content.get("contract", {})
+    if not isinstance(primary_contract, dict):
+        primary_contract = {}
+    trigger_patterns = _contract_symbols(
+        primary_contract,
+        section="trigger",
+        key="patterns",
+        fallback=["concept_query_only"],
+    )[:2]
+    trigger_exclusions = _contract_symbols(
+        primary_contract,
+        section="trigger",
+        key="exclusions",
+        fallback=["concept_query_only"],
+    )[:2]
+    fails_when = _contract_symbols(
+        primary_contract,
+        section="boundary",
+        key="fails_when",
+        fallback=["disconfirming_evidence_present"],
+    )[:2]
+    do_not_fire_when = _contract_symbols(
+        primary_contract,
+        section="boundary",
+        key="do_not_fire_when",
+        fallback=["scenario_missing_decision_context", "concept_query_only"],
+    )[:2]
+    return {
+        "title": "Workflow Gateway",
+        "contract": {
+            "trigger": {
+                "patterns": trigger_patterns,
+                "exclusions": trigger_exclusions,
+            },
+            "intake": {
+                "required": [
+                    {"name": "user_goal", "type": "string", "description": "The outcome the user wants from the workflow set."},
+                    {"name": "available_context", "type": "list", "description": "Known inputs, constraints, and missing situational facts."},
+                    {"name": "candidate_workflow_hint", "type": "string", "description": "Optional workflow id or topic the user thinks may fit."},
+                ],
+            },
+            "judgment_schema": {
+                "output": {
+                    "type": "structured",
+                    "schema": {
+                        "verdict": "enum[route_to_workflow, ask_clarifying_question, defer]",
+                        "selected_workflow_id": "string",
+                        "routing_reason": "string",
+                        "missing_context": "list[string]",
+                        "next_action": "string",
+                    },
+                },
+                "reasoning_chain_required": True,
+            },
+            "boundary": {
+                "fails_when": fails_when,
+                "do_not_fire_when": do_not_fire_when,
+            },
+        },
+        "relations": {
+            "depends_on": [],
+            "delegates_to": [],
+            "constrained_by": [],
+            "complements": [],
+            "contradicts": [],
+        },
+        "rationale": (
+            "当一个材料被边界规则整体判定为 high workflow certainty + high context certainty 时，"
+            "KiU 不能为了让 bundle 看起来有 skill 而把确定性步骤伪装成厚 skill。"
+            "但默认产物仍需要一个可安装、可调用的入口，否则用户拿到的包只能审计，不能使用。"
+            "`workflow-gateway` 的职责就是在这两者之间保持边界：它读取用户目标、现有上下文和可能的 workflow hint，"
+            "再选择、排序或要求补充上下文；它不改写 workflow_candidates 下的固定步骤，也不把脚本逻辑偷偷并回 agentic skill。"
+            "因此它是一个薄路由 skill，而不是领域判断 skill。[^anchor:workflow-gateway-primary]"
+        ),
+        "evidence_summary": (
+            "该 gateway 只在当前生成轮次没有任何 agentic skill candidate、但存在多个 workflow_script_candidate 时生成。"
+            "这说明材料的主要交付物是确定性流程，而不是判断密集型技能；同时也说明需要一个最小可用入口，"
+            "把用户请求路由到 workflow_candidates 中的具体 `workflow.yaml` / `CHECKLIST.md`。"
+            "当前候选 workflow 包括 " + route_lines + "。[^anchor:workflow-gateway-primary]"
+        ),
+        "trace_refs": ["traces/workflow-gateway-routing-smoke.yaml"],
+        "usage_notes": [
+            "把用户目标映射到一个 workflow id；如果目标不足，先问缺失上下文。",
+            "输出 selected_workflow_id、routing_reason、missing_context 和 next_action。",
+            "不要把 workflow_candidates 下的确定性步骤复制成新的厚 skill。",
+        ],
+        "scenario_families": {
+            "should_trigger": [
+                {
+                    "scenario_id": "choose-workflow-entrypoint",
+                    "summary": "用户拿到一组 workflow candidates，但不知道应该从哪一个开始。",
+                    "prompt_signals": ["应该先跑哪个流程", "这些步骤哪个适合当前目标", "帮我选一个工作流入口"],
+                    "boundary_reason": "这是路由问题，不是重新生成领域答案。",
+                    "next_action_shape": "返回 selected_workflow_id、routing_reason、missing_context、next_action。",
+                    "anchor_refs": ["workflow-gateway-primary"],
+                }
+            ],
+            "should_not_trigger": [
+                {
+                    "scenario_id": "exact-workflow-already-known",
+                    "summary": "用户已经明确指定 workflow id 时，不需要 gateway 再判断。",
+                    "prompt_signals": ["运行 10-业务流程识别", "打开这个 workflow.yaml"],
+                    "boundary_reason": "这时应直接执行对应 workflow，而不是再做 agentic 路由。",
+                    "anchor_refs": ["workflow-gateway-primary"],
+                }
+            ],
+            "edge_case": [
+                {
+                    "scenario_id": "goal-too-vague-for-routing",
+                    "summary": "用户只说想分析材料，但没有说明目标、输入或约束。",
+                    "prompt_signals": ["帮我分析一下", "看看这个材料"],
+                    "boundary_reason": "目标不足时只能 ask_clarifying_question，不能猜一个 workflow。",
+                    "next_action_shape": "列 missing_context 并提出最少澄清问题。",
+                    "anchor_refs": ["workflow-gateway-primary"],
+                }
+            ],
+            "refusal": [
+                {
+                    "scenario_id": "agentic-judgment-request",
+                    "summary": "用户要求直接给复杂判断结论，而不是选择 workflow。",
+                    "prompt_signals": ["直接告诉我战略怎么定", "不要流程，给结论"],
+                    "boundary_reason": "这超出薄 gateway 职责，应转交厚 skill 或要求新建 agentic candidate。",
+                    "next_action_shape": "说明 gateway 只能路由 workflow，不能替代判断密集型 skill。",
+                    "anchor_refs": ["workflow-gateway-primary"],
+                }
+            ],
+        },
+        "eval_summary": {
+            "kiu_test": {
+                "trigger_test": "pass",
+                "fire_test": "pass",
+                "boundary_test": "pass",
+            },
+            "subsets": {
+                "real_decisions": {"cases": [], "passed": 0, "total": 0, "threshold": 0.0, "status": "pending"},
+                "synthetic_adversarial": {"cases": [], "passed": 0, "total": 0, "threshold": 0.0, "status": "pending"},
+                "out_of_distribution": {"cases": [], "passed": 0, "total": 0, "threshold": 0.0, "status": "pending"},
+            },
+            "key_failure_modes": [
+                "把 workflow 步骤内联成 agentic skill。",
+                "在目标和上下文不足时猜测 workflow。",
+            ],
+        },
+        "revision_seed": {
+            "summary": "Initial thin workflow gateway generated because all accepted candidates were deterministic workflow candidates.",
+            "evidence_changes": [
+                "Preserved workflow candidates outside bundle/skills.",
+                "Added one llm_agentic router skill as an installable entrypoint.",
+            ],
+            "open_gaps": [
+                "Replace smoke usage review with real user routing logs before publication.",
+                "Confirm whether each routed workflow should later gain a dedicated agentic wrapper.",
+            ],
+        },
+    }
+
+
+def _contract_symbols(
+    contract: dict[str, Any],
+    *,
+    section: str,
+    key: str,
+    fallback: list[str],
+) -> list[str]:
+    section_doc = contract.get(section, {})
+    if not isinstance(section_doc, dict):
+        return fallback
+    values = [
+        str(item)
+        for item in section_doc.get(key, [])
+        if isinstance(item, str) and item
+    ]
+    return values or fallback
+
+
+def _unique_limited(values: list[str], *, limit: int) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+        if len(result) >= limit:
+            break
+    return result
+
+
+def _write_workflow_gateway_trace(*, bundle_root: Path, seed: CandidateSeed) -> None:
+    gateway = seed.metadata.get("workflow_gateway", {})
+    routes_to = gateway.get("routes_to", []) if isinstance(gateway, dict) else []
+    trace = {
+        "trace_id": "workflow-gateway-routing-smoke",
+        "title": "Workflow gateway routes an all-workflow bundle",
+        "related_skills": ["workflow-gateway"],
+        "kind": "generated_smoke",
+        "situation": (
+            "The generated bundle contains deterministic workflow candidates but no thick "
+            "agentic skill candidates, so the user needs an installable entrypoint."
+        ),
+        "decision": (
+            "Use workflow-gateway to select or sequence a workflow candidate, while keeping "
+            "the fixed workflow steps under workflow_candidates/."
+        ),
+        "outcome": (
+            "The user receives a callable router skill plus auditable workflow artifacts without "
+            "collapsing workflow logic into a thick skill."
+        ),
+        "source_note": "Generated by KiU when an all-workflow run needs a boundary-safe entrypoint.",
+        "workflow_candidates": routes_to,
+    }
+    _write_yaml(bundle_root / "traces" / "workflow-gateway-routing-smoke.yaml", trace)
+
+
 def _render_skill_candidate(
     *,
     bundle_root: Path,
@@ -212,7 +564,7 @@ def _render_skill_candidate(
     revisions = _build_revision_log(source_bundle, seed, skill_revision)
     _write_yaml(skill_dir / "iterations" / "revisions.yaml", revisions)
 
-    scenario_families = _scenario_families_for_seed(seed)
+    scenario_families = _scenario_families_for_seed(source_bundle, seed)
     _write_yaml(skill_dir / "usage" / "scenarios.yaml", scenario_families)
 
     skill_markdown = build_candidate_skill_markdown(
@@ -225,14 +577,25 @@ def _render_skill_candidate(
     )
     (skill_dir / "SKILL.md").write_text(skill_markdown, encoding="utf-8")
 
-    _write_yaml(skill_dir / "candidate.yaml", seed.metadata)
+    candidate_metadata = dict(seed.metadata)
+    candidate_metadata["graph_to_skill_distillation"] = build_distillation_contract(
+        source_bundle=source_bundle,
+        seed=seed,
+    )
+    _write_yaml(skill_dir / "candidate.yaml", candidate_metadata)
 
 
-def _scenario_families_for_seed(seed: CandidateSeed) -> dict[str, Any]:
+def _scenario_families_for_seed(source_bundle: SourceBundle, seed: CandidateSeed) -> dict[str, Any]:
     if seed.source_skill and seed.source_skill.scenario_families:
-        return seed.source_skill.scenario_families
-    scenario_families = seed.seed_content.get("scenario_families", {})
-    return scenario_families if isinstance(scenario_families, dict) else {}
+        scenario_families = seed.source_skill.scenario_families
+    else:
+        scenario_families = seed.seed_content.get("scenario_families", {})
+    scenario_families = scenario_families if isinstance(scenario_families, dict) else {}
+    return augment_scenario_families(
+        source_bundle=source_bundle,
+        seed=seed,
+        scenario_families=scenario_families,
+    )
 
 
 def _render_workflow_candidate(

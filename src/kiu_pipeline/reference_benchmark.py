@@ -62,6 +62,7 @@ def benchmark_reference_pack(
         kiu_bundle=kiu_bundle,
         generated_run=generated_run,
         reference_pack=reference_pack,
+        same_scenario_usage=same_scenario_usage,
     )
 
     return {
@@ -208,12 +209,14 @@ def _scan_generated_run(run_root: Path, source_bundle_path: Path) -> dict[str, A
     )
     generated_bundle_root = run_root / "bundle"
     generated_bundle_skill_reviews: dict[str, Any] = {}
+    graph_to_skill_distillation: dict[str, Any] = {}
     if generated_bundle_root.exists():
         try:
             generated_bundle = load_source_bundle(generated_bundle_root)
         except Exception:
             generated_bundle = None
         if generated_bundle is not None:
+            graph_to_skill_distillation = _review_graph_to_skill_distillation(generated_bundle)
             for skill in generated_bundle.skills.values():
                 generated_bundle_skill_reviews[skill.skill_id] = _review_kiu_skill(skill)
     return {
@@ -238,6 +241,7 @@ def _scan_generated_run(run_root: Path, source_bundle_path: Path) -> dict[str, A
             "tri_state_effectiveness",
             {},
         ),
+        "graph_to_skill_distillation": graph_to_skill_distillation,
         "generated_bundle_skill_reviews": generated_bundle_skill_reviews,
         "pipeline_artifacts": _discover_pipeline_artifacts(
             source_bundle_path=source_bundle_path,
@@ -440,6 +444,11 @@ def _build_comparison(
                 "weighted_pass_rate_delta"
             ),
             "same_scenario_usage_winner": same_scenario_summary.get("usage_winner"),
+            "graph_to_skill_distillation_100": (
+                generated_run.get("graph_to_skill_distillation", {}).get("overall_score_100")
+                if generated_run is not None
+                else None
+            ),
             "same_scenario_matched_pair_count": same_scenario_summary.get("matched_pair_count"),
             "same_scenario_case_count": same_scenario_summary.get("scenario_count"),
             "concept_aligned_pair_count": concept_alignment.get("summary", {}).get("matched_pair_count"),
@@ -754,6 +763,7 @@ def _build_scorecard(
     kiu_bundle: dict[str, Any],
     generated_run: dict[str, Any] | None,
     reference_pack: dict[str, Any],
+    same_scenario_usage: dict[str, Any],
 ) -> dict[str, Any]:
     bundle_errors = int(kiu_bundle.get("validator_errors", 0) or 0)
     bundle_warnings = int(kiu_bundle.get("validator_warnings", 0) or 0)
@@ -883,10 +893,27 @@ def _build_scorecard(
         1,
     )
 
+    distillation_review = (
+        generated_run.get("graph_to_skill_distillation", {})
+        if generated_run is not None
+        else {}
+    )
+    graph_to_skill_distillation_score = round(
+        float(distillation_review.get("overall_score_100", 0.0) or 0.0),
+        1,
+    )
+    v061_gate = _build_v061_distillation_gate(
+        generated_run=generated_run,
+        same_scenario_usage=same_scenario_usage,
+        distillation_score_100=graph_to_skill_distillation_score,
+    )
+
     return {
         "kiu_foundation_retained_100": foundation_score,
         "graphify_core_absorbed_100": graphify_score,
         "cangjie_core_absorbed_100": cangjie_score,
+        "graph_to_skill_distillation_100": graph_to_skill_distillation_score,
+        "v061_distillation_gate": v061_gate,
         "details": {
             "kiu_foundation_retained": {
                 "structural_cleanliness": round(structural_cleanliness, 4),
@@ -912,7 +939,156 @@ def _build_scorecard(
                 "usage_quality_ratio": round(usage_quality_ratio, 4),
                 "extractor_kinds": sorted(extraction_kinds),
             },
+            "graph_to_skill_distillation": distillation_review,
         },
+    }
+
+
+def _review_graph_to_skill_distillation(bundle: Any) -> dict[str, Any]:
+    graph_doc = getattr(bundle, "graph_doc", {}) or {}
+    inferred_edge_ids = {
+        str(edge.get("id"))
+        for edge in graph_doc.get("edges", [])
+        if isinstance(edge, dict) and edge.get("id") and edge.get("extraction_kind") == "INFERRED"
+    }
+    ambiguous_ids = {
+        str(edge.get("id"))
+        for edge in graph_doc.get("edges", [])
+        if isinstance(edge, dict) and edge.get("id") and edge.get("extraction_kind") == "AMBIGUOUS"
+    }
+    ambiguous_ids.update(
+        str(node.get("id"))
+        for node in graph_doc.get("nodes", [])
+        if isinstance(node, dict) and node.get("id") and node.get("extraction_kind") == "AMBIGUOUS"
+    )
+
+    referenced_inferred: set[str] = set()
+    referenced_ambiguous: set[str] = set()
+    graph_scenario_count = 0
+    source_action_count = 0
+    contract_count = 0
+    navigation_skill_count = 0
+    skill_count = len(getattr(bundle, "skills", {}) or {})
+
+    for skill in getattr(bundle, "skills", {}).values():
+        candidate_doc = _load_candidate_yaml(skill.skill_dir / "candidate.yaml")
+        contract = candidate_doc.get("graph_to_skill_distillation", {}) if isinstance(candidate_doc, dict) else {}
+        if isinstance(contract, dict) and contract.get("schema_version") == "kiu.graph-to-skill-distillation/v0.1":
+            contract_count += 1
+            navigation = contract.get("graph_navigation", {})
+            if isinstance(navigation, dict) and navigation.get("communities"):
+                navigation_skill_count += 1
+        elif "Graph navigation:" in "\n".join(skill.sections.values()):
+            navigation_skill_count += 1
+
+        scenario_families = getattr(skill, "scenario_families", {})
+        if not isinstance(scenario_families, dict):
+            continue
+        for bucket, ids in (
+            ("should_trigger", inferred_edge_ids),
+            ("edge_case", ambiguous_ids),
+            ("refusal", ambiguous_ids),
+        ):
+            items = scenario_families.get(bucket, [])
+            if not isinstance(items, list):
+                continue
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                role = str(item.get("distillation_role", ""))
+                scenario_id = str(item.get("scenario_id", ""))
+                anchor_refs = {str(anchor) for anchor in item.get("anchor_refs", [])}
+                graph_refs = anchor_refs & ids
+                if role or scenario_id.startswith("graph-") or graph_refs:
+                    graph_scenario_count += 1
+                    if item.get("source_location") and item.get("next_action_shape"):
+                        source_action_count += 1
+                if bucket == "should_trigger":
+                    referenced_inferred.update(anchor_refs & inferred_edge_ids)
+                else:
+                    referenced_ambiguous.update(anchor_refs & ambiguous_ids)
+
+    inferred_ratio = _safe_ratio(len(referenced_inferred), len(inferred_edge_ids))
+    ambiguous_ratio = _safe_ratio(len(referenced_ambiguous), len(ambiguous_ids))
+    source_action_ratio = _safe_ratio(source_action_count, graph_scenario_count)
+    contract_ratio = _safe_ratio(contract_count, skill_count)
+    navigation_ratio = _safe_ratio(navigation_skill_count, skill_count)
+    applicable = bool(inferred_edge_ids or ambiguous_ids)
+    overall = 0.0
+    if applicable:
+        overall = round(
+            100.0
+            * _average(
+                [
+                    inferred_ratio if inferred_edge_ids else 1.0,
+                    ambiguous_ratio if ambiguous_ids else 1.0,
+                    source_action_ratio,
+                    contract_ratio,
+                    navigation_ratio,
+                ]
+            ),
+            1,
+        )
+    return {
+        "schema_version": "kiu.graph-to-skill-distillation-review/v0.1",
+        "applicable": applicable,
+        "overall_score_100": overall,
+        "inferred_edge_count": len(inferred_edge_ids),
+        "ambiguous_signal_count": len(ambiguous_ids),
+        "referenced_inferred_edge_count": len(referenced_inferred),
+        "referenced_ambiguous_signal_count": len(referenced_ambiguous),
+        "graph_scenario_count": graph_scenario_count,
+        "inferred_trigger_expansion_ratio": round(inferred_ratio, 4),
+        "ambiguous_boundary_probe_ratio": round(ambiguous_ratio, 4),
+        "source_location_action_ratio": round(source_action_ratio, 4),
+        "contract_coverage_ratio": round(contract_ratio, 4),
+        "graph_navigation_ratio": round(navigation_ratio, 4),
+        "referenced_inferred_edge_ids": sorted(referenced_inferred),
+        "referenced_ambiguous_signal_ids": sorted(referenced_ambiguous),
+    }
+
+
+def _load_candidate_yaml(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
+    return loaded if isinstance(loaded, dict) else {}
+
+
+def _build_v061_distillation_gate(
+    *,
+    generated_run: dict[str, Any] | None,
+    same_scenario_usage: dict[str, Any],
+    distillation_score_100: float,
+) -> dict[str, Any]:
+    reasons: list[str] = []
+    if generated_run is None:
+        reasons.append("missing_generated_run")
+    elif not generated_run.get("workflow_boundary_preserved"):
+        reasons.append("workflow_boundary_not_preserved")
+
+    if distillation_score_100 < 90.0:
+        reasons.append("graph_to_skill_distillation_below_90")
+
+    summary = same_scenario_usage.get("summary", {}) if isinstance(same_scenario_usage, dict) else {}
+    scenario_count = int(summary.get("scenario_count", 0) or 0)
+    if scenario_count:
+        if summary.get("usage_winner") != "kiu":
+            reasons.append("same_scenario_usage_not_won_by_kiu")
+        if summary.get("failure_tag_counts"):
+            reasons.append("same_scenario_failure_tags_present")
+        kiu_pass = float(summary.get("kiu_weighted_pass_rate", 0.0) or 0.0)
+        reference_pass = float(summary.get("reference_weighted_pass_rate", 0.0) or 0.0)
+        if kiu_pass < reference_pass:
+            reasons.append("same_scenario_pass_rate_regressed")
+
+    return {
+        "schema_version": "kiu.v061-distillation-gate/v0.1",
+        "ready": not reasons,
+        "minimum_graph_to_skill_distillation_100": 90.0,
+        "actual_graph_to_skill_distillation_100": distillation_score_100,
+        "same_scenario_case_count": scenario_count,
+        "reasons": reasons,
     }
 
 
@@ -2223,6 +2399,8 @@ def _render_markdown_report(report: dict[str, Any]) -> str:
             f"- KiU foundation retained: `{scorecard['kiu_foundation_retained_100']}`",
             f"- Graphify core absorbed: `{scorecard['graphify_core_absorbed_100']}`",
             f"- cangjie core absorbed: `{scorecard['cangjie_core_absorbed_100']}`",
+            f"- Graph-to-skill distillation: `{scorecard.get('graph_to_skill_distillation_100')}`",
+            f"- v0.6.1 distillation gate ready: `{scorecard.get('v061_distillation_gate', {}).get('ready')}`",
             "",
         ]
     )

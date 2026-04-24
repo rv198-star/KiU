@@ -395,3 +395,202 @@ tickets:
   - bundles/poor-charlies-almanack-v0.1/graph/graph.json
   - /tmp/kiu-v06-graphify-closure/generated/poor-charlies-almanack-v0.1/v06-graphify-closure/reports/reference-benchmark.json
   - reports/2026-04-24-v0.6.0-final-release-evidence-pack.md
+- id: KIU-661
+  title: distillation contract v0.1
+  target_version: v0.6.1
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: distillation
+  summary: Record graph-to-skill distillation rules and signal mappings in generated
+    candidate metadata.
+  acceptance:
+  - Implementation is covered by tests or generated-run evidence.
+  - Workflow-vs-agentic boundary remains preserved.
+  - No external final skill pack is used as a hidden generation input.
+  evidence:
+  - src/kiu_pipeline/distillation.py
+  - src/kiu_pipeline/render.py
+  - docs/kiu-skill-spec-v0.6.1.md
+- id: KIU-662
+  title: tri-state signals to boundary cases
+  target_version: v0.6.1
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: distillation
+  summary: Render AMBIGUOUS graph nodes and edges as edge-case/refusal boundary probes.
+  acceptance:
+  - Implementation is covered by tests or generated-run evidence.
+  - Workflow-vs-agentic boundary remains preserved.
+  - No external final skill pack is used as a hidden generation input.
+  evidence:
+  - src/kiu_pipeline/distillation.py
+  - tests/test_pipeline.py
+- id: KIU-663
+  title: inferred edges to trigger expansion
+  target_version: v0.6.1
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: distillation
+  summary: Render INFERRED graph edges as bounded trigger-expansion scenarios.
+  acceptance:
+  - Implementation is covered by tests or generated-run evidence.
+  - Workflow-vs-agentic boundary remains preserved.
+  - No external final skill pack is used as a hidden generation input.
+  evidence:
+  - src/kiu_pipeline/distillation.py
+  - tests/test_pipeline.py
+- id: KIU-664
+  title: source location to action language
+  target_version: v0.6.1
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: distillation
+  summary: Carry source_location into graph-derived next_action_shape and usage scenarios.
+  acceptance:
+  - Implementation is covered by tests or generated-run evidence.
+  - Workflow-vs-agentic boundary remains preserved.
+  - No external final skill pack is used as a hidden generation input.
+  evidence:
+  - src/kiu_pipeline/distillation.py
+  - /tmp/kiu-v061-distillation/generated/poor-charlies-almanack-v0.1/v061-distillation/reports/reference-benchmark.json
+- id: KIU-665
+  title: graph report to skill navigation
+  target_version: v0.6.1
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: distillation
+  summary: Expose GRAPH_REPORT community navigation in the distillation contract without
+    treating it as independent evidence.
+  acceptance:
+  - Implementation is covered by tests or generated-run evidence.
+  - Workflow-vs-agentic boundary remains preserved.
+  - No external final skill pack is used as a hidden generation input.
+  evidence:
+  - src/kiu_pipeline/distillation.py
+  - docs/kiu-skill-spec-v0.6.1.md
+- id: KIU-666
+  title: same-source distillation benchmark gate
+  target_version: v0.6.1
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: benchmark
+  summary: Add graph-to-skill distillation score and v0.6.1 gate to reference benchmark
+    reports.
+  acceptance:
+  - Implementation is covered by tests or generated-run evidence.
+  - Workflow-vs-agentic boundary remains preserved.
+  - No external final skill pack is used as a hidden generation input.
+  evidence:
+  - src/kiu_pipeline/reference_benchmark.py
+  - tests/test_reference_benchmark.py
+  - /tmp/kiu-v061-distillation/generated/poor-charlies-almanack-v0.1/v061-distillation/reports/reference-benchmark.json
+- id: KIU-667
+  title: multi-sample distillation regression
+  target_version: v0.6.1
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: regression
+  summary: Rerun Poor Charlie, Effective Requirements, and Financial Statement samples
+    independently and prevent all-workflow samples from shipping without an installable
+    entrypoint.
+  acceptance:
+  - Implementation is covered by tests or generated-run evidence.
+  - Workflow-vs-agentic boundary remains preserved.
+  - No external final skill pack is used as a hidden generation input.
+  evidence:
+  - src/kiu_pipeline/render.py
+  - tests/test_pipeline.py
+  - /tmp/kiu-v061-multisample
+- id: KIU-668
+  title: v0.6.1 evidence pack
+  target_version: v0.6.1
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: release-evidence
+  summary: Archive v0.6.1 spec, evidence, changelog, and backlog closure.
+  acceptance:
+  - Implementation is covered by tests or generated-run evidence.
+  - Workflow-vs-agentic boundary remains preserved.
+  - No external final skill pack is used as a hidden generation input.
+  evidence:
+  - docs/kiu-skill-spec-v0.6.1.md
+  - reports/2026-04-24-v0.6.1-distillation-evidence-pack.md
+  - CHANGELOG.md
+- id: KIU-669
+  title: effective-requirements gateway usage evidence expansion
+  target_version: v0.6.2
+  status: todo
+  priority: P0
+  blocker_level: hard
+  area: usage-quality
+  summary: Expand the Effective Requirements workflow-gateway from one smoke usage
+    review to a small real/synthetic routing case set so Usage is judged by coverage,
+    not a single happy path.
+  acceptance:
+  - Add at least 6 source-backed gateway routing usage cases across should_route,
+    ask_clarifying_question, and do_not_route/refusal situations.
+  - Effective Requirements generated run reports Usage >= 90.0 without editing generated
+    /tmp artifacts by hand.
+  - workflow-gateway production quality remains good-or-better and no failure_tag_counts
+    appear in usage review.
+  - Evidence distinguishes gateway routing quality from workflow execution quality.
+  evidence:
+  - src/kiu_pipeline/usage_smoke.py
+  - src/kiu_pipeline/render.py
+  - tests/test_pipeline.py
+  - /tmp/kiu-v062-effective-requirements/reports/three-layer-review.json
+- id: KIU-670
+  title: effective-requirements judgment-heavy skill extraction
+  target_version: v0.6.2
+  status: todo
+  priority: P0
+  blocker_level: hard
+  area: skill-extraction
+  summary: Reverse-locate judgment-rich parts of Effective Requirements, such as stakeholder
+    conflict, business-goal tradeoff, and scenario-boundary trimming, and emit only
+    genuinely agentic thick skills.
+  acceptance:
+  - Identify at least 2 candidate themes whose workflow_certainty or context_certainty
+    is not high/high.
+  - Generated bundle contains at least 2 non-gateway skill candidates plus preserved
+    workflow candidates.
+  - Each new skill has double anchors, scenario families, source-backed usage notes,
+    and production_quality >= 0.82.
+  - No candidate is promoted to skill merely because it is broad or prose-rich; routing
+    evidence must justify llm_agentic handling.
+  evidence:
+  - src/kiu_pipeline/seed.py
+  - src/kiu_pipeline/extraction_bundle.py
+  - tests/test_pipeline.py
+  - /tmp/kiu-v062-effective-requirements/reports/production-quality.json
+- id: KIU-671
+  title: workflow-gateway boundary anti-drift gate
+  target_version: v0.6.2
+  status: todo
+  priority: P0
+  blocker_level: hard
+  area: workflow-boundary
+  summary: Add explicit review gates ensuring Effective Requirements quality gains
+    do not come from silently collapsing deterministic workflow logic into thick skills.
+  acceptance:
+  - Reference/generated review reports workflow_gateway_boundary_preserved = true
+    for all-workflow and mixed workflow/skill runs.
+  - Preflight or benchmark detects gateway SKILL.md copying workflow steps instead
+    of routing to workflow_candidates.
+  - Effective Requirements keeps workflow artifacts under workflow_candidates/ and
+    excludes workflow_script_candidate from bundle/skills/.
+  - AGENTS.md workflow-vs-agentic principle is cited in v0.6.2 evidence when explaining
+    any promotion from workflow to skill.
+  evidence:
+  - src/kiu_pipeline/preflight.py
+  - src/kiu_pipeline/reference_benchmark.py
+  - docs/kiu-skill-spec-v0.6.1.md
+  - reports/2026-04-24-v0.6.2-effective-requirements-evidence-pack.md

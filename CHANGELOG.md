@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## [0.6.1] - 2026-04-24
+
+### Added
+- Added graph-to-skill distillation contracts in generated `candidate.yaml` files, mapping `INFERRED` graph edges to bounded trigger expansion and `AMBIGUOUS` graph signals to edge-case boundary probes.
+- Added benchmark scoring for `graph_to_skill_distillation_100` plus a v0.6.1 distillation gate that checks distillation score, workflow-boundary preservation, and same-scenario usage safety.
+- Added a thin `workflow-gateway` skill when a generated run otherwise contains workflow candidates but zero installable skills; workflow logic remains under `workflow_candidates/`.
+- Added `docs/kiu-skill-spec-v0.6.1.md` and `reports/2026-04-24-v0.6.1-distillation-evidence-pack.md`.
+
+### Changed
+- Generated `usage/scenarios.yaml` now receives graph-derived scenarios with `distillation_role`, `extraction_kind`, `source_location`, graph anchors, and concrete next-action language.
+- Generated `SKILL.md` rendering now includes concise distillation notes only when tri-state graph signals are actually consumed, preserving seeded high-quality fixture content when no such signals exist.
+- Reference benchmark markdown now surfaces the graph-to-skill distillation score and v0.6.1 gate status.
+
+### Verified
+- Poor Charlie generated run: Source `100.0`, Generated `97.8`, Usage `95.8`, Overall `97.9`, release gate PASS.
+- Same-source benchmark: KiU usage `97.7` vs reference `96.4`, delta `+1.3`, weighted pass-rate parity `1.0`, usage winner `kiu`, failure tags `{}`.
+- Distillation gate: `graph_to_skill_distillation_100 = 100.0`, `v061_distillation_gate.ready = true`, `3/3` inferred edges and `4/4` ambiguous signals consumed.
+- Multi-sample regression: Poor Charlie `97.9`, Effective Requirements `91.8`, Financial Statement `93.6`, all release gates ready.
+- v0.6 regression baseline: `7` checks executed, `7` passed, `0` failed.
+
 ## [0.6.0] - 2026-04-24
 
 ### Added

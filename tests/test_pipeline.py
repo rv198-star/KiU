@@ -2659,6 +2659,64 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertIn("refusal", scenario_families)
             self.assertIn("Scenario families:", first_skill_markdown)
 
+    def test_run_book_pipeline_full_workflow_book_emits_gateway_skill(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_root = Path(tmp_dir) / "artifacts"
+            source_path = ROOT / "examples" / "有效需求分析（第2版）.md"
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "run_book_pipeline.py"),
+                    "--input",
+                    str(source_path),
+                    "--bundle-id",
+                    "effective-requirements-full-book",
+                    "--source-id",
+                    "effective-requirements-analysis",
+                    "--run-id",
+                    "workflow-gateway-smoke",
+                    "--output-root",
+                    str(output_root),
+                    "--max-chars",
+                    "1200",
+                    "--deterministic-pass",
+                    "heuristic-extractors",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            payload = json.loads(result.stdout)
+            run_root = Path(payload["run_root"])
+            manifest = yaml.safe_load((run_root / "bundle" / "manifest.yaml").read_text(encoding="utf-8"))
+            metrics = json.loads((run_root / "reports" / "metrics.json").read_text(encoding="utf-8"))
+            review_doc = json.loads((run_root / "reports" / "three-layer-review.json").read_text(encoding="utf-8"))
+
+            skill_ids = [entry["skill_id"] for entry in manifest["skills"]]
+            self.assertIn("workflow-gateway", skill_ids)
+            self.assertGreater(metrics["summary"]["workflow_script_candidates"], 0)
+            self.assertGreaterEqual(metrics["summary"]["skill_candidates"], 1)
+            self.assertGreater(review_doc["usage_outputs"]["score_100"], 0.0)
+            gateway_candidate = yaml.safe_load(
+                (run_root / "bundle" / "skills" / "workflow-gateway" / "candidate.yaml").read_text(encoding="utf-8")
+            )
+            self.assertEqual(gateway_candidate["disposition"], "skill_candidate")
+            self.assertEqual(gateway_candidate["recommended_execution_mode"], "llm_agentic")
+            self.assertEqual(
+                gateway_candidate["workflow_gateway"]["routes_to"],
+                metrics["workflow_script_candidate_ids"],
+            )
+            self.assertTrue(
+                (run_root / "bundle" / "traces" / "workflow-gateway-routing-smoke.yaml").exists()
+            )
+            gateway_markdown = (
+                run_root / "bundle" / "skills" / "workflow-gateway" / "SKILL.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("traces/workflow-gateway-routing-smoke.yaml", gateway_markdown)
+            self.assertNotIn("Representative cases are still pending curation.", gateway_markdown)
+
     def test_run_book_pipeline_cli_accepts_source_markdown_outside_repo(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_root = Path(tmp_dir)
@@ -2981,6 +3039,72 @@ class CandidatePipelineTests(unittest.TestCase):
                 "valuation_depends_only_on_story_or_long_term_guess",
                 contract["trigger"]["exclusions"],
             )
+
+    def test_build_candidates_distills_graph_signals_into_usage_scenarios(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_root = Path(tmp_dir) / "generated"
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_candidates.py"),
+                    "--source-bundle",
+                    str(self.bundle_path),
+                    "--output-root",
+                    str(output_root),
+                    "--run-id",
+                    "graph-to-skill-distillation",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+            run_root = output_root / "poor-charlies-almanack-v0.1" / "graph-to-skill-distillation"
+            circle_scenarios = yaml.safe_load(
+                (
+                    run_root
+                    / "bundle"
+                    / "skills"
+                    / "circle-of-competence"
+                    / "usage"
+                    / "scenarios.yaml"
+                ).read_text(encoding="utf-8")
+            )
+            circle_edge_ids = {
+                item.get("scenario_id")
+                for item in circle_scenarios.get("edge_case", [])
+                if isinstance(item, dict)
+            }
+            self.assertIn("graph-ambiguous-boundary-n_eval_ood_career_offer", circle_edge_ids)
+
+            invert_scenarios = yaml.safe_load(
+                (
+                    run_root
+                    / "bundle"
+                    / "skills"
+                    / "invert-the-problem"
+                    / "usage"
+                    / "scenarios.yaml"
+                ).read_text(encoding="utf-8")
+            )
+            invert_trigger_ids = {
+                item.get("scenario_id")
+                for item in invert_scenarios.get("should_trigger", [])
+                if isinstance(item, dict)
+            }
+            self.assertIn("graph-inferred-link-e_invert_margin_complements", invert_trigger_ids)
+
+            invert_markdown = (
+                run_root
+                / "bundle"
+                / "skills"
+                / "invert-the-problem"
+                / "SKILL.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("Graph-to-skill distillation", invert_markdown)
+            self.assertIn("INFERRED", invert_markdown)
+            self.assertIn("source_location", invert_markdown)
 
     def test_build_candidates_cli_runs_refinement_scheduler_and_emits_terminal_state(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

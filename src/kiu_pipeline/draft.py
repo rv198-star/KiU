@@ -7,6 +7,7 @@ import yaml
 
 from .models import CandidateSeed, SourceBundle
 from .contracts import build_semantic_contract
+from .distillation import augment_scenario_families, build_distillation_note
 
 
 EMPTY_RELATIONS = {
@@ -44,6 +45,12 @@ def build_candidate_skill_markdown(
     )
     if not isinstance(scenario_families, dict):
         scenario_families = {}
+    scenario_families = augment_scenario_families(
+        source_bundle=source_bundle,
+        seed=seed,
+        scenario_families=scenario_families,
+    )
+    distillation_note = build_distillation_note(source_bundle=source_bundle, seed=seed)
 
     identity = {
         "skill_id": seed.candidate_id,
@@ -62,11 +69,13 @@ def build_candidate_skill_markdown(
         source_bundle,
         seed,
         scenario_families=scenario_families,
+        distillation_note=distillation_note,
     )
     usage_summary = seed_content.get("usage_summary", "").strip() or _build_usage_summary(
         trace_refs,
         usage_notes=seed_content.get("usage_notes", []),
         scenario_families=scenario_families,
+        distillation_note=distillation_note,
     )
     eval_summary_doc = eval_summary
     if eval_summary_doc is None:
@@ -117,6 +126,7 @@ def _build_evidence_summary(
     seed: CandidateSeed,
     *,
     scenario_families: dict[str, Any] | None = None,
+    distillation_note: str = "",
 ) -> str:
     scenario_families = scenario_families if isinstance(scenario_families, dict) else {}
     source_skill = seed.source_skill
@@ -130,14 +140,17 @@ def _build_evidence_summary(
             )
             if scenario_layer:
                 suffix += f"\n\n{scenario_layer}"
+            if distillation_note:
+                suffix += f"\n\n{distillation_note}"
             return (
                 f"{base}\n\n{suffix}"
             )
     seed_evidence = seed.seed_content.get("evidence_summary", "").strip()
     if seed_evidence:
         scenario_layer = _build_scenario_family_evidence_summary(scenario_families)
-        if scenario_layer:
-            return f"{seed_evidence}\n\n{scenario_layer}"
+        additions = [item for item in (scenario_layer, distillation_note) if item]
+        if additions:
+            return f"{seed_evidence}\n\n" + "\n\n".join(additions)
         return seed_evidence
     anchors = _collect_anchor_descriptors(source_bundle, seed)
     if anchors:
@@ -158,6 +171,8 @@ def _build_evidence_summary(
         scenario_layer = _build_scenario_family_evidence_summary(scenario_families)
         if scenario_layer:
             lines.append(scenario_layer)
+        if distillation_note:
+            lines.append(distillation_note)
         lines.append("See `anchors.yaml` and `candidate.yaml` for the released graph/source bindings.")
         return "\n\n".join(lines)
     return (
@@ -172,12 +187,16 @@ def _build_usage_summary(
     usage_notes: list[str] | None = None,
     *,
     scenario_families: dict[str, Any] | None = None,
+    distillation_note: str = "",
 ) -> str:
     scenario_families = scenario_families if isinstance(scenario_families, dict) else {}
     lines = [f"Current trace attachments: {len(trace_refs)}.", ""]
     for note in usage_notes or []:
         lines.append(f"- {note}")
     if usage_notes:
+        lines.append("")
+    if distillation_note:
+        lines.append(distillation_note)
         lines.append("")
     if scenario_families:
         lines.append("Scenario families:")

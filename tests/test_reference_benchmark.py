@@ -633,6 +633,22 @@ class ReferenceBenchmarkCliTests(unittest.TestCase):
 
             self.assertEqual(matched_pair["kiu_skill_id"], "value-assessment-source-note")
             self.assertEqual(matched_pair["relationship"], "direct_match")
+            self.assertGreaterEqual(
+                payload["scorecard"]["graph_to_skill_distillation_100"],
+                90.0,
+            )
+            self.assertTrue(
+                payload["scorecard"]["v061_distillation_gate"]["ready"],
+                payload["scorecard"]["v061_distillation_gate"],
+            )
+            self.assertGreaterEqual(
+                payload["generated_run"]["graph_to_skill_distillation"]["inferred_trigger_expansion_ratio"],
+                1.0,
+            )
+            self.assertGreaterEqual(
+                payload["generated_run"]["graph_to_skill_distillation"]["ambiguous_boundary_probe_ratio"],
+                1.0,
+            )
 
 
 if __name__ == "__main__":
