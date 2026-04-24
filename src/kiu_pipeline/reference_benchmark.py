@@ -1805,6 +1805,7 @@ def _evaluate_usage_case(
     action_overlap = _text_overlap_ratio(expected_behavior, action_text)
     concept_query = _looks_like_concept_query(case_text)
     concept_query_boundary = _supports_concept_query_boundary(boundary_text)
+    explicit_no_fire_match = _matches_explicit_no_fire_boundary(case_text, boundary_text)
 
     if case_type == "should_trigger":
         trigger_ratio = _average(
@@ -1837,6 +1838,7 @@ def _evaluate_usage_case(
         restraint_reason = max(
             boundary_overlap,
             1.0 if concept_query and concept_query_boundary else 0.0,
+            1.0 if explicit_no_fire_match else 0.0,
         )
         trigger_ratio = _average(
             [
@@ -1849,7 +1851,13 @@ def _evaluate_usage_case(
             [
                 boundary_clarity,
                 restraint_reason,
-                1.0 if (concept_query_boundary or (supports_do_not_fire and not concept_query)) else 0.0,
+                1.0
+                if (
+                    explicit_no_fire_match
+                    or concept_query_boundary
+                    or (supports_do_not_fire and not concept_query)
+                )
+                else 0.0,
             ]
         )
         next_action_ratio = _average(
@@ -1912,12 +1920,13 @@ def _evaluate_usage_case(
         supports_do_not_fire=supports_do_not_fire,
         supports_edge=supports_edge,
         concept_query=concept_query,
-        concept_query_boundary=concept_query_boundary,
+        concept_query_boundary=concept_query_boundary or explicit_no_fire_match,
     )
     review_notes = [
         f"alignment_strength:{round(alignment_strength, 2)}",
         "concept_query_case" if concept_query else "",
-        "concept_query_boundary_missing" if concept_query and not concept_query_boundary else "",
+        "concept_query_boundary_missing" if concept_query and not (concept_query_boundary or explicit_no_fire_match) else "",
+        "explicit_no_fire_boundary_match" if explicit_no_fire_match else "",
         "boundary_reason_sparse" if boundary_overlap < 0.12 else "boundary_reason_covered",
         "next_action_sparse" if action_overlap < 0.12 and not supports_decline else "",
         "edge_support_missing" if case_type == "edge_case" and not supports_edge else "",
@@ -2327,6 +2336,31 @@ def _supports_concept_query_boundary(text: str) -> bool:
             "知识问答",
         ),
     )
+
+
+def _matches_explicit_no_fire_boundary(case_text: str, boundary_text: str) -> bool:
+    case_lower = case_text.lower()
+    boundary_lower = boundary_text.lower()
+    categories = (
+        (
+            ("评价", "人物", "hero", "character", "名望"),
+            ("pure_character_evaluation_request", "character_evaluation", "人物评价"),
+        ),
+        (
+            ("观点摘要", "总结", "观点", "summary", "summarize"),
+            ("pure_viewpoint_summary_request", "viewpoint_summary", "观点摘要"),
+        ),
+        (
+            ("模板", "会议纪要", "workflow", "checklist", "流程", "表格"),
+            ("mechanical_workflow_template_request", "workflow_template", "模板请求"),
+        ),
+    )
+    for case_markers, boundary_markers in categories:
+        case_matched = any(marker in case_lower for marker in case_markers)
+        boundary_matched = any(marker in boundary_lower for marker in boundary_markers)
+        if case_matched and boundary_matched:
+            return True
+    return False
 
 
 def _looks_like_concept_query(text: str) -> bool:

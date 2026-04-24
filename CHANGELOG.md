@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## [0.6.7] - 2026-04-25
+
+### Fixed
+- Reran Shiji and Mao raw-book no-seed closure generation with the upgraded borrowed-value anti-condition contracts so the new boundaries are present in generated `SKILL.md` artifacts, not only in unit-level contract builders.
+- Fixed blind review excerpts to front-load boundary and anti-misuse evidence before long contract/method/rationale text, preventing reviewer-visible packs from hiding `do_not_fire_when` and `anti_conditions` behind truncation.
+- Added end-to-end same-scenario decoy validation for KIU-685: p010/p020/p023-style character-evaluation, workflow-template, and viewpoint-summary prompts must be scored as explicit no-fire boundary matches.
+
+### Added
+- Added corrected v0.6.7 Shiji blind review pack under `reports/blind-review-packs/v0.6.7-shiji-cangjie-protocol/`.
+- Added `reports/2026-04-25-v0.6.7-boundary-rendering-and-decoy-evidence.md`.
+
+### Verified
+- v0.6.7 Shiji blind pack: `26` pairs, `placeholder_count=0`, hidden A/B role balance `13/13`.
+- Reviewer-visible `option_b` decoy check: at least `3` should-not-trigger pairs contain the new anti-condition text.
+- v0.6 compatibility baseline: `7` checks executed, `7` passed, `0` failed.
+- Same-source benchmark keeps external blind closure pending: `external_blind_100=0.0`, `closure_100=0.0`.
+
 ## [0.6.6] - 2026-04-25
 
 ### Fixed

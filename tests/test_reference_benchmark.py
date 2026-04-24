@@ -1226,6 +1226,124 @@ class ReferenceBenchmarkCliTests(unittest.TestCase):
             self.assertIn("Weighted pass-rate delta", markdown)
             self.assertIn("Usage winner", markdown)
 
+
+    def test_same_scenario_decoys_pass_when_explicit_anti_conditions_match(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            bundle = tmp_root / "kiu-bundle"
+            skill_id = "historical-case-consequence-judgment"
+            skill_dir = bundle / "skills" / skill_id
+            for path in [bundle / "graph", bundle / "evaluation", bundle / "traces", skill_dir / "eval", skill_dir / "iterations", skill_dir / "usage"]:
+                path.mkdir(parents=True, exist_ok=True)
+            (bundle / "automation.yaml").write_text("inherits_from: default\n", encoding="utf-8")
+            (bundle / "manifest.yaml").write_text(
+                "\n".join(
+                    [
+                        "bundle_id: explicit-boundary-test",
+                        "domain: default",
+                        "graph:",
+                        "  path: graph/graph.json",
+                        "  graph_hash: sha256:test",
+                        "skills:",
+                        f"  - skill_id: {skill_id}",
+                        f"    path: skills/{skill_id}",
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            (bundle / "graph" / "graph.json").write_text('{"nodes": [], "edges": [], "communities": []}', encoding="utf-8")
+            (skill_dir / "anchors.yaml").write_text(
+                "graph_hash: sha256:test\ngraph_version: kiu.graph/v0.2\ngraph_anchor_sets:\n  - node_id: n1\nsource_anchor_sets:\n  - source_file: source.md\n    line_start: 1\n    line_end: 2\n",
+                encoding="utf-8",
+            )
+            (skill_dir / "eval" / "summary.yaml").write_text("status: pass\n", encoding="utf-8")
+            (skill_dir / "iterations" / "revisions.yaml").write_text("history: []\n", encoding="utf-8")
+            (skill_dir / "usage" / "scenarios.yaml").write_text(
+                "should_not_trigger:\n"
+                "  - scenario_id: character-evaluation-decoy\n"
+                "    summary: Reject pure character evaluation.\n"
+                "  - scenario_id: viewpoint-summary-decoy\n"
+                "    summary: Reject pure viewpoint summary.\n"
+                "  - scenario_id: workflow-template-decoy\n"
+                "    summary: Reject mechanical workflow template requests.\n",
+                encoding="utf-8",
+            )
+            (skill_dir / "SKILL.md").write_text(
+                f"# Historical Case Consequence Judgment\n\n"
+                "## Identity\n```yaml\n"
+                f"skill_id: {skill_id}\ntitle: Historical Case Consequence Judgment\n"
+                "```\n\n"
+                "## Contract\n```yaml\n"
+                "trigger:\n  patterns:\n    - user_applying_historical_case_to_current_judgment\n  exclusions:\n    - pure_summary_request\n"
+                "intake:\n  required:\n    - name: current_decision\n      type: string\n"
+                "judgment_schema:\n  output:\n    type: structured\n    schema:\n      verdict: enum[apply_pattern|do_not_apply]\n      next_action: string\n      evidence_to_check: list[string]\n      decline_reason: string\n      confidence: enum[low|medium|high]\n"
+                "boundary:\n  fails_when:\n    - current_decision_context_missing\n  do_not_fire_when:\n    - pure_character_evaluation_request\n    - pure_viewpoint_summary_request\n    - mechanical_workflow_template_request\n```\n\n"
+                "## Rationale\n"
+                "This skill only fires for a live decision that needs historical-case consequence judgment. "
+                "It explicitly refuses pure character evaluation, viewpoint summary, and mechanical workflow template requests because those are not in-use judgment situations.\n\n"
+                "## Evidence Summary\nSource evidence is represented by test anchors.\n\n"
+                "## Relations\n```yaml\ndepends_on: []\ndelegates_to: []\nconstrained_by: []\ncomplements: []\ncontradicts: []\n```\n\n"
+                "## Usage Summary\nRepresentative cases:\n- `traces/demo.yaml`\n\n"
+                "## Evaluation Summary\npass\n\n"
+                "## Revision Summary\nExplicit no-fire boundary smoke.\n",
+                encoding="utf-8",
+            )
+            reference_root = _write_reference_pack(tmp_root / "reference", [skill_id])
+            _write_test_prompts(
+                reference_root / skill_id,
+                {
+                    "skill": skill_id,
+                    "test_cases": [
+                        {
+                            "id": "p010",
+                            "type": "should_not_trigger",
+                            "prompt": "请评价项羽是不是英雄人物。",
+                            "expected_behavior": "should_not_fire: pure_character_evaluation_request",
+                            "notes": "人物评价诱饵",
+                        },
+                        {
+                            "id": "p020",
+                            "type": "should_not_trigger",
+                            "prompt": "帮我生成一个会议纪要模板。",
+                            "expected_behavior": "should_not_fire: mechanical_workflow_template_request",
+                            "notes": "workflow 模板诱饵",
+                        },
+                        {
+                            "id": "p023",
+                            "type": "should_not_trigger",
+                            "prompt": "请总结《史记》里关于君臣关系的观点。",
+                            "expected_behavior": "should_not_fire: pure_viewpoint_summary_request",
+                            "notes": "观点摘要诱饵",
+                        },
+                    ],
+                    "minimum_pass_rate": 1.0,
+                },
+            )
+            alignment_path = tmp_root / "alignment.yaml"
+            alignment_path.write_text(
+                "schema_version: kiu.reference-alignment/v0.1\npairs:\n"
+                f"  - kiu_skill_id: {skill_id}\n"
+                f"    reference_skill_id: {skill_id}\n"
+                "    relationship: direct_match\n",
+                encoding="utf-8",
+            )
+
+            report = benchmark_reference_pack(
+                kiu_bundle_path=bundle,
+                reference_pack_path=reference_root,
+                alignment_file=alignment_path,
+                comparison_scope="same-source",
+            )
+
+            cases = report["same_scenario_usage"]["matched_pairs"][0]["cases"]
+            self.assertEqual(len(cases), 3)
+            for case in cases:
+                self.assertEqual(case["type"], "should_not_trigger")
+                self.assertEqual(case["kiu_review"]["verdict"], "pass", case)
+                self.assertIn("explicit_no_fire_boundary_match", case["kiu_review"]["notes"])
+                self.assertNotIn("boundary_leak", case["kiu_review"]["failure_analysis"]["tags"])
+
     def test_reference_benchmark_cli_uses_generated_bundle_for_concept_alignment_when_run_root_present(
         self,
     ) -> None:

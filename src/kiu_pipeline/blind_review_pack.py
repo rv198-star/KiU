@@ -263,13 +263,117 @@ def _skill_card(path: Path, *, redactions: list[str]) -> dict[str, str]:
         markdown = path.read_text(encoding="utf-8")
     except OSError:
         markdown = ""
-    cleaned = _redact_text(_clean_markdown(markdown), redactions)
+    focused = _focused_review_excerpt(markdown)
+    cleaned = _redact_text(_clean_markdown(focused), redactions)
     if not cleaned:
         cleaned = "No artifact excerpt available. Judge only the prompt fit."
     return {
-        "artifact_excerpt": cleaned[:1800].rstrip(),
+        "artifact_excerpt": cleaned[:2400].rstrip(),
         "review_focus": "Assess whether this artifact would guide a model toward a useful, bounded answer for the case.",
     }
+
+
+def _focused_review_excerpt(markdown: str) -> str:
+    """Put trigger boundaries before long rationale so blind reviewers can see them."""
+
+    text = re.sub(r"(?s)^---.*?---", "", markdown).strip()
+    if not text:
+        return ""
+    title = _first_heading(text)
+    parts: list[str] = []
+    if title:
+        parts.append(title)
+
+    boundary = _collect_marker_windows(
+        text,
+        markers=(
+            "boundary:",
+            "do_not_fire_when",
+            "anti_conditions",
+            "anti_misuse",
+            "## boundary",
+            "## b",
+            "边界",
+        ),
+        max_windows=4,
+        window_lines=12,
+    )
+    if boundary:
+        parts.extend(["## Boundary / Anti-misuse", boundary])
+
+    contract_or_method = _extract_named_sections(
+        text,
+        names=("Contract", "I", "I — 方法论骨架", "E — 可执行步骤"),
+        max_chars=1200,
+    )
+    if contract_or_method:
+        parts.extend(["## Contract / Method", contract_or_method])
+
+    rationale = _extract_named_sections(
+        text,
+        names=("Rationale", "Evidence Summary", "B — 边界"),
+        max_chars=1000,
+    )
+    if rationale:
+        parts.extend(["## Rationale / Evidence", rationale])
+
+    if len(parts) <= (1 if title else 0):
+        return text
+    return "\n\n".join(parts)
+
+
+def _first_heading(text: str) -> str:
+    for line in text.splitlines():
+        if line.lstrip().startswith("#"):
+            return line.strip()
+    return ""
+
+
+def _collect_marker_windows(
+    text: str,
+    *,
+    markers: tuple[str, ...],
+    max_windows: int,
+    window_lines: int,
+) -> str:
+    lines = text.splitlines()
+    windows: list[str] = []
+    seen: set[tuple[int, int]] = set()
+    lowered_markers = tuple(marker.lower() for marker in markers)
+    for index, line in enumerate(lines):
+        lowered = line.lower()
+        if not any(marker in lowered for marker in lowered_markers):
+            continue
+        start = max(0, index - 1)
+        end = min(len(lines), index + window_lines)
+        key = (start, end)
+        if key in seen:
+            continue
+        seen.add(key)
+        windows.append("\n".join(lines[start:end]).strip())
+        if len(windows) >= max_windows:
+            break
+    return "\n---\n".join(item for item in windows if item)
+
+
+def _extract_named_sections(text: str, *, names: tuple[str, ...], max_chars: int) -> str:
+    sections: list[str] = []
+    for name in names:
+        section = _extract_markdown_section(text, name)
+        if section:
+            sections.append(section)
+        if sum(len(item) for item in sections) >= max_chars:
+            break
+    return "\n\n".join(sections)[:max_chars].rstrip()
+
+
+def _extract_markdown_section(text: str, name: str) -> str:
+    escaped = re.escape(name)
+    pattern = re.compile(rf"(?ms)^##+\s+{escaped}\b.*?$(.*?)(?=^##+\s+|\Z)")
+    match = pattern.search(text)
+    if match:
+        return match.group(0).strip()
+    return ""
 
 
 def _clean_markdown(markdown: str) -> str:

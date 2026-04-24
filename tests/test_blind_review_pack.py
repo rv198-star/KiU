@@ -126,6 +126,75 @@ class BlindReviewPackTests(unittest.TestCase):
             b_kiu_count = sum(1 for item in key_doc["pairs"] if item["option_roles"]["b"] == "kiu")
             self.assertLessEqual(abs(a_kiu_count - b_kiu_count), 1)
 
+
+    def test_review_excerpt_surfaces_boundary_terms_before_long_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            generated_bundle = root / "generated" / "bundle"
+            reference_pack = root / "reference"
+            kiu_skill = generated_bundle / "skills" / "history-skill"
+            ref_skill = reference_pack / "history-skill"
+            kiu_skill.mkdir(parents=True)
+            ref_skill.mkdir(parents=True)
+            long_intake = "\n".join(
+                f"  - name: field_{index}\n    description: long intake field {index}"
+                for index in range(45)
+            )
+            (kiu_skill / "SKILL.md").write_text(
+                f"# KiU History Skill\n\n"
+                "## Contract\n```yaml\n"
+                "trigger:\n  patterns:\n  - historical_case_decision\n"
+                f"intake:\n  required:\n{long_intake}\n"
+                "boundary:\n  do_not_fire_when:\n"
+                "  - pure_character_evaluation_request\n"
+                "  - pure_viewpoint_summary_request\n"
+                "  - mechanical_workflow_template_request\n"
+                "```\n\n"
+                "## Rationale\nUse only for bounded in-use judgment.\n",
+                encoding="utf-8",
+            )
+            (ref_skill / "SKILL.md").write_text(
+                "# Baseline History Skill\n\n## B — 边界\n不要用于纯史实查询。\n",
+                encoding="utf-8",
+            )
+            benchmark = {
+                "generated_run": {"generated_bundle_path": str(generated_bundle)},
+                "reference_pack": {"path": str(reference_pack)},
+                "same_scenario_usage": {
+                    "matched_pairs": [
+                        {
+                            "kiu_skill_id": "history-skill",
+                            "reference_skill_id": "history-skill",
+                            "cases": [
+                                {
+                                    "case_id": "case-1",
+                                    "type": "should_not_trigger",
+                                    "prompt": "请评价项羽是不是英雄人物。",
+                                    "expected_behavior": "should not fire",
+                                    "notes": "boundary visibility",
+                                }
+                            ],
+                        }
+                    ]
+                },
+            }
+            benchmark_path = root / "benchmark.json"
+            benchmark_path.write_text(json.dumps(benchmark), encoding="utf-8")
+            out = root / "blind-pack"
+
+            summary = build_blind_review_pack(
+                benchmark_report_path=benchmark_path,
+                output_dir=out,
+                review_id="boundary-visible",
+            )
+
+            self.assertEqual(summary["placeholder_count"], 0)
+            public_doc = json.loads((out / "reviewer-pack.json").read_text(encoding="utf-8"))
+            public_text = json.dumps(public_doc, ensure_ascii=False)
+            self.assertIn("pure_character_evaluation_request", public_text)
+            self.assertIn("pure_viewpoint_summary_request", public_text)
+            self.assertIn("mechanical_workflow_template_request", public_text)
+
     def test_merge_response_with_private_key_produces_loadable_blind_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
