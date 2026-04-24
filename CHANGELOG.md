@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## [0.6.2] - 2026-04-24
+
+### Added
+- Effective Requirements generation now emits two judgment-heavy non-gateway skills, `solution-to-problem-reframing` and `stakeholder-resistance-tradeoff`, while preserving deterministic workflows under `workflow_candidates/`.
+- `workflow-gateway` usage evidence now covers six routing and boundary cases instead of one happy-path smoke case.
+- Generated-bundle preflight and three-layer review now report `workflow_gateway_boundary_preserved` and reject gateway skills that inline deterministic workflow checklist steps.
+
+### Changed
+- Bumped the package version to `0.6.2`.
+
+### Verified
+- Effective Requirements generated run: Source `96.7`, Generated `93.0`, Usage `98.9`, Overall `95.9`, release gate PASS.
+- Effective Requirements output shape: `3` skills, `12` workflow candidates, `8` usage reviews, failure tags `{}`.
+- Full regression: `154` unit tests pass; Poor Charlie and Engineering bundles validate as `VALID`.
+
 ## [0.6.1] - 2026-04-24
 
 ### Added

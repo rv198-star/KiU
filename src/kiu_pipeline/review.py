@@ -263,7 +263,13 @@ def _score_generated_bundle(
     workflow_dirs = len(
         [path for path in (run_root / "workflow_candidates").glob("*") if path.is_dir()]
     ) if (run_root / "workflow_candidates").exists() else 0
-    boundary_preserved = workflow_count == 0 or workflow_dirs == workflow_count
+    workflow_gateway_boundary_preserved = bool(
+        generated_report.get(
+            "workflow_gateway_boundary_preserved",
+            generated_report.get("summary", {}).get("workflow_gateway_boundary_preserved", True),
+        )
+    )
+    boundary_preserved = (workflow_count == 0 or workflow_dirs == workflow_count) and workflow_gateway_boundary_preserved
     verification_doc = _load_json(run_root / "reports" / "verification-summary.json")
     verification_gate_present = bool(verification_doc)
     workflow_ready_ratio = _workflow_verification_ready_ratio(
@@ -293,8 +299,12 @@ def _score_generated_bundle(
         notes.append("production_quality_excellent")
     if workflow_count > 0 and boundary_preserved:
         notes.append("workflow_boundary_preserved")
+    if workflow_count > 0 and workflow_gateway_boundary_preserved:
+        notes.append("workflow_gateway_boundary_preserved")
     if workflow_count > 0 and not boundary_preserved:
         notes.append("workflow_boundary_drift")
+    if workflow_count > 0 and not workflow_gateway_boundary_preserved:
+        notes.append("workflow_gateway_boundary_drift")
     if verification_gate_present:
         notes.append("verification_gate_present")
     if workflow_count > 0 and workflow_ready_ratio < 1.0:
@@ -311,6 +321,7 @@ def _score_generated_bundle(
         "average_production_quality": average_production,
         "verification_gate_present": verification_gate_present,
         "workflow_verification_ready_ratio": workflow_ready_ratio,
+        "workflow_gateway_boundary_preserved": workflow_gateway_boundary_preserved,
         "notes": notes,
     }
 

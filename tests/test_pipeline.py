@@ -2696,9 +2696,55 @@ class CandidatePipelineTests(unittest.TestCase):
 
             skill_ids = [entry["skill_id"] for entry in manifest["skills"]]
             self.assertIn("workflow-gateway", skill_ids)
+            self.assertTrue(
+                {
+                    "solution-to-problem-reframing",
+                    "stakeholder-resistance-tradeoff",
+                }.issubset(set(skill_ids))
+            )
             self.assertGreater(metrics["summary"]["workflow_script_candidates"], 0)
-            self.assertGreaterEqual(metrics["summary"]["skill_candidates"], 1)
-            self.assertGreater(review_doc["usage_outputs"]["score_100"], 0.0)
+            self.assertEqual(metrics["summary"]["workflow_script_candidates"], 12)
+            self.assertGreaterEqual(metrics["summary"]["skill_candidates"], 3)
+            self.assertIn("2-日常需求分析", metrics["workflow_script_candidate_ids"])
+            self.assertIn("5-干系人分析", metrics["workflow_script_candidate_ids"])
+            production_quality = json.loads(
+                (run_root / "reports" / "production-quality.json").read_text(encoding="utf-8")
+            )
+            quality_by_id = {
+                item["candidate_id"]: item
+                for item in production_quality["skills"]
+            }
+            for agentic_skill_id in (
+                "solution-to-problem-reframing",
+                "stakeholder-resistance-tradeoff",
+            ):
+                self.assertGreaterEqual(quality_by_id[agentic_skill_id]["production_quality"], 0.82)
+                candidate_doc = yaml.safe_load(
+                    (run_root / "bundle" / "skills" / agentic_skill_id / "candidate.yaml").read_text(encoding="utf-8")
+                )
+                self.assertEqual(candidate_doc["disposition"], "skill_candidate")
+                self.assertEqual(candidate_doc["recommended_execution_mode"], "llm_agentic")
+                self.assertNotEqual(
+                    (candidate_doc["workflow_certainty"], candidate_doc["context_certainty"]),
+                    ("high", "high"),
+                )
+            self.assertTrue(review_doc["generated_bundle"]["workflow_gateway_boundary_preserved"])
+            self.assertIn("workflow_gateway_boundary_preserved", review_doc["generated_bundle"]["notes"])
+            self.assertGreaterEqual(review_doc["usage_outputs"]["score_100"], 90.0)
+            self.assertGreaterEqual(review_doc["usage_outputs"]["sample_count"], 6)
+            self.assertEqual(review_doc["usage_outputs"]["failure_tag_counts"], {})
+            usage_case_ids = {
+                path.stem for path in (run_root / "usage-review").glob("workflow-gateway-*.yaml")
+            }
+            self.assertGreaterEqual(len(usage_case_ids), 6)
+            self.assertTrue(
+                {
+                    "workflow-gateway-route-primary",
+                    "workflow-gateway-route-by-hint",
+                    "workflow-gateway-ask-context",
+                    "workflow-gateway-refuse-agentic",
+                }.issubset(usage_case_ids)
+            )
             gateway_candidate = yaml.safe_load(
                 (run_root / "bundle" / "skills" / "workflow-gateway" / "candidate.yaml").read_text(encoding="utf-8")
             )
@@ -2716,6 +2762,21 @@ class CandidatePipelineTests(unittest.TestCase):
             ).read_text(encoding="utf-8")
             self.assertIn("traces/workflow-gateway-routing-smoke.yaml", gateway_markdown)
             self.assertNotIn("Representative cases are still pending curation.", gateway_markdown)
+
+            preflight_report = validate_generated_bundle(run_root / "bundle")
+            self.assertTrue(preflight_report["workflow_gateway_boundary_preserved"])
+            self.assertTrue(preflight_report["summary"]["workflow_gateway_boundary_preserved"])
+
+            gateway_path = run_root / "bundle" / "skills" / "workflow-gateway" / "SKILL.md"
+            gateway_path.write_text(
+                gateway_markdown + "\n## Rollback\n- [ ] Confirm rollback steps are written.\n",
+                encoding="utf-8",
+            )
+            drift_report = validate_generated_bundle(run_root / "bundle")
+            self.assertFalse(drift_report["workflow_gateway_boundary_preserved"])
+            self.assertTrue(
+                any("inline deterministic workflow checklist" in error for error in drift_report["errors"])
+            )
 
     def test_run_book_pipeline_cli_accepts_source_markdown_outside_repo(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

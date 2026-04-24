@@ -527,7 +527,7 @@ tickets:
 - id: KIU-669
   title: effective-requirements gateway usage evidence expansion
   target_version: v0.6.2
-  status: todo
+  status: done
   priority: P0
   blocker_level: hard
   area: usage-quality
@@ -546,11 +546,12 @@ tickets:
   - src/kiu_pipeline/usage_smoke.py
   - src/kiu_pipeline/render.py
   - tests/test_pipeline.py
-  - /tmp/kiu-v062-effective-requirements/reports/three-layer-review.json
+  - /tmp/kiu-v062-effective-requirements/generated/effective-requirements-analysis-source-v0.6/v062-effective-requirements/reports/three-layer-review.json
+  - reports/2026-04-24-v0.6.2-effective-requirements-evidence-pack.md
 - id: KIU-670
   title: effective-requirements judgment-heavy skill extraction
   target_version: v0.6.2
-  status: todo
+  status: done
   priority: P0
   blocker_level: hard
   area: skill-extraction
@@ -570,11 +571,12 @@ tickets:
   - src/kiu_pipeline/seed.py
   - src/kiu_pipeline/extraction_bundle.py
   - tests/test_pipeline.py
-  - /tmp/kiu-v062-effective-requirements/reports/production-quality.json
+  - /tmp/kiu-v062-effective-requirements/generated/effective-requirements-analysis-source-v0.6/v062-effective-requirements/reports/production-quality.json
+  - reports/2026-04-24-v0.6.2-effective-requirements-evidence-pack.md
 - id: KIU-671
   title: workflow-gateway boundary anti-drift gate
   target_version: v0.6.2
-  status: todo
+  status: done
   priority: P0
   blocker_level: hard
   area: workflow-boundary
@@ -591,6 +593,6 @@ tickets:
     any promotion from workflow to skill.
   evidence:
   - src/kiu_pipeline/preflight.py
-  - src/kiu_pipeline/reference_benchmark.py
-  - docs/kiu-skill-spec-v0.6.1.md
+  - src/kiu_pipeline/review.py
+  - tests/test_pipeline.py
   - reports/2026-04-24-v0.6.2-effective-requirements-evidence-pack.md

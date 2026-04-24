@@ -75,7 +75,13 @@ def render_generated_run(
             }
         )
 
-    if not rendered_seeds and workflow_only_seeds:
+    has_gateway_seed = any(seed.candidate_id == "workflow-gateway" for seed in rendered_seeds)
+    should_render_gateway = (
+        bool(workflow_only_seeds)
+        and not has_gateway_seed
+        and (not rendered_seeds or len(workflow_only_seeds) >= 3)
+    )
+    if should_render_gateway:
         gateway_seed = _build_workflow_gateway_seed(
             source_bundle=source_bundle,
             workflow_only_seeds=workflow_only_seeds,
@@ -87,6 +93,7 @@ def render_generated_run(
             skill_revision=1,
         )
         _write_workflow_gateway_trace(bundle_root=bundle_root, seed=gateway_seed)
+        _append_gateway_trigger_definitions(bundle_root=bundle_root, seed=gateway_seed)
         rendered_seeds.append(gateway_seed)
         manifest_skills.append(
             {
@@ -387,7 +394,7 @@ def _build_workflow_gateway_seed_content(
             "contradicts": [],
         },
         "rationale": (
-            "当一个材料被边界规则整体判定为 high workflow certainty + high context certainty 时，"
+            "当一个材料存在 high workflow certainty + high context certainty 的候选时，"
             "KiU 不能为了让 bundle 看起来有 skill 而把确定性步骤伪装成厚 skill。"
             "但默认产物仍需要一个可安装、可调用的入口，否则用户拿到的包只能审计，不能使用。"
             "`workflow-gateway` 的职责就是在这两者之间保持边界：它读取用户目标、现有上下文和可能的 workflow hint，"
@@ -395,8 +402,8 @@ def _build_workflow_gateway_seed_content(
             "因此它是一个薄路由 skill，而不是领域判断 skill。[^anchor:workflow-gateway-primary]"
         ),
         "evidence_summary": (
-            "该 gateway 只在当前生成轮次没有任何 agentic skill candidate、但存在多个 workflow_script_candidate 时生成。"
-            "这说明材料的主要交付物是确定性流程，而不是判断密集型技能；同时也说明需要一个最小可用入口，"
+            "该 gateway 在当前生成轮次存在 workflow_script_candidate 时生成，即使同一 bundle 也包含少量真正判断密集型 skill。"
+            "这说明材料仍有一部分主要交付物是确定性流程，同时也说明需要一个最小可用入口，"
             "把用户请求路由到 workflow_candidates 中的具体 `workflow.yaml` / `CHECKLIST.md`。"
             "当前候选 workflow 包括 " + route_lines + "。[^anchor:workflow-gateway-primary]"
         ),
@@ -838,3 +845,46 @@ def _write_yaml(path: Path, doc: dict[str, Any]) -> None:
         yaml.safe_dump(doc, sort_keys=False, allow_unicode=True),
         encoding="utf-8",
     )
+
+
+def _append_gateway_trigger_definitions(*, bundle_root: Path, seed: CandidateSeed) -> None:
+    trigger_path = bundle_root / "triggers.yaml"
+    trigger_doc = yaml.safe_load(trigger_path.read_text(encoding="utf-8")) if trigger_path.exists() else {}
+    if not isinstance(trigger_doc, dict):
+        trigger_doc = {}
+    trigger_entries = trigger_doc.setdefault("triggers", [])
+    if not isinstance(trigger_entries, list):
+        trigger_entries = []
+        trigger_doc["triggers"] = trigger_entries
+    existing = {
+        item.get("symbol")
+        for item in trigger_entries
+        if isinstance(item, dict) and item.get("symbol")
+    }
+    contract = seed.seed_content.get("contract", {})
+    symbols: list[str] = []
+    for section, key in (
+        ("trigger", "patterns"),
+        ("trigger", "exclusions"),
+        ("boundary", "fails_when"),
+        ("boundary", "do_not_fire_when"),
+    ):
+        values = contract.get(section, {}).get(key, []) if isinstance(contract.get(section), dict) else []
+        symbols.extend(str(item) for item in values if isinstance(item, str) and item)
+    for symbol in symbols:
+        if symbol in existing:
+            continue
+        trigger_entries.append(
+            {
+                "symbol": symbol,
+                "definition": f"Workflow gateway routing symbol `{symbol}` generated to preserve workflow-vs-agentic boundaries.",
+                "positive_examples": [
+                    "Use workflow-gateway to choose, sequence, or defer workflow candidates without inlining deterministic steps."
+                ],
+                "negative_examples": [
+                    "Do not use workflow-gateway to execute or copy workflow checklist steps into a thick skill."
+                ],
+            }
+        )
+        existing.add(symbol)
+    _write_yaml(trigger_path, trigger_doc)

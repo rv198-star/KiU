@@ -262,6 +262,10 @@ def _resolve_candidate_specs(
         derived_routing_evidence["derivation_mode"] = "additional_candidate"
         derived_routing_evidence["derived_from_candidate_id"] = base_candidate_id
         derived_routing_evidence["selected_candidate_kind"] = candidate_kind
+        if item.get("agentic_priority") is not None:
+            derived_routing_evidence["agentic_priority"] = _normalize_nonnegative_int(
+                item.get("agentic_priority")
+            )
         specs.append(
             {
                 "candidate_id": candidate_id,
@@ -335,9 +339,13 @@ def _candidate_seed_score(
             ]
         )
     )
-    return trace_ref_count + len(support["supporting_edge_ids"]) + len(
-        support["community_ids"]
-    ) + int(routing_evidence.get("workflow_cues", 0) or 0)
+    return (
+        trace_ref_count
+        + len(support["supporting_edge_ids"])
+        + len(support["community_ids"])
+        + int(routing_evidence.get("workflow_cues", 0) or 0)
+        + _normalize_nonnegative_int(routing_evidence.get("agentic_priority"))
+    )
 
 
 def derive_candidate_metadata(

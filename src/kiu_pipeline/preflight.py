@@ -18,6 +18,8 @@ def validate_generated_bundle(bundle_root: str | Path) -> dict[str, Any]:
 
     skill_candidates = 0
     workflow_script_candidates = 0
+    workflow_gateway_boundary_preserved = True
+    workflow_candidate_ids = _workflow_candidate_ids(bundle_root)
 
     for entry in manifest.get("skills", []):
         skill_id = entry.get("skill_id", "<missing-skill-id>")
@@ -50,6 +52,15 @@ def validate_generated_bundle(bundle_root: str | Path) -> dict[str, Any]:
             errors.append(f"{skill_id}: candidate.yaml missing terminal_state")
 
         skill_markdown = (candidate_path.parent / "SKILL.md").read_text(encoding="utf-8")
+        gateway_errors = _validate_workflow_gateway_boundary(
+            skill_id=skill_id,
+            candidate_doc=candidate_doc,
+            skill_markdown=skill_markdown,
+            workflow_candidate_ids=workflow_candidate_ids,
+        )
+        if gateway_errors:
+            workflow_gateway_boundary_preserved = False
+            errors.extend(gateway_errors)
         sections = parse_sections(skill_markdown)
         eval_doc = yaml.safe_load(
             (candidate_path.parent / "eval" / "summary.yaml").read_text(encoding="utf-8")
@@ -76,8 +87,55 @@ def validate_generated_bundle(bundle_root: str | Path) -> dict[str, Any]:
             errors.append(f"{skill_id}: Revision Summary drift vs iterations/revisions.yaml")
 
     report["errors"] = errors
+    report["workflow_gateway_boundary_preserved"] = workflow_gateway_boundary_preserved
     report["summary"] = {
         "skill_candidates": skill_candidates,
         "workflow_script_candidates": workflow_script_candidates,
+        "workflow_gateway_boundary_preserved": workflow_gateway_boundary_preserved,
     }
     return report
+
+
+def _workflow_candidate_ids(bundle_root: Path) -> list[str]:
+    workflow_root = bundle_root.parent / "workflow_candidates"
+    if not workflow_root.exists():
+        return []
+    return sorted(path.name for path in workflow_root.iterdir() if path.is_dir())
+
+
+def _validate_workflow_gateway_boundary(
+    *,
+    skill_id: str,
+    candidate_doc: dict[str, Any],
+    skill_markdown: str,
+    workflow_candidate_ids: list[str],
+) -> list[str]:
+    if skill_id != "workflow-gateway" and candidate_doc.get("candidate_kind") != "workflow_gateway":
+        return []
+
+    errors: list[str] = []
+    gateway_doc = candidate_doc.get("workflow_gateway", {})
+    if not isinstance(gateway_doc, dict):
+        gateway_doc = {}
+    routes_to = sorted(
+        str(item)
+        for item in gateway_doc.get("routes_to", [])
+        if isinstance(item, str) and item
+    )
+    if workflow_candidate_ids and not routes_to:
+        errors.append("workflow-gateway: missing workflow_gateway.routes_to for existing workflow_candidates")
+    if workflow_candidate_ids and set(routes_to) != set(workflow_candidate_ids):
+        errors.append("workflow-gateway: workflow_gateway.routes_to must match workflow_candidates directories")
+    if workflow_candidate_ids and "workflow_candidates" not in skill_markdown:
+        errors.append("workflow-gateway: SKILL.md must route to workflow_candidates instead of hiding workflow steps")
+
+    inline_markers = (
+        "## Rollback",
+        "## Reversibility",
+        "- [ ] Confirm rollback steps",
+        "- [ ] Identify any irreversible data writes",
+        "- [ ] Summarize the proposed change and the exact affected surface",
+    )
+    if any(marker in skill_markdown for marker in inline_markers):
+        errors.append("workflow-gateway: SKILL.md appears to inline deterministic workflow checklist steps")
+    return errors

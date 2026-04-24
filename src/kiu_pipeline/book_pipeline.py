@@ -41,6 +41,7 @@ from .reports import (
 from .review import review_generated_run
 from .seed import mine_candidate_seed_assessment
 from .source_chunks import build_source_chunks_from_markdown
+from .usage_smoke import write_smoke_usage_reviews as write_generated_smoke_usage_reviews
 from .verification_gate import write_seed_verification_reports
 
 
@@ -117,7 +118,7 @@ def run_book_pipeline(
         drafting_mode=drafting_mode,
         llm_budget_tokens=llm_budget_tokens,
     )
-    _write_smoke_usage_reviews(run_root)
+    write_generated_smoke_usage_reviews(run_root)
     review_doc = review_generated_run(
         run_root=run_root,
         source_bundle_path=source_bundle_root,

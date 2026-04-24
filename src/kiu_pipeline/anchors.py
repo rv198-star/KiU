@@ -40,6 +40,8 @@ def build_candidate_anchors(
                 for anchor in explicit_source_anchors
                 if isinstance(anchor, dict)
             ]
+        if not source_anchor_sets and seed.candidate_id == "workflow-gateway":
+            source_anchor_sets = _build_gateway_fallback_source_anchors(source_bundle=source_bundle)
 
     return {
         "skill_id": seed.candidate_id,
@@ -111,3 +113,24 @@ def _read_snippet(path: Path, *, line_start: int, line_end: int) -> str:
         if line.strip()
     )
     return excerpt[:220] if len(excerpt) > 220 else excerpt
+
+
+def _build_gateway_fallback_source_anchors(*, source_bundle: SourceBundle) -> list[dict[str, Any]]:
+    source_root = source_bundle.root / "sources"
+    if not source_root.exists():
+        return []
+    source_files = sorted(path for path in source_root.iterdir() if path.is_file())
+    if not source_files:
+        return []
+    source_file = source_files[0]
+    relative_path = source_file.relative_to(source_bundle.root).as_posix()
+    return [
+        {
+            "anchor_id": "workflow-gateway-source-fallback",
+            "kind": "source_excerpt",
+            "path": _candidate_relative_path(relative_path),
+            "line_start": 1,
+            "line_end": 1,
+            "snippet": _read_snippet(source_file, line_start=1, line_end=1),
+        }
+    ]

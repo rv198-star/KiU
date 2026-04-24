@@ -142,7 +142,7 @@ def scaffold_extraction_bundle(
             "inherits_from": inherits_from,
             "trigger_registry": "triggers.yaml",
             "seed_node_types": DEFAULT_SEED_NODE_TYPES,
-            "max_candidates": 12,
+            "max_candidates": 14,
             "candidate_kinds": DEFAULT_CANDIDATE_KINDS,
             "routing_rules": DEFAULT_ROUTING_RULES,
         },
@@ -358,60 +358,381 @@ def _build_additional_candidate_specs(
     descriptors: list[dict[str, str]],
 ) -> list[dict[str, Any]]:
     semantic_family = identify_semantic_family(candidate_id)
-    if semantic_family != "margin-of-safety-sizing":
-        return []
+    if semantic_family == "margin-of-safety-sizing":
+        value_candidate_id = _derive_related_candidate_id(
+            base_candidate_id=candidate_id,
+            semantic_root="value-assessment",
+        )
+        value_title = _humanize_title(value_candidate_id)
+        value_contract = _build_seed_contract(
+            candidate_id=value_candidate_id,
+            title=value_title,
+            descriptors=descriptors,
+        )
+        value_trace_ref = _write_trace_doc(
+            bundle_root=bundle_root,
+            candidate_id=value_candidate_id,
+            title=value_title,
+            descriptors=descriptors,
+        )
+        value_eval_summary = _write_eval_docs(
+            bundle_root=bundle_root,
+            candidate_id=value_candidate_id,
+            title=value_title,
+            descriptors=descriptors,
+            contract=value_contract,
+        )
+        value_usage_notes = _build_usage_notes(
+            candidate_id=value_candidate_id,
+            title=value_title,
+            descriptors=descriptors,
+        )
+        value_scenario_families = _build_scenario_families(
+            candidate_id=value_candidate_id,
+            title=value_title,
+            descriptors=descriptors,
+        )
+        value_skill_seed = _compose_skill_seed(
+            candidate_id=value_candidate_id,
+            title=value_title,
+            contract=value_contract,
+            descriptors=descriptors,
+            trace_ref=value_trace_ref,
+            usage_notes=value_usage_notes,
+            scenario_families=value_scenario_families,
+            eval_summary=value_eval_summary,
+        )
+        value_skill_seed["relations"]["delegates_to"] = [candidate_id]
+        return [
+            {
+                "candidate_id": value_candidate_id,
+                "candidate_kind": "general_agentic",
+                "skill_seed": value_skill_seed,
+            }
+        ]
 
-    value_candidate_id = _derive_related_candidate_id(
-        base_candidate_id=candidate_id,
-        semantic_root="value-assessment",
-    )
-    value_title = _humanize_title(value_candidate_id)
-    value_contract = _build_seed_contract(
-        candidate_id=value_candidate_id,
-        title=value_title,
-        descriptors=descriptors,
-    )
-    value_trace_ref = _write_trace_doc(
+    return _build_requirements_agentic_candidate_specs(
         bundle_root=bundle_root,
-        candidate_id=value_candidate_id,
-        title=value_title,
+        source_candidate_id=candidate_id,
         descriptors=descriptors,
     )
-    value_eval_summary = _write_eval_docs(
+
+
+def _build_requirements_agentic_candidate_specs(
+    *,
+    bundle_root: Path,
+    source_candidate_id: str,
+    descriptors: list[dict[str, str]],
+) -> list[dict[str, Any]]:
+    requirement_specs = {
+        "2-日常需求分析": {
+            "candidate_id": "solution-to-problem-reframing",
+            "title": "Solution To Problem Reframing",
+            "trigger_patterns": [
+                "solution_level_request_with_unclear_problem",
+                "stakeholder_requests_feature_but_business_impact_unknown",
+                "implementation_cost_debate_before_problem_recovery",
+            ],
+            "trigger_exclusions": [
+                "workflow_execution_request_only",
+                "problem_already_validated_and_solution_selected",
+                "concept_query_only",
+            ],
+            "intake": [
+                ("proposed_solution", "string", "用户或客户已经提出的功能、页面、报表或实现方案。"),
+                ("requester_and_user", "structured", "区分需求提出者、真实使用者、受影响者是否一致。"),
+                ("business_impact_if_absent", "list[string]", "如果不做该方案，业务问题、风险或机会损失是什么。"),
+                ("current_workaround", "string", "当前临时解决方式及其代价。"),
+                ("disconfirming_evidence", "list[string]", "能证明该方案只是表层表达、问题尚未澄清或价值不足的证据。"),
+            ],
+            "schema": {
+                "verdict": "enum[reframe_to_problem|accept_solution_with_constraints|defer]",
+                "problem_level_need": "string",
+                "solution_risk": "list[string]",
+                "evidence_to_check": "list[string]",
+                "next_question": "string",
+                "decline_reason": "string",
+                "confidence": "enum[low|medium|high]",
+            },
+            "fails_when": [
+                "problem_level_need_cannot_be_recovered",
+                "requester_and_real_user_conflict_unresolved",
+            ],
+            "do_not_fire_when": [
+                "workflow_execution_request_only",
+                "problem_already_validated_and_solution_selected",
+            ],
+            "rationale_tail": (
+                "This candidate is intentionally not a workflow wrapper. It fires when the input requires reconstructing the real problem behind a proposed solution, judging whether the requester's wording is reliable, and deciding whether to reframe, accept with constraints, or defer. The underlying chapter still provides deterministic restore/complement/evaluate workflows, but this skill handles the judgment boundary before those workflows are chosen."
+            ),
+            "usage_notes": [
+                "当用户拿着一个明确方案来问要不要做时，先恢复问题级需求，而不是直接细化 How。",
+                "输出必须区分 proposed_solution、problem_level_need、solution_risk 和 next_question。",
+                "如果问题已验证且只是要执行固定模板，应路由到 workflow_candidates/2-日常需求分析，而不是触发本 skill。",
+                "如果真实用户与需求提出者不一致，必须显式标出需要补访谈或补证据。",
+            ],
+            "scenarios": {
+                "should_trigger": [
+                    {
+                        "scenario_id": "feature-request-before-problem",
+                        "summary": "客户要求加一个具体功能，但业务影响、真实使用者和替代方案都不清楚。",
+                        "prompt_signals": ["客户说必须加这个按钮", "先别问为什么，赶紧实现", "开发说成本很高"],
+                        "boundary_reason": "这需要判断方案级表达背后的问题级需求，不能只执行固定清单。",
+                        "next_action_shape": "输出 reframe_to_problem、problem_level_need、solution_risk、next_question。",
+                    }
+                ],
+                "should_not_trigger": [
+                    {
+                        "scenario_id": "routine-template-fill",
+                        "summary": "用户已经确认 Who/Why/How，只要求按模板整理一条日常需求。",
+                        "prompt_signals": ["按变更需求模板整理", "字段都齐了"],
+                        "boundary_reason": "这是高 workflow certainty + 高 context certainty，应进入 workflow_candidates/。",
+                    }
+                ],
+                "edge_case": [
+                    {
+                        "scenario_id": "requester-not-real-user",
+                        "summary": "需求提出者和真实使用者不一致，需要判断当前方案是否误代表真实问题。",
+                        "prompt_signals": ["领导提的需求", "一线用户没参与", "不知道谁真正用"],
+                        "boundary_reason": "需要 agentic 判断并补上下文，而不是直接选择流程。",
+                        "next_action_shape": "列出缺失访谈对象和最小验证问题。",
+                    }
+                ],
+                "refusal": [
+                    {
+                        "scenario_id": "solution-already-validated",
+                        "summary": "业务问题、用户和约束都已验证，只剩下执行拆解。",
+                        "prompt_signals": ["目标和用户都确认了", "只要拆任务"],
+                        "boundary_reason": "不应把确定性执行伪装成厚 skill。",
+                    }
+                ],
+            },
+            "revision_summary": "Initial requirements-agentic extraction added because solution-level requests require judgment before deterministic daily-requirements workflows can safely run.",
+        },
+        "5-干系人分析": {
+            "candidate_id": "stakeholder-resistance-tradeoff",
+            "title": "Stakeholder Resistance Tradeoff",
+            "trigger_patterns": [
+                "stakeholder_attention_and_resistance_conflict",
+                "important_stakeholder_missing_from_requirement",
+                "scope_choice_depends_on_power_interest_tradeoff",
+            ],
+            "trigger_exclusions": [
+                "stakeholder_list_is_only_being_filled",
+                "single_stakeholder_no_conflict",
+                "concept_query_only",
+            ],
+            "intake": [
+                ("stakeholders", "list[structured]", "关键干系人、角色、权力、受影响程度和使用关系。"),
+                ("attention_points", "list[string]", "各干系人的关注点、成功标准或收益。"),
+                ("resistance_points", "list[string]", "各干系人的担心、阻力点、损失或反对理由。"),
+                ("decision_scope", "string", "当前要决定的需求范围、优先级或沟通策略。"),
+                ("disconfirming_evidence", "list[string]", "证明某个干系人被漏掉、权力判断错误或阻力被低估的证据。"),
+            ],
+            "schema": {
+                "verdict": "enum[prioritize_resistance|prioritize_attention|ask_for_missing_stakeholder|defer]",
+                "critical_stakeholders": "list[string]",
+                "tradeoff_reason": "string",
+                "risk_if_ignored": "list[string]",
+                "evidence_to_check": "list[string]",
+                "next_action": "string",
+                "confidence": "enum[low|medium|high]",
+            },
+            "fails_when": [
+                "critical_stakeholder_identity_uncertain",
+                "resistance_point_is_asserted_without_evidence",
+            ],
+            "do_not_fire_when": [
+                "stakeholder_list_is_only_being_filled",
+                "single_stakeholder_no_conflict",
+            ],
+            "rationale_tail": (
+                "This candidate exists because stakeholder analysis becomes agentic when the work is no longer listing roles but judging whose concern, resistance, or missing voice should change scope and next action. The deterministic stakeholder workflow remains the right artifact for inventory building; this skill handles conflict-sensitive boundary arbitration."
+            ),
+            "usage_notes": [
+                "当关注点和阻力点冲突时，输出关键干系人、取舍理由和忽略风险。",
+                "如果只是补干系人列表，应路由到 workflow_candidates/4-干系人识别 或 5-干系人分析。",
+                "必须显式检查遗漏干系人和被低估阻力，不能只给沟通建议。",
+                "当关键干系人身份不确定时，先 ask_for_missing_stakeholder。",
+            ],
+            "scenarios": {
+                "should_trigger": [
+                    {
+                        "scenario_id": "resistance-changes-scope",
+                        "summary": "业务方关注效率，审计或运营方担心风险，需求范围需要在冲突中取舍。",
+                        "prompt_signals": ["一方要快", "另一方担心风险", "到底听谁的"],
+                        "boundary_reason": "这里需要判断关注点和阻力点的权重，不是填写干系人表。",
+                        "next_action_shape": "输出 prioritize_resistance/prioritize_attention、critical_stakeholders、risk_if_ignored。",
+                    }
+                ],
+                "should_not_trigger": [
+                    {
+                        "scenario_id": "stakeholder-inventory-only",
+                        "summary": "用户只要求列出项目干系人和基本职责。",
+                        "prompt_signals": ["帮我列干系人", "整理角色列表"],
+                        "boundary_reason": "这是确定性识别流程，应保留在 workflow_candidates/。",
+                    }
+                ],
+                "edge_case": [
+                    {
+                        "scenario_id": "missing-real-user",
+                        "summary": "发起人明确，但真实使用者或受影响群体没有被访谈。",
+                        "prompt_signals": ["领导提的", "一线没人参与", "不知道谁会反对"],
+                        "boundary_reason": "需要判断缺失干系人是否足以阻断结论。",
+                        "next_action_shape": "输出 ask_for_missing_stakeholder 和最小补访谈列表。",
+                    }
+                ],
+                "refusal": [
+                    {
+                        "scenario_id": "single-stakeholder-no-conflict",
+                        "summary": "只有一个明确使用者且无冲突，只需继续执行固定分析模板。",
+                        "prompt_signals": ["只有一个使用部门", "没有争议"],
+                        "boundary_reason": "不应为无冲突场景制造 agentic 判断。",
+                    }
+                ],
+            },
+            "revision_summary": "Initial requirements-agentic extraction added to separate conflict-sensitive stakeholder tradeoff from deterministic stakeholder inventory workflows.",
+        },
+    }
+    spec = requirement_specs.get(source_candidate_id)
+    if not spec:
+        return []
+    candidate_id = spec["candidate_id"]
+    title = spec["title"]
+    contract = _build_requirements_agentic_contract(spec)
+    trace_ref = _write_trace_doc(
         bundle_root=bundle_root,
-        candidate_id=value_candidate_id,
-        title=value_title,
-        descriptors=descriptors,
-        contract=value_contract,
-    )
-    value_usage_notes = _build_usage_notes(
-        candidate_id=value_candidate_id,
-        title=value_title,
+        candidate_id=candidate_id,
+        title=title,
         descriptors=descriptors,
     )
-    value_scenario_families = _build_scenario_families(
-        candidate_id=value_candidate_id,
-        title=value_title,
+    eval_summary = _write_eval_docs(
+        bundle_root=bundle_root,
+        candidate_id=candidate_id,
+        title=title,
+        descriptors=descriptors,
+        contract=contract,
+    )
+    scenario_families = _with_anchor_refs(spec["scenarios"], descriptors)
+    skill_seed = _compose_skill_seed(
+        candidate_id=candidate_id,
+        title=title,
+        contract=contract,
+        descriptors=descriptors,
+        trace_ref=trace_ref,
+        usage_notes=spec["usage_notes"],
+        scenario_families=scenario_families,
+        eval_summary=eval_summary,
+    )
+    skill_seed["relations"]["depends_on"] = spec.get("depends_on", [])
+    skill_seed["relations"]["complements"] = spec.get("complements", [])
+    skill_seed["rationale"] = _build_requirements_agentic_rationale(
+        title=title,
+        descriptors=descriptors,
+        tail=spec["rationale_tail"],
+    )
+    skill_seed["evidence_summary"] = _build_requirements_agentic_evidence_summary(
+        title=title,
         descriptors=descriptors,
     )
-    value_skill_seed = _compose_skill_seed(
-        candidate_id=value_candidate_id,
-        title=value_title,
-        contract=value_contract,
-        descriptors=descriptors,
-        trace_ref=value_trace_ref,
-        usage_notes=value_usage_notes,
-        scenario_families=value_scenario_families,
-        eval_summary=value_eval_summary,
-    )
-    value_skill_seed["relations"]["delegates_to"] = [candidate_id]
+    skill_seed["revision_seed"] = {
+        "summary": spec["revision_summary"],
+        "evidence_changes": [
+            "Preserved deterministic requirement-analysis workflows under workflow_candidates/.",
+            "Added a separate llm_agentic candidate only for judgment-rich arbitration.",
+            "Bound the candidate to graph/source double anchors and smoke evaluation cases.",
+        ],
+        "open_gaps": [
+            "Replace generated smoke cases with real project review logs.",
+            "Verify the skill against mixed stakeholder and scope-trimming cases before broad publication.",
+        ],
+    }
     return [
         {
-            "candidate_id": value_candidate_id,
+            "candidate_id": candidate_id,
             "candidate_kind": "general_agentic",
-            "skill_seed": value_skill_seed,
+            "agentic_priority": 8,
+            "skill_seed": skill_seed,
         }
     ]
+
+
+def _build_requirements_agentic_contract(spec: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "trigger": {
+            "patterns": spec["trigger_patterns"],
+            "exclusions": spec["trigger_exclusions"],
+        },
+        "intake": {
+            "required": [
+                {"name": name, "type": kind, "description": description}
+                for name, kind, description in spec["intake"]
+            ]
+        },
+        "judgment_schema": {
+            "output": {
+                "type": "structured",
+                "schema": spec["schema"],
+            },
+            "reasoning_chain_required": True,
+        },
+        "boundary": {
+            "fails_when": spec["fails_when"],
+            "do_not_fire_when": spec["do_not_fire_when"],
+        },
+    }
+
+
+def _with_anchor_refs(
+    scenario_families: dict[str, Any],
+    descriptors: list[dict[str, str]],
+) -> dict[str, Any]:
+    anchor_refs = [item["anchor_id"] for item in descriptors[:3]]
+    enriched: dict[str, Any] = {}
+    for family, cases in scenario_families.items():
+        enriched_cases = []
+        for case in cases:
+            case_doc = dict(case)
+            case_doc.setdefault("anchor_refs", anchor_refs)
+            enriched_cases.append(case_doc)
+        enriched[family] = enriched_cases
+    return enriched
+
+
+def _build_requirements_agentic_rationale(
+    *,
+    title: str,
+    descriptors: list[dict[str, str]],
+    tail: str,
+) -> str:
+    primary = descriptors[0]
+    support = " ".join(
+        f"`{item['label']}` adds source context through \"{item['snippet']}\"[^anchor:{item['anchor_id']}]."
+        for item in descriptors[1:3]
+    )
+    return (
+        f"`{title}` is anchored in \"{primary['snippet']}\"[^anchor:{primary['anchor_id']}]. "
+        f"{support} "
+        f"{tail} The output must name the evidence it checked, the boundary reason, and a concrete next action; otherwise it should defer or route back to workflow_candidates/."
+    ).strip()
+
+
+def _build_requirements_agentic_evidence_summary(
+    *,
+    title: str,
+    descriptors: list[dict[str, str]],
+) -> str:
+    lines = [
+        f"`{title}` is grounded in \"{descriptors[0]['snippet']}\"[^anchor:{descriptors[0]['anchor_id']}]."
+    ]
+    for item in descriptors[1:3]:
+        lines.append(
+            f"`{item['label']}` supplies neighboring source evidence: \"{item['snippet']}\"[^anchor:{item['anchor_id']}]."
+        )
+    lines.append(
+        "These anchors justify an llm_agentic candidate only where the user needs interpretation, conflict arbitration, or missing-context judgment; deterministic execution remains in workflow_candidates/."
+    )
+    return "\n\n".join(lines)
 
 
 def _derive_related_candidate_id(*, base_candidate_id: str, semantic_root: str) -> str:
