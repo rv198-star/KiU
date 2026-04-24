@@ -8,6 +8,7 @@ from typing import Any
 import yaml
 
 from kiu_pipeline.load import load_source_bundle, parse_sections
+from kiu_pipeline.pipeline_provenance import load_pipeline_provenance
 from kiu_pipeline.profile_resolver import resolve_profile
 from kiu_pipeline.review import review_generated_run
 from kiu_validator.core import validate_bundle
@@ -183,6 +184,7 @@ def _scan_generated_run(run_root: Path, source_bundle_path: Path) -> dict[str, A
             source_bundle_path=source_bundle_path,
         )
 
+    pipeline_provenance = load_pipeline_provenance(run_root)
     production_quality_path = reports_root / "production-quality.json"
     production_quality = (
         json.loads(production_quality_path.read_text(encoding="utf-8"))
@@ -243,9 +245,15 @@ def _scan_generated_run(run_root: Path, source_bundle_path: Path) -> dict[str, A
         ),
         "graph_to_skill_distillation": graph_to_skill_distillation,
         "generated_bundle_skill_reviews": generated_bundle_skill_reviews,
+        "pipeline_provenance": pipeline_provenance,
+        "raw_book_no_seed_cold_start": bool(
+            pipeline_provenance.get("raw_book_no_seed_cold_start")
+        ),
+        "pipeline_mode": pipeline_provenance.get("pipeline_mode", "unknown"),
         "pipeline_artifacts": _discover_pipeline_artifacts(
             source_bundle_path=source_bundle_path,
             run_root=run_root,
+            pipeline_provenance=pipeline_provenance,
         ),
     }
 
@@ -253,6 +261,13 @@ def _scan_generated_run(run_root: Path, source_bundle_path: Path) -> dict[str, A
 def _scan_reference_pack(reference_root: Path) -> dict[str, Any]:
     skill_paths = sorted(reference_root.glob("*/SKILL.md"))
     skill_ids = [path.parent.name for path in skill_paths]
+    metadata_path = reference_root / "metadata.json"
+    metadata: dict[str, Any] = {}
+    if metadata_path.exists():
+        try:
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            metadata = {"metadata_parse_error": True}
     frontmatters = []
     quote_count = 0
     execution_count = 0
@@ -289,6 +304,10 @@ def _scan_reference_pack(reference_root: Path) -> dict[str, Any]:
 
     return {
         "path": str(reference_root),
+        "reference_protocol": metadata.get("reference_protocol"),
+        "official_cangjie_run": metadata.get("official_cangjie_run"),
+        "benchmark_only": metadata.get("benchmark_only"),
+        "external_reference_boundary": metadata.get("external_reference_boundary", {}),
         "skill_count": skill_count,
         "skill_ids": skill_ids,
         "has_book_overview": (reference_root / "BOOK_OVERVIEW.md").exists(),
@@ -854,9 +873,10 @@ def _build_scorecard(
         )
 
     pipeline_artifacts = generated_run.get("pipeline_artifacts", {}) if generated_run is not None else {}
+    cold_start_proof_ratio = 1.0 if pipeline_artifacts.get("raw_book_no_seed_cold_start") else 0.0
     stage_presence_ratio = _average(
         [
-            1.0 if pipeline_artifacts.get("raw_source_present") else 0.0,
+            cold_start_proof_ratio,
             1.0 if pipeline_artifacts.get("book_overview_present") else 0.0,
             1.0 if pipeline_artifacts.get("source_chunks_present") else 0.0,
             1.0 if pipeline_artifacts.get("extraction_result_present") else 0.0,
@@ -912,6 +932,8 @@ def _build_scorecard(
         "kiu_foundation_retained_100": foundation_score,
         "graphify_core_absorbed_100": graphify_score,
         "cangjie_core_absorbed_100": cangjie_score,
+        "book_to_skill_cold_start_proven": bool(cold_start_proof_ratio),
+        "book_to_skill_cold_start_proven_100": round(100.0 * cold_start_proof_ratio, 1),
         "graph_to_skill_distillation_100": graph_to_skill_distillation_score,
         "v061_distillation_gate": v061_gate,
         "details": {
@@ -933,7 +955,10 @@ def _build_scorecard(
                 "graph_report_ratio": graph_report_ratio,
             },
             "cangjie_core_absorbed": {
+                "cold_start_proof_ratio": round(cold_start_proof_ratio, 4),
                 "pipeline_stage_presence_ratio": round(stage_presence_ratio, 4),
+                "pipeline_mode": pipeline_artifacts.get("pipeline_mode"),
+                "source_bundle_skill_count": pipeline_artifacts.get("source_bundle_skill_count"),
                 "extractor_coverage_ratio": round(extractor_coverage_ratio, 4),
                 "throughput_vs_reference_ratio": round(throughput_ratio, 4),
                 "usage_quality_ratio": round(usage_quality_ratio, 4),
@@ -1735,12 +1760,17 @@ def _supports_edge_handling(text: str) -> bool:
         (
             "edge",
             "partial",
+            "ask_or_delegate",
+            "act_with_boundary",
+            "bounded temporary action",
             "谨慎",
             "边界",
             "圈外",
             "圈内",
             "部分",
             "defer",
+            "delegate",
+            "authorization",
             "study_more",
         ),
     )
@@ -1756,6 +1786,9 @@ def _supports_decline_action(text: str) -> bool:
             "pass",
             "reject",
             "do_not_fire",
+            "do_not_apply",
+            "ask_or_delegate",
+            "refuse",
             "不要",
             "不应",
             "拒绝",
@@ -2208,6 +2241,7 @@ def _discover_pipeline_artifacts(
     *,
     source_bundle_path: Path,
     run_root: Path,
+    pipeline_provenance: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     manifest = yaml.safe_load((source_bundle_path / "manifest.yaml").read_text(encoding="utf-8")) or {}
     graph_path = source_bundle_path / manifest.get("graph", {}).get("path", "graph/graph.json")
@@ -2235,7 +2269,16 @@ def _discover_pipeline_artifacts(
                     extractor_kind = node.get("extractor_kind")
                     if isinstance(extractor_kind, str) and extractor_kind:
                         extractor_kinds.add(_normalize_extractor_kind(extractor_kind))
+    pipeline_provenance = pipeline_provenance or {}
+    raw_book_no_seed_cold_start = bool(
+        pipeline_provenance.get("raw_book_no_seed_cold_start")
+    )
     return {
+        "raw_book_no_seed_cold_start": raw_book_no_seed_cold_start,
+        "pipeline_mode": pipeline_provenance.get("pipeline_mode", "unknown"),
+        "source_bundle_skill_count": int(
+            pipeline_provenance.get("source_bundle_skill_count", 0) or 0
+        ),
         "raw_source_present": source_snapshot_present,
         "book_overview_present": book_overview_path.exists(),
         "source_chunks_present": source_chunks_path.exists(),
@@ -2399,6 +2442,7 @@ def _render_markdown_report(report: dict[str, Any]) -> str:
             f"- KiU foundation retained: `{scorecard['kiu_foundation_retained_100']}`",
             f"- Graphify core absorbed: `{scorecard['graphify_core_absorbed_100']}`",
             f"- cangjie core absorbed: `{scorecard['cangjie_core_absorbed_100']}`",
+            f"- Book-to-skill cold start proven: `{scorecard.get('book_to_skill_cold_start_proven')}`",
             f"- Graph-to-skill distillation: `{scorecard.get('graph_to_skill_distillation_100')}`",
             f"- v0.6.1 distillation gate ready: `{scorecard.get('v061_distillation_gate', {}).get('ready')}`",
             "",

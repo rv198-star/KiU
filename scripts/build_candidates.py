@@ -15,6 +15,10 @@ if str(SRC) not in sys.path:
 from kiu_pipeline.load import load_source_bundle
 from kiu_pipeline.local_paths import resolve_output_root
 from kiu_pipeline.normalize import normalize_graph
+from kiu_pipeline.pipeline_provenance import (
+    build_source_bundle_regeneration_provenance,
+    write_pipeline_provenance,
+)
 from kiu_pipeline.preflight import validate_generated_bundle
 from kiu_pipeline.quality import assess_run_quality
 from kiu_pipeline.refiner import refine_bundle_candidates
@@ -85,6 +89,14 @@ def main() -> int:
         run_root=run_root,
         summary=assessment["summary"],
     )
+    provenance_path = write_pipeline_provenance(
+        run_root,
+        build_source_bundle_regeneration_provenance(
+            source_bundle_root=args.source_bundle,
+            run_root=run_root,
+            entrypoint="build_candidates.py",
+        ),
+    )
     bundle_root = run_root / "bundle"
     candidates = load_generated_candidates(bundle_root)
     refined = refine_bundle_candidates(
@@ -114,6 +126,7 @@ def main() -> int:
             {
                 "run_root": str(run_root),
                 "bundle_root": str(bundle_root),
+                "pipeline_provenance_path": str(provenance_path),
                 "summary": metrics["summary"],
                 "quality": {
                     "release_ready": quality_report["release_ready"],

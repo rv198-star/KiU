@@ -16,7 +16,19 @@ from .contracts import build_semantic_contract, identify_semantic_family
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_SEED_NODE_TYPES = ["principle_signal", "control_signal", "counter_example_signal"]
+DEFAULT_SEED_NODE_TYPES = [
+    "principle_signal",
+    "control_signal",
+    "counter_example_signal",
+    "narrative_pattern_signal",
+    "case_mechanism",
+    "situation_strategy_pattern",
+]
+BORROWED_VALUE_FAMILIES = {
+    "historical-analogy-transfer-gate",
+    "no-investigation-no-decision",
+    "principal-contradiction-focus",
+}
 DEFAULT_CANDIDATE_KINDS = {
     "general_agentic": {
         "workflow_certainty": "medium",
@@ -47,6 +59,70 @@ DEFAULT_ROUTING_RULES = [
 ]
 
 
+def _is_borrowed_value_family(semantic_family: str) -> bool:
+    return semantic_family in BORROWED_VALUE_FAMILIES
+
+
+def _borrowed_value_profile(semantic_family: str) -> dict[str, Any]:
+    profiles: dict[str, dict[str, Any]] = {
+        "historical-analogy-transfer-gate": {
+            "source_pattern": "historical case mechanism",
+            "trigger": "the user wants to borrow a historical, biographical, or case pattern for a current decision",
+            "verdicts": "transfer / partial_transfer / do_not_transfer / ask_more_context",
+            "output": "mechanism_mapping, transfer_conditions, anti_conditions, abuse_check, and transfer_checked_next_action",
+            "positive_signals": ["历史案例能不能借鉴", "这个故事像不像我们的处境", "机制是否相同"],
+            "negative_signals": ["讲讲这段历史", "翻译一下", "人物介绍", "单个故事成功所以照做"],
+            "transfer_conditions": [
+                "current_decision_is_explicit",
+                "actor_incentive_constraint_outcome_chain_matches",
+                "material_differences_are_named",
+            ],
+            "anti_conditions": [
+                "single_case_overreach",
+                "surface_similarity_only",
+                "pure_history_query_or_translation",
+            ],
+        },
+        "no-investigation-no-decision": {
+            "source_pattern": "investigation-before-judgment strategy",
+            "trigger": "the user is about to decide from reports, templates, book claims, or past experience without field evidence",
+            "verdicts": "go_investigate / partial_judgment / do_not_decide",
+            "output": "investigation_questions, transfer_conditions, anti_conditions, abuse_check, and field_evidence_next_action",
+            "positive_signals": ["没有现场事实", "只看报告要拍板", "照搬过去经验", "先决定再补材料"],
+            "negative_signals": ["作者原话是什么", "总结这篇文章", "人物介绍", "评价立场但没有我的决策"],
+            "transfer_conditions": [
+                "current_decision_is_explicit",
+                "field_evidence_can_change_the_decision",
+                "investigation_questions_are_actionable_before_commitment",
+            ],
+            "anti_conditions": [
+                "context_transfer_abuse",
+                "pure_author_position_query",
+                "decision_window_already_closed",
+            ],
+        },
+        "principal-contradiction-focus": {
+            "source_pattern": "principal-contradiction focus strategy",
+            "trigger": "the user faces multiple conflicts or fronts and must choose the main constraint before allocating action",
+            "verdicts": "focus_here / split_after_focus / ask_more_context / do_not_apply",
+            "output": "principal_contradiction, transfer_conditions, anti_conditions, abuse_check, and focused_action_program",
+            "positive_signals": ["矛盾太多", "平均用力", "先抓哪个问题", "资源分散"],
+            "negative_signals": ["总结主要矛盾理论", "评价作者立场", "单纯政治评论", "没有当前行动选择"],
+            "transfer_conditions": [
+                "multiple_conflicts_are_named",
+                "one_constraint_materially_controls_the_next_action",
+                "resource_allocation_changes_after_focus",
+            ],
+            "anti_conditions": [
+                "context_transfer_abuse",
+                "stance_commentary_without_user_decision",
+                "all_conflicts_are_independent_and_need_parallel_workflows",
+            ],
+        },
+    }
+    return profiles[semantic_family]
+
+
 def scaffold_extraction_bundle(
     *,
     source_chunks_path: str | Path,
@@ -75,16 +151,17 @@ def scaffold_extraction_bundle(
     (bundle_root / "evaluation" / "synthetic_adversarial").mkdir(parents=True, exist_ok=True)
     (bundle_root / "evaluation" / "out_of_distribution").mkdir(parents=True, exist_ok=True)
 
-    source_markdown_path = _resolve_source_file(
-        source_file=str(source_chunks_doc["source_file"]),
+    source_file_map, copied_source_root = _copy_source_files(
+        source_chunks_doc=source_chunks_doc,
         source_chunks_path=source_chunks_input_path,
+        bundle_root=bundle_root,
+        source_id=source_id,
     )
-    copied_source_relpath = Path("sources") / source_markdown_path.name
-    shutil.copy2(source_markdown_path, bundle_root / copied_source_relpath)
 
     persisted_source_chunks = _rewrite_source_chunks_doc(
         source_chunks_doc=source_chunks_doc,
-        rewritten_source_file=copied_source_relpath.as_posix(),
+        source_file_map=source_file_map,
+        copied_source_root=copied_source_root,
     )
     (bundle_root / "ingestion" / "source-chunks-v0.1.json").write_text(
         json.dumps(persisted_source_chunks, ensure_ascii=False, indent=2) + "\n",
@@ -94,7 +171,7 @@ def scaffold_extraction_bundle(
     rewritten_graph_doc = _rewrite_graph_source_paths(
         graph_doc=graph_doc,
         source_snapshot=source_id,
-        rewritten_source_file=copied_source_relpath.as_posix(),
+        source_file_map=source_file_map,
     )
     if not rewritten_graph_doc.get("communities"):
         rewritten_graph_doc["communities"] = derive_graph_communities(rewritten_graph_doc)
@@ -154,10 +231,10 @@ def scaffold_extraction_bundle(
             "materials": [
                 {
                     "source_id": source_id,
-                    "kind": "markdown_document",
-                    "original_path": source_markdown_path.as_posix(),
-                    "bundle_path": copied_source_relpath.as_posix(),
-                    "line_count": len(source_markdown_path.read_text(encoding="utf-8").splitlines()),
+                    "kind": "markdown_document" if len(source_file_map) == 1 else "markdown_collection",
+                    "original_path": str(source_chunks_doc.get("source_file")),
+                    "bundle_path": copied_source_root,
+                    "file_count": len(source_file_map),
                     "source_chunks_path": "ingestion/source-chunks-v0.1.json",
                     "chunk_count": len(source_chunks_doc.get("chunks", [])),
                 }
@@ -285,17 +362,17 @@ def _rewrite_graph_source_paths(
     *,
     graph_doc: dict[str, Any],
     source_snapshot: str,
-    rewritten_source_file: str,
+    source_file_map: dict[str, str],
 ) -> dict[str, Any]:
     rewritten = dict(graph_doc)
     rewritten["source_snapshot"] = source_snapshot
     rewritten["nodes"] = [
-        _rewrite_source_file(entity=node, rewritten_source_file=rewritten_source_file)
+        _rewrite_source_file(entity=node, source_file_map=source_file_map)
         for node in graph_doc.get("nodes", [])
         if isinstance(node, dict)
     ]
     rewritten["edges"] = [
-        _rewrite_source_file(entity=edge, rewritten_source_file=rewritten_source_file)
+        _rewrite_source_file(entity=edge, source_file_map=source_file_map)
         for edge in graph_doc.get("edges", [])
         if isinstance(edge, dict)
     ]
@@ -744,16 +821,41 @@ def _derive_related_candidate_id(*, base_candidate_id: str, semantic_root: str) 
 def _rewrite_source_chunks_doc(
     *,
     source_chunks_doc: dict[str, Any],
-    rewritten_source_file: str,
+    source_file_map: dict[str, str],
+    copied_source_root: str,
 ) -> dict[str, Any]:
     rewritten = dict(source_chunks_doc)
-    rewritten["source_file"] = rewritten_source_file
+    rewritten["source_file"] = _rewrite_source_file_value(
+        str(source_chunks_doc.get("source_file", "")),
+        source_file_map=source_file_map,
+        default=copied_source_root,
+    )
+    if isinstance(source_chunks_doc.get("source_files"), list):
+        rewritten["source_files"] = [
+            _rewrite_source_file_value(str(item), source_file_map=source_file_map)
+            for item in source_chunks_doc["source_files"]
+            if isinstance(item, str) and item
+        ]
+    rewritten["section_map"] = []
+    for entry in source_chunks_doc.get("section_map", []):
+        if not isinstance(entry, dict):
+            continue
+        section_doc = dict(entry)
+        if isinstance(section_doc.get("source_file"), str):
+            section_doc["source_file"] = _rewrite_source_file_value(
+                section_doc["source_file"],
+                source_file_map=source_file_map,
+            )
+        rewritten["section_map"].append(section_doc)
     rewritten["chunks"] = []
     for chunk in source_chunks_doc.get("chunks", []):
         if not isinstance(chunk, dict):
             continue
         chunk_doc = dict(chunk)
-        chunk_doc["source_file"] = rewritten_source_file
+        chunk_doc["source_file"] = _rewrite_source_file_value(
+            str(chunk.get("source_file", "")),
+            source_file_map=source_file_map,
+        )
         rewritten["chunks"].append(chunk_doc)
     return rewritten
 
@@ -761,11 +863,14 @@ def _rewrite_source_chunks_doc(
 def _rewrite_source_file(
     *,
     entity: dict[str, Any],
-    rewritten_source_file: str,
+    source_file_map: dict[str, str],
 ) -> dict[str, Any]:
     rewritten = dict(entity)
-    if rewritten.get("source_file") is not None:
-        rewritten["source_file"] = rewritten_source_file
+    if isinstance(rewritten.get("source_file"), str):
+        rewritten["source_file"] = _rewrite_source_file_value(
+            rewritten["source_file"],
+            source_file_map=source_file_map,
+        )
     return rewritten
 
 
@@ -898,6 +1003,37 @@ def _build_seed_rationale(
         )
         for item in supporting[:2]
     )
+    if _is_borrowed_value_family(semantic_family):
+        profile = _borrowed_value_profile(semantic_family)
+        return (
+            f"`{title}` is a borrowed-value judgment skill anchored in "
+            f"\"{primary['snippet']}\"[^anchor:{primary['anchor_id']}]. "
+            f"It should fire when {profile['trigger']}. "
+            "The skill must not summarize, translate, introduce a person, answer a pure fact lookup, or comment on the author's stance as its main job; those remain source/retrieval tasks. "
+            f"Instead it maps the source pattern `{profile['source_pattern']}` into a current decision only after checking transfer_conditions and anti_conditions. "
+            f"{support_text} "
+            f"The output must use `{profile['verdicts']}` and include {profile['output']}. "
+            "It must explicitly detect `single_case_overreach` or `context_transfer_abuse` when the user tries to copy a book, historical case, competitor, large-company process, or past success without context fit."
+        ).strip()
+    if semantic_family == "historical-case-consequence-judgment":
+        return (
+            f"`{title}` is anchored in multiple historical episodes, starting from \"{primary['snippet']}\"[^anchor:{primary['anchor_id']}]. "
+            "It should fire when the user is not merely asking what happened in history, but wants to use historical cases to judge a current choice, policy, strategy, or organizational tradeoff. "
+            "The skill must extract a case-consequence pattern, then state where the analogy transfers and where it breaks. "
+            "This is intentionally agentic: it requires comparing actors, incentives, constraints, timing, and consequences across cases before deciding whether the pattern applies. "
+            f"{support_text} "
+            "The output should be `apply_pattern / partial_apply / do_not_apply`, with a named case pattern, transfer limits, a decision warning, and a concrete next action. "
+            "It must refuse pure history summaries, fact lookup, or single anecdote arguments that lack a live decision boundary."
+        ).strip()
+    if semantic_family == "role-boundary-before-action":
+        return (
+            f"`{title}` is anchored in role, mandate, and consequence evidence beginning with "
+            f"\"{primary['snippet']}\"[^anchor:{primary['anchor_id']}]. "
+            "It should fire when the user has a live action under a role, mandate, delegation, or organizational position and must decide whether acting now would exceed authority, damage trust, or create a bad precedent. "
+            f"{support_text} "
+            "The skill should not merely warn generically; it must name the role boundary, authority gap, order cost, and safe next action. "
+            "It must refuse pure role-definition questions, meeting templates, and cases requiring legal/compliance final judgment rather than agentic boundary arbitration."
+        ).strip()
     if semantic_family == "circle-of-competence":
         return (
             f"`{title}` anchored in \"{primary['snippet']}\"[^anchor:{primary['anchor_id']}] should fire "
@@ -1026,6 +1162,64 @@ def _build_seed_evidence_summary(
     primary = descriptors[0]
     supporting = descriptors[1:]
     semantic_family = identify_semantic_family(candidate_id)
+    if _is_borrowed_value_family(semantic_family):
+        profile = _borrowed_value_profile(semantic_family)
+        return "\n\n".join(
+            [
+                (
+                    f"`{title}` is grounded in borrowed-value evidence beginning with "
+                    f"\"{primary['snippet']}\"[^anchor:{primary['anchor_id']}]."
+                ),
+                *[
+                    (
+                        f"`{item['label']}` preserves another source anchor for mechanism transfer: "
+                        f"\"{item['snippet']}\"[^anchor:{item['anchor_id']}]."
+                    )
+                    for item in supporting[:2]
+                ],
+                (
+                    "The graph/source layer may extract summaries, chronology, facts, biography cues, positions, and source text broadly, "
+                    "but this skill consumes that evidence only for current decision transfer. "
+                    f"Required transfer_conditions: {', '.join(profile['transfer_conditions'])}. "
+                    f"Blocking anti_conditions: {', '.join(profile['anti_conditions'])}. "
+                    "Pure summary, translation, fact lookup, biography introduction, author-position query, and stance commentary without user decision should not trigger the judgment skill."
+                ),
+            ]
+        )
+    if semantic_family == "historical-case-consequence-judgment":
+        return "\n\n".join(
+            [
+                (
+                    f"`{title}` is anchored to historical case evidence beginning with \"{primary['snippet']}\""
+                    f"[^anchor:{primary['anchor_id']}]."
+                ),
+                *[
+                    (
+                        f"`{item['label']}` supplies an additional case or consequence anchor: \"{item['snippet']}\""
+                        f"[^anchor:{item['anchor_id']}]."
+                    )
+                    for item in supporting[:2]
+                ],
+                "These excerpts justify a judgment skill only when a user has a current decision and needs to compare historical case patterns, consequences, incentives, and transfer limits. They do not justify treating history as a deterministic recipe or using one anecdote as proof.",
+            ]
+        )
+    if semantic_family == "role-boundary-before-action":
+        return "\n\n".join(
+            [
+                (
+                    f"`{title}` is grounded in role-boundary evidence beginning with \"{primary['snippet']}\""
+                    f"[^anchor:{primary['anchor_id']}]."
+                ),
+                *[
+                    (
+                        f"`{item['label']}` supplies another authority, mandate, or consequence anchor: \"{item['snippet']}\""
+                        f"[^anchor:{item['anchor_id']}]."
+                    )
+                    for item in supporting[:2]
+                ],
+                "These anchors support a boundary-arbitration skill only when a user is deciding whether to act under uncertain authorization. They do not support ancient-role literalism, generic hierarchy advice, or deterministic workflow execution.",
+            ]
+        )
     if semantic_family == "circle-of-competence":
         return "\n\n".join(
             [
@@ -1138,6 +1332,33 @@ def _build_usage_notes(
 ) -> list[str]:
     primary = descriptors[0]
     semantic_family = identify_semantic_family(candidate_id)
+    if _is_borrowed_value_family(semantic_family):
+        profile = _borrowed_value_profile(semantic_family)
+        return [
+            f"Use this skill when {profile['trigger']}; the live current_decision must be explicit before the source pattern is transferred.",
+            "Keep source extraction broad, but keep skill firing narrow: summary, translation, fact lookup, biography introduction, author-position query, and stance commentary without user decision belong outside this judgment skill.",
+            "Before applying the pattern, list transfer_conditions and anti_conditions; if either side is missing, ask for more context or decline.",
+            "Treat single_case_overreach and context_transfer_abuse as first-class abuse checks, especially when the user wants to copy a book, historical case, competitor, large-company process, or past success.",
+            f"Positive trigger signals include: {', '.join(profile['positive_signals'])}.",
+            f"Negative trigger signals include: {', '.join(profile['negative_signals'])}.",
+            f"Output {profile['output']} with a `{profile['verdicts']}` verdict.",
+        ]
+    if semantic_family == "historical-case-consequence-judgment":
+        return [
+            "Use this skill when the user wants to apply historical cases to a live decision, not when they only ask for a summary of what happened.",
+            "Ask for the current decision, candidate historical analogies, relevant differences, and the boundary of transfer before giving advice; if the user asks `司马迁是哪一年出生的？`, answer as a fact lookup outside this skill.",
+            "Output a named case pattern, the consequences it highlights, transfer limits, and a concrete next action.",
+            "Use `partial_apply` when the case pattern is suggestive but actor incentives, institutional context, or time horizon differ materially.",
+            "Use `do_not_apply` when the user is cherry-picking one story, asking for fact lookup such as birth year/biography, asking to translate classical Chinese into modern Chinese, or ignoring decisive differences between the historical case and the current situation.",
+        ]
+    if semantic_family == "role-boundary-before-action":
+        return [
+            "Use this skill when the user asks whether they should act, intervene, decide, escalate, or refuse under a specific role, mandate, delegation, or organizational responsibility.",
+            "Ask for actor_role, proposed_action, authority_boundary, stakeholders, urgency, and order_cost before giving a verdict.",
+            "Output `act / act_with_boundary / ask_or_delegate / refuse`, with role_boundary, authority_gap, order_cost, and safe_next_action.",
+            "Use `ask_or_delegate` when the action may be useful but the mandate is ambiguous or the decision properly belongs to another role.",
+            "Use `refuse` when the user requests a template, role definition, legal final opinion, or action with unknown authorization facts.",
+        ]
     if semantic_family == "circle-of-competence":
         return [
             "Use this skill when the user is about to commit in an unfamiliar domain and says things like “我可以学”“应该差不多” or “大家都说这是好机会”.",
@@ -1209,6 +1430,157 @@ def _build_scenario_families(
     semantic_family = identify_semantic_family(candidate_id)
     anchor_refs = [item["anchor_id"] for item in descriptors[:2] if item.get("anchor_id")]
 
+    if _is_borrowed_value_family(semantic_family):
+        profile = _borrowed_value_profile(semantic_family)
+        return {
+            "should_trigger": [
+                {
+                    "scenario_id": "borrow-source-pattern-for-live-decision",
+                    "summary": f"{title} fires when {profile['trigger']}.",
+                    "prompt_signals": profile["positive_signals"],
+                    "boundary_reason": "There is a live current_decision and the user needs transferable judgment, not source explanation.",
+                    "transfer_conditions": profile["transfer_conditions"],
+                    "anti_conditions": profile["anti_conditions"],
+                    "abuse_check": "clear",
+                    "next_action_shape": f"Return {profile['output']} with verdict {profile['verdicts']}.",
+                    "anchor_refs": anchor_refs,
+                }
+            ],
+            "should_not_trigger": [
+                {
+                    "scenario_id": "source-understanding-only",
+                    "summary": "Do not fire when the user only asks for summary, translation, fact lookup, biography introduction, author-position query, or stance commentary without a current decision.",
+                    "prompt_signals": profile["negative_signals"],
+                    "boundary_reason": "These are source/retrieval/QA tasks. The graph layer may extract them, but the judgment skill should not answer them as if they were transfer decisions.",
+                    "transfer_conditions": [],
+                    "anti_conditions": ["pure_summary_request", "pure_translation_request", "fact_lookup_request", "biography_intro_request", "author_position_query", "stance_commentary_without_user_decision"],
+                    "abuse_check": "insufficient_context",
+                    "anchor_refs": anchor_refs,
+                }
+            ],
+            "edge_case": [
+                {
+                    "scenario_id": "partial-transfer-with-material-differences",
+                    "summary": "Use partial transfer when the source pattern is useful but actor incentives, constraints, time horizon, institution, or resource conditions differ materially.",
+                    "prompt_signals": ["有点像", "但时代不同", "能借鉴多少", "机制像但条件不一样"],
+                    "boundary_reason": "Borrow the mechanism only after naming both fit and non-fit conditions.",
+                    "transfer_conditions": profile["transfer_conditions"],
+                    "anti_conditions": ["material_differences_not_named", *profile["anti_conditions"]],
+                    "abuse_check": "insufficient_context",
+                    "next_action_shape": "Name fit conditions, non-fit conditions, and a reversible next action before applying the source pattern.",
+                    "anchor_refs": anchor_refs,
+                }
+            ],
+            "refusal": [
+                {
+                    "scenario_id": "context-transfer-abuse",
+                    "summary": "Refuse when the user wants to copy the book, historical case, competitor, big-company process, or past success without checking context fit.",
+                    "prompt_signals": ["书里这么做成功了", "大公司都这么做", "竞品这样做我们也照搬", "过去成功所以继续照做", "不用看差异"],
+                    "boundary_reason": "This is context_transfer_abuse: source material is being used as permission to bypass current-context judgment.",
+                    "transfer_conditions": [],
+                    "anti_conditions": ["context_transfer_abuse", *profile["anti_conditions"]],
+                    "abuse_check": "context_transfer_abuse",
+                    "next_action_shape": "Decline direct transfer and ask for current_decision, source_pattern, fit conditions, non-fit conditions, and disconfirming evidence.",
+                    "anchor_refs": anchor_refs,
+                },
+                {
+                    "scenario_id": "single-case-overreach",
+                    "summary": "Refuse when one attractive story or case is treated as enough proof for a current decision.",
+                    "prompt_signals": ["只凭这个案例", "历史上有人成功", "一个故事就说明", "不用找反例"],
+                    "boundary_reason": "This is single_case_overreach: one case cannot carry a transferable decision without mechanism and counterexample checks.",
+                    "transfer_conditions": [],
+                    "anti_conditions": ["single_case_overreach", *profile["anti_conditions"]],
+                    "abuse_check": "single_case_overreach",
+                    "next_action_shape": "Decline broad transfer; require at least mechanism mapping, current context fit, and counter-case search.",
+                    "anchor_refs": anchor_refs,
+                },
+            ],
+        }
+
+    if semantic_family == "historical-case-consequence-judgment":
+        return {
+            "should_trigger": [
+                {
+                    "scenario_id": "historical-analogy-for-current-decision",
+                    "summary": "The user wants to use one or more historical cases, such as 项羽和刘邦, to judge a current strategy, governance, investment, or 商业决策 where short-term strength may become long-term distrust.",
+                    "prompt_signals": ["这个历史案例能不能类比", "项羽和刘邦", "短期强势但长期失信", "商业决策", "眼前收益很大", "以后会反噬", "史记案例", "压力测试", "历史类比", "哪个机制真的像我的处境"],
+                    "boundary_reason": "There is a live decision and the user needs analogy transfer, not a history summary; the skill must compare mechanism, consequence, and transfer limit.",
+                    "next_action_shape": "列出 case_pattern、机制链、transfer_limits、decision_warning 和 next_action。",
+                    "anchor_refs": anchor_refs,
+                }
+            ],
+            "should_not_trigger": [
+                {
+                    "scenario_id": "history-summary-only",
+                    "summary": "Do not fire when the user only asks what happened, who someone was, when someone was born, or how to translate/explain a historical passage.",
+                    "prompt_signals": ["讲讲这段历史", "这个人是谁", "司马迁是哪一年出生", "史实查询", "百科查询", "翻译一下", "古文翻译成现代汉语", "翻译任务", "文本处理"],
+                    "boundary_reason": "史实查询、百科查询、翻译任务、文本处理 and explanation do not require decision-facing analogy judgment; 不应激活本 skill.",
+                    "anchor_refs": anchor_refs,
+                }
+            ],
+            "edge_case": [
+                {
+                    "scenario_id": "suggestive-but-different-context",
+                    "summary": "Use partial_apply when the historical pattern is suggestive but institutions, incentives, technology, or time horizon differ.",
+                    "prompt_signals": ["有点像", "但时代不一样", "能借鉴多少"],
+                    "boundary_reason": "The analogy may help but cannot decide the case by itself.",
+                    "next_action_shape": "先列出相似点、关键差异和不可迁移部分，再给 partial_apply。",
+                    "anchor_refs": anchor_refs,
+                }
+            ],
+            "refusal": [
+                {
+                    "scenario_id": "single-anecdote-proof",
+                    "summary": "Refuse when the user tries to prove a current decision only by citing one attractive historical anecdote.",
+                    "prompt_signals": ["只记得一个史记故事", "历史上有人这么做成功了", "所以我们也照做", "不用再看差异"],
+                    "boundary_reason": "One anecdote without transfer-limit analysis is unsafe evidence.",
+                    "next_action_shape": "要求补充 current_decision、case_analogs、relevant_differences；证据不足时输出 do_not_apply。",
+                    "anchor_refs": anchor_refs,
+                }
+            ],
+        }
+    if semantic_family == "role-boundary-before-action":
+        return {
+            "should_trigger": [
+                {
+                    "scenario_id": "act-under-ambiguous-mandate",
+                    "summary": "The user is considering an intervention, decision, escalation, or refusal under a role where authorization, cross-team responsibility boundaries, and long-term order costs are unclear.",
+                    "prompt_signals": ["我有权限推动", "越过其他团队", "职责边界", "老板让我直接处理", "跨部门冲突", "我该不该介入", "这件事短期做了有效", "破坏长期秩序", "这算不算越界"],
+                    "boundary_reason": "There is a live action and the user needs role-boundary arbitration, not a role definition; check authority, responsibility, stakeholders, and long-term order cost.",
+                    "next_action_shape": "列出 role_boundary、authority_gap、order_cost，并给 act_with_boundary / ask_or_delegate / refuse。",
+                    "anchor_refs": anchor_refs,
+                }
+            ],
+            "should_not_trigger": [
+                {
+                    "scenario_id": "role-definition-or-template-only",
+                    "summary": "Do not fire when the user only asks for a concept explanation, meeting template, or mechanical checklist.",
+                    "prompt_signals": ["解释一下职责", "生成会议纪要模板", "给我一个流程清单"],
+                    "boundary_reason": "No current action under uncertain authorization is being judged.",
+                    "anchor_refs": anchor_refs,
+                }
+            ],
+            "edge_case": [
+                {
+                    "scenario_id": "urgent-but-authorization-unknown",
+                    "summary": "Use ask_or_delegate when urgency is real but authorization facts are missing or the mandate belongs to another owner.",
+                    "prompt_signals": ["事情很急", "不知道有没有授权", "可能要先斩后奏"],
+                    "boundary_reason": "Urgency can justify a bounded temporary action but not silent overreach.",
+                    "next_action_shape": "先给 low-regret bounded action，再要求补授权或升级给 owner。",
+                    "anchor_refs": anchor_refs,
+                }
+            ],
+            "refusal": [
+                {
+                    "scenario_id": "legal-or-ethics-final-opinion",
+                    "summary": "Refuse to provide final legal, compliance, or ethics authorization when the facts require a responsible authority.",
+                    "prompt_signals": ["这合法吗", "能不能规避合规", "不用告诉负责人"],
+                    "boundary_reason": "The skill can structure the boundary question but cannot replace accountable review.",
+                    "next_action_shape": "说明不能最终授权，列出需提交给合规/负责人确认的问题。",
+                    "anchor_refs": anchor_refs,
+                }
+            ],
+        }
     if semantic_family == "circle-of-competence":
         return {
             "should_trigger": [
@@ -1355,6 +1727,22 @@ def _build_scenario_families(
                     "boundary_reason": "This is knowledge inquiry, not an active anti-bias intervention.",
                     "anchor_refs": anchor_refs,
                 }
+            ],
+        }
+    if semantic_family == "role-boundary-before-action":
+        return {
+            "summary": (
+                f"Initial extraction-backed draft for {title} now separates role-boundary arbitration from generic history analogy and workflow templates. "
+                "It should trigger on prompts like “我有权限但担心越界”, “老板让我直接处理跨部门冲突”, and “不知道有没有授权但事情很急”, "
+                "while refusing role-definition questions, meeting templates, and legal/compliance final opinions."
+            ),
+            "evidence_changes": [
+                "Bound the draft to multi-file narrative role/authority anchors.",
+                "Added scenario families for ambiguous mandate, template-only refusal, urgent authorization gaps, and legal/compliance refusal.",
+            ],
+            "open_gaps": [
+                "Add real organizational cases that distinguish bounded temporary action from silent overreach.",
+                "Validate whether ancient role-order evidence transfers safely to modern teams without literal hierarchy drift.",
             ],
         }
     if semantic_family == "value-assessment":
@@ -1546,6 +1934,22 @@ def _write_trace_doc(
 
 def _build_revision_seed(*, candidate_id: str, title: str) -> dict[str, Any]:
     semantic_family = identify_semantic_family(candidate_id)
+    if _is_borrowed_value_family(semantic_family):
+        return {
+            "summary": (
+                f"Initial borrowed-value draft for {title} created from graph/source evidence. "
+                "The revision scope is deliberately not summary quality; it checks whether a source pattern can improve a live decision without context-transfer abuse."
+            ),
+            "evidence_changes": [
+                "Added source-shape detection for biography/history/case/argument-heavy materials.",
+                "Bound transfer_conditions and anti_conditions into contract and usage scenario families.",
+                "Added refusal coverage for summary, translation, fact lookup, biography introduction, author-position query, stance commentary, single_case_overreach, and context_transfer_abuse.",
+            ],
+            "open_gaps": [
+                "Replace smoke cases with external human-written borrowing scenarios for stronger usage evidence.",
+                "Add more cross-domain counter-cases before using the pattern in high-stakes contexts.",
+            ],
+        }
     if semantic_family == "circle-of-competence":
         return {
             "summary": (
@@ -1694,7 +2098,13 @@ def _write_eval_docs(
         f"If `{contract['boundary']['do_not_fire_when'][0]}` remains true, defer the skill instead of firing.",
         f"If `{contract['boundary']['fails_when'][0]}` is observed, treat the evidence as conflicting.",
     ]
-    if semantic_family == "circle-of-competence":
+    if _is_borrowed_value_family(semantic_family):
+        key_failure_modes = [
+            "Do not fire on pure summary, translation, fact lookup, biography introduction, author-position query, or stance commentary without a user decision; route those to source/retrieval paths.",
+            "Do not let source admiration become context_transfer_abuse: copying a book, historical case, competitor, big-company process, or past success without current fit must be refused.",
+            "Do not accept single_case_overreach; require mechanism mapping, transfer_conditions, anti_conditions, and counter-case or disconfirming evidence before transfer.",
+        ]
+    elif semantic_family == "circle-of-competence":
         key_failure_modes = [
             "Do not confuse product familiarity, title prestige, or transferable general ability with demonstrated domain understanding.",
             "Do not fire on concept-only questions, proven in-circle operators with长期成功记录 in the same domain, or objective technology-comparison requests like “Python 和 Go 哪个更适合做微服务开发”.",
@@ -1709,6 +2119,12 @@ def _write_eval_docs(
         key_failure_modes = [
             "Do not treat 达尔文历史/科学知识查询, market-data collection like “先帮我收集新能源行业数据”, or urgent incident response like “服务器突然宕机了” as if they already contain a formed thesis to audit.",
             "When the user says everyone agrees, plans to拍板 tomorrow, or has only collected supportive evidence, force explicit counter-evidence, mitigation steps, and a concrete next action; if the user has not formed any thesis yet, do not start证伪. 对紧急决策场景不应激活, 因为系统性地搜索反面证据不现实。",
+        ]
+    elif semantic_family == "role-boundary-before-action":
+        key_failure_modes = [
+            "Do not fire on role definitions, meeting templates, or mechanical checklist requests; the skill requires a live proposed action under uncertain authorization.",
+            "Do not give a final legal, compliance, or ethics authorization; structure the boundary question and route to accountable review.",
+            "Do not let urgency justify silent overreach; if authorization facts are missing, use ask_or_delegate or a bounded temporary action.",
         ]
     elif semantic_family == "value-assessment":
         key_failure_modes = [
@@ -1747,6 +2163,107 @@ def _build_adjacency(edges: list[dict[str, Any]]) -> dict[str, list[dict[str, An
         adjacency.setdefault(edge["from"], []).append(edge)
         adjacency.setdefault(edge["to"], []).append(edge)
     return adjacency
+
+
+def _copy_source_files(
+    *,
+    source_chunks_doc: dict[str, Any],
+    source_chunks_path: Path,
+    bundle_root: Path,
+    source_id: str,
+) -> tuple[dict[str, str], str]:
+    source_file_values = _collect_source_file_values(source_chunks_doc)
+    source_root_value = str(source_chunks_doc.get("source_file", ""))
+    source_root_path = _resolve_source_file(
+        source_file=source_root_value,
+        source_chunks_path=source_chunks_path,
+    )
+    source_file_map: dict[str, str] = {}
+    multiple_files = len(source_file_values) > 1 or source_root_path.is_dir()
+
+    for source_file_value in source_file_values:
+        source_path = _resolve_source_file(
+            source_file=source_file_value,
+            source_chunks_path=source_chunks_path,
+        )
+        if source_path.is_dir():
+            continue
+        if multiple_files:
+            try:
+                relative_under_root = source_path.resolve().relative_to(source_root_path.resolve())
+            except ValueError:
+                relative_under_root = Path(source_path.name)
+            copied_relpath = Path("sources") / source_id / relative_under_root
+        else:
+            copied_relpath = Path("sources") / source_path.name
+        destination = bundle_root / copied_relpath
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_path, destination)
+        _register_source_file_mapping(
+            source_file_map=source_file_map,
+            original_value=source_file_value,
+            resolved_path=source_path,
+            copied_relpath=copied_relpath.as_posix(),
+        )
+
+    copied_source_root = (Path("sources") / source_id).as_posix() if multiple_files else next(iter(source_file_map.values()))
+    if source_root_path.is_dir():
+        _register_source_file_mapping(
+            source_file_map=source_file_map,
+            original_value=source_root_value,
+            resolved_path=source_root_path,
+            copied_relpath=copied_source_root,
+        )
+    return source_file_map, copied_source_root
+
+
+def _collect_source_file_values(source_chunks_doc: dict[str, Any]) -> list[str]:
+    values: list[str] = []
+    if isinstance(source_chunks_doc.get("source_files"), list):
+        values.extend(
+            item for item in source_chunks_doc["source_files"] if isinstance(item, str) and item
+        )
+    for chunk in source_chunks_doc.get("chunks", []):
+        if isinstance(chunk, dict) and isinstance(chunk.get("source_file"), str):
+            values.append(chunk["source_file"])
+    if not values and isinstance(source_chunks_doc.get("source_file"), str):
+        values.append(source_chunks_doc["source_file"])
+    return sorted(set(values))
+
+
+def _register_source_file_mapping(
+    *,
+    source_file_map: dict[str, str],
+    original_value: str,
+    resolved_path: Path,
+    copied_relpath: str,
+) -> None:
+    source_file_map[original_value] = copied_relpath
+    source_file_map[resolved_path.as_posix()] = copied_relpath
+    try:
+        source_file_map[resolved_path.resolve().relative_to(REPO_ROOT).as_posix()] = copied_relpath
+    except ValueError:
+        pass
+
+
+def _rewrite_source_file_value(
+    source_file: str,
+    *,
+    source_file_map: dict[str, str],
+    default: str | None = None,
+) -> str:
+    if source_file in source_file_map:
+        return source_file_map[source_file]
+    resolved = Path(source_file)
+    if resolved.as_posix() in source_file_map:
+        return source_file_map[resolved.as_posix()]
+    try:
+        resolved_value = resolved.resolve().as_posix()
+    except OSError:
+        resolved_value = resolved.as_posix()
+    if resolved_value in source_file_map:
+        return source_file_map[resolved_value]
+    return default or source_file
 
 
 def _resolve_source_file(

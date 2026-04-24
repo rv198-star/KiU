@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from .models import CandidateSeed, NormalizedGraph, SourceBundle
@@ -224,15 +225,17 @@ def _resolve_candidate_specs(
     base_seed_content: dict[str, Any],
     routing_evidence: dict[str, Any],
 ) -> list[dict[str, Any]]:
-    specs = [
-        {
-            "candidate_id": base_candidate_id,
-            "candidate_kind": base_candidate_kind,
-            "gold_match_hint": override.get("gold_match_hint"),
-            "seed_content": base_seed_content,
-            "routing_evidence": dict(routing_evidence),
-        }
-    ]
+    specs = []
+    if not _is_degenerate_candidate_id(base_candidate_id):
+        specs.append(
+            {
+                "candidate_id": base_candidate_id,
+                "candidate_kind": base_candidate_kind,
+                "gold_match_hint": override.get("gold_match_hint"),
+                "seed_content": base_seed_content,
+                "routing_evidence": dict(routing_evidence),
+            }
+        )
     additional_candidate_docs = []
     node_seed_content = node.get("skill_seed", {})
     if isinstance(node_seed_content, dict):
@@ -524,6 +527,7 @@ def _infer_candidate_kind(
     routing_evidence = {
         "inference_mode": "extraction_derived",
         "selected_candidate_kind": selected_candidate_kind,
+        "agentic_priority": _normalize_nonnegative_int(node_hints.get("agentic_priority")),
         "workflow_cues": workflow_cues,
         "workflow_signal_total": workflow_signal_total,
         "context_cues": context_cues,
@@ -692,6 +696,8 @@ def _merge_seed_group(
         len(source_skill.trace_refs) if source_skill else 0
     ) + len(supporting_edge_ids) + len(community_ids) + int(
         routing_evidence.get("workflow_cues", 0) or 0
+    ) + _normalize_nonnegative_int(
+        routing_evidence.get("agentic_priority")
     )
     return CandidateSeed(
         candidate_id=primary_seed.candidate_id,
@@ -764,6 +770,9 @@ def _merge_routing_evidence(
         "selected_candidate_kind": candidate_kind,
         "workflow_cues": max(
             _normalize_nonnegative_int(doc.get("workflow_cues")) for doc in routing_docs
+        ),
+        "agentic_priority": max(
+            _normalize_nonnegative_int(doc.get("agentic_priority")) for doc in routing_docs
         ),
         "context_cues": max(
             _normalize_nonnegative_int(doc.get("context_cues")) for doc in routing_docs
@@ -865,6 +874,21 @@ def _slugify(text: str) -> str:
         .replace("/", "-")
         .replace(" ", "-")
     )
+
+
+def _is_degenerate_candidate_id(candidate_id: str) -> bool:
+    normalized = str(candidate_id or "").strip("-_")
+    if not normalized:
+        return True
+    tokens = [token for token in re.split(r"[-_]+", normalized) if token]
+    if len(tokens) == 1 and len(tokens[0]) <= 1:
+        return True
+    chinese_numeral = r"[零〇一二三四五六七八九十百千万]+"
+    if re.fullmatch(chinese_numeral, normalized):
+        return True
+    if re.fullmatch(r"[0-9]+", normalized):
+        return True
+    return False
 
 
 def _normalize_nonnegative_int(value: Any) -> int:

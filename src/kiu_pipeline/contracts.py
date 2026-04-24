@@ -92,6 +92,187 @@ def identify_semantic_family(candidate_id: str) -> str:
 
 
 def _build_family_contract(semantic_family: str) -> dict[str, Any] | None:
+    if semantic_family == "no-investigation-no-decision":
+        return _borrowed_value_contract(
+            trigger_patterns=[
+                "decision_based_on_book_template_or_secondhand_report",
+                "team_lacks_field_evidence_before_decision",
+                "context_transfer_abuse_risk_from_past_success_or_framework",
+            ],
+            exclusions=[
+                "pure_author_position_query",
+                "pure_summary_request",
+                "biography_intro_request",
+            ],
+            verdict="enum[go_investigate|partial_judgment|do_not_decide]",
+            primary_output="investigation_questions",
+            next_action="field_evidence_next_action",
+        )
+    if semantic_family == "principal-contradiction-focus":
+        return _borrowed_value_contract(
+            trigger_patterns=[
+                "multiple_conflicts_compete_for_attention",
+                "strategy_requires_identifying_principal_contradiction",
+                "resources_are_spread_across_too_many_fronts",
+            ],
+            exclusions=[
+                "pure_stance_commentary_without_user_decision",
+                "pure_summary_request",
+                "fact_lookup_request",
+            ],
+            verdict="enum[focus_here|split_after_focus|ask_more_context|do_not_apply]",
+            primary_output="principal_contradiction",
+            next_action="focused_action_program",
+        )
+    if semantic_family == "historical-analogy-transfer-gate":
+        return _borrowed_value_contract(
+            trigger_patterns=[
+                "user_wants_to_transfer_case_or_history_to_current_decision",
+                "single_case_overreach_risk",
+                "analogy_needs_mechanism_not_story_mapping",
+            ],
+            exclusions=[
+                "pure_history_query_or_translation",
+                "biography_intro_request",
+                "fact_lookup_request",
+            ],
+            verdict="enum[transfer|partial_transfer|do_not_transfer|ask_more_context]",
+            primary_output="mechanism_mapping",
+            next_action="transfer_checked_next_action",
+        )
+    if semantic_family == "role-boundary-before-action":
+        return {
+            "trigger": {
+                "patterns": [
+                    "user_deciding_whether_to_act_under_a_role_or_mandate",
+                    "action_may_exceed_authority_or_responsibility_boundary",
+                    "short_term_effectiveness_may_damage_long_term_order",
+                ],
+                "exclusions": [
+                    "pure_role_definition_query",
+                    "mechanical_workflow_template_request",
+                    "legal_or_compliance_final_opinion_required",
+                ],
+            },
+            "intake": {
+                "required": [
+                    {
+                        "name": "actor_role",
+                        "type": "string",
+                        "description": "The user's role, mandate, authorization source, and practical responsibility in the current situation.",
+                    },
+                    {
+                        "name": "proposed_action",
+                        "type": "string",
+                        "description": "The concrete action the user is considering before the boundary is checked.",
+                    },
+                    {
+                        "name": "authority_boundary",
+                        "type": "structured",
+                        "description": "What the actor is clearly allowed to do, what is ambiguous, and what is outside the role.",
+                    },
+                    {
+                        "name": "order_cost",
+                        "type": "list[string]",
+                        "description": "Second-order effects on trust, mandate, coordination, precedent, and escalation paths.",
+                    },
+                ]
+            },
+            "judgment_schema": {
+                "output": {
+                    "type": "structured",
+                    "schema": {
+                        "verdict": "enum[act|act_with_boundary|ask_or_delegate|refuse]",
+                        "role_boundary": "string",
+                        "authority_gap": "list[string]",
+                        "order_cost": "list[string]",
+                        "safe_next_action": "string",
+                        "confidence": "enum[low|medium|high]",
+                    },
+                },
+                "reasoning_chain_required": True,
+            },
+            "boundary": {
+                "fails_when": [
+                    "authorization_facts_unknown",
+                    "legal_or_ethics_review_needed",
+                    "role_boundary_analogy_does_not_transfer",
+                ],
+                "do_not_fire_when": [
+                    "pure_role_definition_query",
+                    "meeting_template_or_checklist_request",
+                    "no_current_action_under_consideration",
+                ],
+            },
+        }
+    if semantic_family == "historical-case-consequence-judgment":
+        return {
+            "trigger": {
+                "patterns": [
+                    "user_applying_historical_case_to_current_judgment",
+                    "decision_depends_on_case_consequence_pattern",
+                    "user_needs_tradeoff_from_multiple_historical_examples",
+                ],
+                "exclusions": [
+                    "history_summary_only",
+                    "fact_lookup_only",
+                    "birth_year_or_biography_lookup_only",
+                    "classical_text_translation_only",
+                    "single_anecdote_without_decision",
+                ],
+            },
+            "intake": {
+                "required": [
+                    {
+                        "name": "current_decision",
+                        "type": "string",
+                        "description": "The live judgment, policy, strategy, or personal choice being compared against historical cases.",
+                    },
+                    {
+                        "name": "case_analogs",
+                        "type": "list[structured]",
+                        "description": "Historical episodes, actors, choices, and consequences that may illuminate the current decision.",
+                    },
+                    {
+                        "name": "relevant_differences",
+                        "type": "list[string]",
+                        "description": "Differences that could make the historical pattern unsafe to transfer.",
+                    },
+                    {
+                        "name": "decision_boundary",
+                        "type": "string",
+                        "description": "What this historical analogy can and cannot decide.",
+                    },
+                ]
+            },
+            "judgment_schema": {
+                "output": {
+                    "type": "structured",
+                    "schema": {
+                        "verdict": "enum[apply_pattern|partial_apply|do_not_apply]",
+                        "case_pattern": "string",
+                        "transfer_limits": "list[string]",
+                        "decision_warning": "string",
+                        "next_action": "string",
+                        "confidence": "enum[low|medium|high]",
+                    },
+                },
+                "reasoning_chain_required": True,
+            },
+            "boundary": {
+                "fails_when": [
+                    "analogy_differences_dominate",
+                    "current_decision_context_missing",
+                ],
+                "do_not_fire_when": [
+                    "history_summary_only",
+                    "fact_lookup_only",
+                    "historical_fact_lookup_or_birth_year_question",
+                    "classical_text_translation_to_modern_chinese",
+                    "single_anecdote_without_decision",
+                ],
+            },
+        }
     if semantic_family == "circle-of-competence":
         return {
             "trigger": {
@@ -459,3 +640,73 @@ def _build_family_contract(semantic_family: str) -> dict[str, Any] | None:
             },
         }
     return None
+
+
+def _borrowed_value_contract(
+    *,
+    trigger_patterns: list[str],
+    exclusions: list[str],
+    verdict: str,
+    primary_output: str,
+    next_action: str,
+) -> dict[str, Any]:
+    return {
+        "trigger": {
+            "patterns": trigger_patterns,
+            "exclusions": exclusions,
+        },
+        "intake": {
+            "required": [
+                {
+                    "name": "current_decision",
+                    "type": "string",
+                    "description": "The present decision, strategy, policy, or organizational judgment the user wants to improve.",
+                },
+                {
+                    "name": "source_pattern",
+                    "type": "structured",
+                    "description": "The source case, argument, or strategy pattern being considered for transfer.",
+                },
+                {
+                    "name": "transfer_conditions",
+                    "type": "list[string]",
+                    "description": "Conditions that must be true before the source pattern can be borrowed.",
+                },
+                {
+                    "name": "anti_conditions",
+                    "type": "list[string]",
+                    "description": "Conditions that block transfer, including single-case overreach and context-transfer abuse.",
+                },
+            ]
+        },
+        "judgment_schema": {
+            "output": {
+                "type": "structured",
+                "schema": {
+                    "verdict": verdict,
+                    primary_output: "string",
+                    "transfer_conditions": "list[string]",
+                    "anti_conditions": "list[string]",
+                    "abuse_check": "enum[clear|single_case_overreach|context_transfer_abuse|insufficient_context]",
+                    next_action: "string",
+                    "confidence": "enum[low|medium|high]",
+                },
+            },
+            "reasoning_chain_required": True,
+        },
+        "boundary": {
+            "fails_when": [
+                "transfer_conditions_missing",
+                "anti_conditions_dominate",
+                "context_transfer_abuse_detected",
+            ],
+            "do_not_fire_when": [
+                "pure_summary_request",
+                "pure_translation_request",
+                "fact_lookup_request",
+                "biography_intro_request",
+                "author_position_query",
+                "stance_commentary_without_user_decision",
+            ],
+        },
+    }

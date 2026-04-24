@@ -5,6 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from kiu_pipeline.cangjie_protocol import PROTOCOL_ID, build_cangjie_protocol_baseline
+from kiu_pipeline.reference_benchmark import benchmark_reference_pack
 from kiu_pipeline.reference_benchmark import _resolve_alignment_pairs
 
 
@@ -240,6 +242,102 @@ class ReferenceBenchmarkCliTests(unittest.TestCase):
             self.assertIn("Unmatched KiU skills", markdown)
             self.assertIn("Unmatched reference skills", markdown)
 
+    def test_cangjie_protocol_baseline_emits_benchmark_only_reference_pack(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_dir = tmp_root / "book"
+            source_dir.mkdir()
+            (source_dir / "001.md").write_text(
+                "\n".join(
+                    [
+                        "# 第一章",
+                        "",
+                        "君臣之际，利害相持，是以小失其本，卒有大祸。",
+                        "不可只见一时之功，而忘后日之乱。",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            (source_dir / "002.md").write_text(
+                "\n".join(
+                    [
+                        "# 第二章",
+                        "",
+                        "王侯用兵，赏罚不明，则臣下争功而国势败。",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            output_root = tmp_root / "cangjie-protocol"
+
+            summary = build_cangjie_protocol_baseline(
+                input_path=source_dir,
+                output_root=output_root,
+                book_title="测试史书",
+                author="测试作者",
+                source_id="test-history",
+            )
+
+            self.assertEqual(summary["reference_protocol"], PROTOCOL_ID)
+            self.assertFalse(summary["official_cangjie_run"])
+            self.assertGreaterEqual(summary["skill_count"], 1)
+            metadata = json.loads((output_root / "metadata.json").read_text(encoding="utf-8"))
+            self.assertTrue(metadata["benchmark_only"])
+            self.assertTrue(
+                metadata["external_reference_boundary"]["uses_original_source_material"]
+            )
+            self.assertFalse(
+                metadata["external_reference_boundary"][
+                    "uses_external_final_skill_pack_as_input"
+                ]
+            )
+            self.assertTrue((output_root / "BOOK_OVERVIEW.md").exists())
+            self.assertTrue((output_root / "INDEX.md").exists())
+            self.assertTrue((output_root / "candidates" / "framework.md").exists())
+            for skill_id in summary["skill_ids"]:
+                self.assertTrue((output_root / skill_id / "SKILL.md").exists())
+                self.assertTrue((output_root / skill_id / "test-prompts.json").exists())
+
+    def test_reference_benchmark_preserves_cangjie_protocol_boundary_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            reference_root = _write_reference_pack(
+                tmp_root / "reference-pack",
+                ["circle-of-competence"],
+            )
+            (reference_root / "metadata.json").write_text(
+                json.dumps(
+                    {
+                        "reference_protocol": PROTOCOL_ID,
+                        "official_cangjie_run": False,
+                        "benchmark_only": True,
+                        "external_reference_boundary": {
+                            "uses_original_source_material": True,
+                            "uses_external_final_skill_pack_as_input": False,
+                        },
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            report = benchmark_reference_pack(
+                kiu_bundle_path=ROOT / "bundles" / "poor-charlies-almanack-v0.1",
+                reference_pack_path=reference_root,
+                comparison_scope="same-source",
+            )
+
+            self.assertEqual(report["reference_pack"]["reference_protocol"], PROTOCOL_ID)
+            self.assertFalse(report["reference_pack"]["official_cangjie_run"])
+            self.assertTrue(report["reference_pack"]["benchmark_only"])
+            self.assertFalse(
+                report["reference_pack"]["external_reference_boundary"][
+                    "uses_external_final_skill_pack_as_input"
+                ]
+            )
+
     def test_reference_benchmark_cli_includes_generated_run_metrics(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_root = Path(tmp_dir)
@@ -297,6 +395,18 @@ class ReferenceBenchmarkCliTests(unittest.TestCase):
 
             payload = json.loads(benchmark_path.read_text(encoding="utf-8"))
             self.assertGreaterEqual(payload["generated_run"]["skill_count"], 1)
+            self.assertTrue(payload["generated_run"]["raw_book_no_seed_cold_start"])
+            self.assertEqual(payload["generated_run"]["pipeline_mode"], "raw_book_no_seed_cold_start")
+            self.assertTrue(payload["scorecard"]["book_to_skill_cold_start_proven"])
+            self.assertEqual(payload["scorecard"]["book_to_skill_cold_start_proven_100"], 100.0)
+            self.assertEqual(
+                payload["scorecard"]["details"]["cangjie_core_absorbed"]["cold_start_proof_ratio"],
+                1.0,
+            )
+            self.assertEqual(
+                payload["scorecard"]["details"]["cangjie_core_absorbed"]["pipeline_mode"],
+                "raw_book_no_seed_cold_start",
+            )
             self.assertGreaterEqual(
                 payload["generated_run"]["workflow_candidate_count"],
                 2,
@@ -330,6 +440,71 @@ class ReferenceBenchmarkCliTests(unittest.TestCase):
             self.assertGreater(
                 payload["comparison"]["output_count"]["generated_throughput_vs_reference"],
                 0.0,
+            )
+
+    def test_reference_benchmark_marks_source_bundle_regeneration_as_not_cold_start(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            output_root = tmp_root / "artifacts"
+            reference_root = _write_reference_pack(
+                tmp_root / "reference-engineering",
+                ["postmortem-blameless", "blast-radius-check"],
+            )
+
+            build = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_candidates.py"),
+                    "--source-bundle",
+                    str(ROOT / "bundles" / "engineering-postmortem-v0.1"),
+                    "--output-root",
+                    str(output_root),
+                    "--run-id",
+                    "source-bundle-regeneration-benchmark",
+                    "--drafting-mode",
+                    "deterministic",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(build.returncode, 0, build.stdout + build.stderr)
+            build_payload = json.loads(build.stdout)
+
+            benchmark_path = tmp_root / "source-bundle-benchmark.json"
+            benchmark = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "benchmark_reference_pack.py"),
+                    "--kiu-bundle",
+                    str(ROOT / "bundles" / "engineering-postmortem-v0.1"),
+                    "--run-root",
+                    build_payload["run_root"],
+                    "--reference-pack",
+                    str(reference_root),
+                    "--comparison-scope",
+                    "structure-only",
+                    "--output",
+                    str(benchmark_path),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(benchmark.returncode, 0, benchmark.stdout + benchmark.stderr)
+
+            payload = json.loads(benchmark_path.read_text(encoding="utf-8"))
+            self.assertFalse(payload["generated_run"]["raw_book_no_seed_cold_start"])
+            self.assertEqual(payload["generated_run"]["pipeline_mode"], "source_bundle_regeneration")
+            self.assertFalse(payload["scorecard"]["book_to_skill_cold_start_proven"])
+            self.assertEqual(payload["scorecard"]["book_to_skill_cold_start_proven_100"], 0.0)
+            self.assertEqual(
+                payload["scorecard"]["details"]["cangjie_core_absorbed"]["cold_start_proof_ratio"],
+                0.0,
+            )
+            self.assertGreater(
+                payload["scorecard"]["details"]["cangjie_core_absorbed"]["source_bundle_skill_count"],
+                0,
             )
 
     def test_reference_benchmark_cli_emits_same_scenario_usage_review(self) -> None:

@@ -86,13 +86,14 @@ def build_section_heading_extraction_result(source_chunks_doc: dict[str, Any]) -
             continue
         if not isinstance(line_start, int) or line_start < 1:
             continue
+        entry_source_file = entry.get("source_file", source_file)
         node_id = f"section::{index:04d}"
         nodes.append(
             {
                 "id": node_id,
                 "type": "source_section",
                 "label": title,
-                "source_file": source_file,
+                "source_file": entry_source_file,
                 "source_location": {
                     "line_start": line_start,
                     "line_end": line_start,
@@ -107,7 +108,7 @@ def build_section_heading_extraction_result(source_chunks_doc: dict[str, Any]) -
                     "type": "next_section",
                     "from": previous_node_id,
                     "to": node_id,
-                    "source_file": source_file,
+                    "source_file": entry_source_file,
                     "source_location": {
                         "line_start": line_start,
                         "line_end": line_start,
@@ -137,6 +138,9 @@ def build_heuristic_extraction_result(source_chunks_doc: dict[str, Any]) -> dict
     node_ids: set[str] = set()
     section_node_by_title: dict[str, str] = {}
     section_nodes_by_id: dict[str, dict[str, Any]] = {}
+    narrative_evidence: list[dict[str, Any]] = []
+    role_boundary_evidence: list[dict[str, Any]] = []
+    strategy_evidence: list[dict[str, Any]] = []
 
     def add_node(node: dict[str, Any]) -> None:
         node_id = node["id"]
@@ -183,6 +187,7 @@ def build_heuristic_extraction_result(source_chunks_doc: dict[str, Any]) -> dict
             continue
         if not isinstance(line_start, int) or line_start < 1:
             continue
+        entry_source_file = entry.get("source_file", source_file)
         extractor_kind = "framework" if level == 1 else "principle"
         node_id = f"{extractor_kind}::{index:04d}"
         add_node(
@@ -190,7 +195,7 @@ def build_heuristic_extraction_result(source_chunks_doc: dict[str, Any]) -> dict
                 "id": node_id,
                 "type": f"{extractor_kind}_signal",
                 "label": title,
-                "source_file": source_file,
+                "source_file": entry_source_file,
                 "source_location": {
                     "line_start": line_start,
                     "line_end": line_start,
@@ -212,7 +217,7 @@ def build_heuristic_extraction_result(source_chunks_doc: dict[str, Any]) -> dict
                         "type": "section_parent",
                         "from": parent_id,
                         "to": node_id,
-                        "source_file": source_file,
+                        "source_file": entry_source_file,
                         "source_location": {
                             "line_start": line_start,
                             "line_end": line_start,
@@ -404,6 +409,98 @@ def build_heuristic_extraction_result(source_chunks_doc: dict[str, Any]) -> dict
                 chunk_id=chunk_id,
             )
 
+        narrative_score, narrative_keywords = _narrative_decision_score(chunk_text)
+        if narrative_score >= 3:
+            narrative_evidence.append(
+                {
+                    "chunk_id": chunk_id,
+                    "evidence_id": evidence_id,
+                    "source_file": chunk.get("source_file", source_file),
+                    "line_start": line_start,
+                    "line_end": line_end,
+                    "section_title": section_title,
+                    "score": narrative_score,
+                    "keywords": narrative_keywords,
+                }
+            )
+        role_boundary_score, role_boundary_keywords = _role_boundary_decision_score(chunk_text)
+        if role_boundary_score >= 3:
+            role_boundary_evidence.append(
+                {
+                    "chunk_id": chunk_id,
+                    "evidence_id": evidence_id,
+                    "source_file": chunk.get("source_file", source_file),
+                    "line_start": line_start,
+                    "line_end": line_end,
+                    "section_title": section_title,
+                    "score": role_boundary_score,
+                    "keywords": role_boundary_keywords,
+                }
+            )
+        strategy_score, strategy_keywords = _situation_strategy_score(chunk_text)
+        if strategy_score >= 3:
+            strategy_evidence.append(
+                {
+                    "chunk_id": chunk_id,
+                    "evidence_id": evidence_id,
+                    "source_file": chunk.get("source_file", source_file),
+                    "line_start": line_start,
+                    "line_end": line_end,
+                    "section_title": section_title,
+                    "score": strategy_score,
+                    "keywords": strategy_keywords,
+                }
+            )
+
+    _add_case_mechanism_node(
+        nodes=nodes,
+        edges=edges,
+        narrative_evidence=narrative_evidence,
+        source_file_count=len(
+            {
+                chunk.get("source_file", source_file)
+                for chunk in chunks
+                if isinstance(chunk, dict) and chunk.get("source_file")
+            }
+        ),
+    )
+    _add_situation_strategy_nodes(
+        nodes=nodes,
+        edges=edges,
+        strategy_evidence=strategy_evidence,
+        source_file_count=len(
+            {
+                chunk.get("source_file", source_file)
+                for chunk in chunks
+                if isinstance(chunk, dict) and chunk.get("source_file")
+            }
+        ),
+    )
+    _add_narrative_pattern_signal(
+        nodes=nodes,
+        edges=edges,
+        narrative_evidence=narrative_evidence,
+        source_file_count=len(
+            {
+                chunk.get("source_file", source_file)
+                for chunk in chunks
+                if isinstance(chunk, dict) and chunk.get("source_file")
+            }
+        ),
+    )
+    _add_role_boundary_pattern_signal(
+        nodes=nodes,
+        edges=edges,
+        role_boundary_evidence=role_boundary_evidence,
+        source_file_count=len(
+            {
+                chunk.get("source_file", source_file)
+                for chunk in chunks
+                if isinstance(chunk, dict) and chunk.get("source_file")
+            }
+        ),
+    )
+
     result["deterministic_pass"] = "heuristic-extractors"
     result["nodes"] = nodes
     result["edges"] = edges
@@ -559,6 +656,336 @@ def apply_llm_extraction_patch(
             merged["warnings"].append(warning)
 
     return merged
+
+
+def _add_narrative_pattern_signal(
+    *,
+    nodes: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+    narrative_evidence: list[dict[str, Any]],
+    source_file_count: int,
+) -> None:
+    if source_file_count < 3 or len(narrative_evidence) < 3:
+        return
+    selected = sorted(
+        narrative_evidence,
+        key=lambda item: (-int(item.get("score", 0) or 0), str(item.get("chunk_id", ""))),
+    )[:8]
+    primary = selected[0]
+    node_id = "narrative-pattern::historical-case-consequence-judgment"
+    keywords = sorted(
+        {
+            keyword
+            for item in selected
+            for keyword in item.get("keywords", [])
+            if isinstance(keyword, str) and keyword
+        }
+    )
+    nodes.append(
+        {
+            "id": node_id,
+            "type": "narrative_pattern_signal",
+            "label": "historical-case-consequence-judgment",
+            "source_file": primary["source_file"],
+            "source_location": {
+                "line_start": primary["line_start"],
+                "line_end": primary["line_end"],
+            },
+            "extraction_kind": "INFERRED",
+            "extractor_kind": "narrative-pattern",
+            "inference_basis": "multi_case_decision_consequence_pattern",
+            "routing_hints": {
+                "workflow_cues": 0,
+                "context_cues": 4,
+                "matched_keywords": [
+                    "case_pattern",
+                    "consequence",
+                    "decision_boundary",
+                    "tradeoff",
+                    *keywords[:6],
+                ],
+                "evidence_chunk_ids": [item["chunk_id"] for item in selected],
+            },
+        }
+    )
+    for index, item in enumerate(selected, start=1):
+        edges.append(
+            {
+                "id": f"narrative-pattern-evidence::{index:04d}",
+                "type": "supported_by_evidence",
+                "from": node_id,
+                "to": item["evidence_id"],
+                "source_file": item["source_file"],
+                "source_location": {
+                    "line_start": item["line_start"],
+                    "line_end": item["line_end"],
+                },
+                "extraction_kind": "EXTRACTED",
+                "confidence": 1.0,
+                "inference_basis": "narrative_case_support",
+                "chunk_id": item["chunk_id"],
+            }
+        )
+
+
+def _add_case_mechanism_node(
+    *,
+    nodes: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+    narrative_evidence: list[dict[str, Any]],
+    source_file_count: int,
+) -> None:
+    if source_file_count < 3 or len(narrative_evidence) < 3:
+        return
+    selected = sorted(
+        narrative_evidence,
+        key=lambda item: (-int(item.get("score", 0) or 0), str(item.get("chunk_id", ""))),
+    )[:6]
+    primary = selected[0]
+    node_id = "case-mechanism::historical-analogy-transfer-gate"
+    nodes.append(
+        {
+            "id": node_id,
+            "type": "case_mechanism",
+            "label": "historical-analogy-transfer-gate",
+            "source_file": primary["source_file"],
+            "source_location": {"line_start": primary["line_start"], "line_end": primary["line_end"]},
+            "extraction_kind": "INFERRED",
+            "extractor_kind": "case-mechanism",
+            "actor": "source_case_actor",
+            "role": "role_under_context",
+            "objective": "current_or_historical_decision_goal",
+            "constraint": "source_context_constraints",
+            "action": "case_action",
+            "immediate_gain": "short_term_effect_or_gain",
+            "delayed_consequence": "long_term_consequence_or_backlash",
+            "mechanism": "compare mechanism, not story surface",
+            "transfer_conditions": [
+                "current_decision_is_explicit",
+                "case_mechanism_matches_actor_role_constraint_action_outcome",
+                "relevant_differences_are_named",
+            ],
+            "anti_conditions": [
+                "single_case_overreach",
+                "surface_similarity_only",
+                "pure_history_query_or_translation",
+            ],
+            "routing_hints": {
+                "workflow_cues": 0,
+                "context_cues": 5,
+                "agentic_priority": 80,
+                "matched_keywords": ["case_mechanism", "transfer_conditions", "anti_conditions"],
+                "evidence_chunk_ids": [item["chunk_id"] for item in selected],
+            },
+        }
+    )
+    for index, item in enumerate(selected, start=1):
+        edges.append(
+            {
+                "id": f"case-mechanism-evidence::{index:04d}",
+                "type": "supported_by_evidence",
+                "from": node_id,
+                "to": item["evidence_id"],
+                "source_file": item["source_file"],
+                "source_location": {"line_start": item["line_start"], "line_end": item["line_end"]},
+                "extraction_kind": "EXTRACTED",
+                "confidence": 1.0,
+                "inference_basis": "case_mechanism_support",
+                "chunk_id": item["chunk_id"],
+            }
+        )
+
+
+def _narrative_decision_score(text: str) -> tuple[int, list[str]]:
+    cue_patterns = (
+        ("decision", r"(欲|将|谋|计|策|议|使|令|从之|不从|请|辞|拒|取|弃|攻|救|迁|贾|贷)"),
+        ("consequence", r"(于是|遂|乃|卒|果|因|故|是以|以此|由此|终|竟|大破|败|亡|死|富|显|得|失)"),
+        ("tradeoff", r"(利|害|权|势|赏|罚|富|贫|强|弱|远|近|虚|实|贵|贱|成败)"),
+        ("boundary", r"(不若|不可|不能|非|毋|无|勿|独|唯|必|宜|当)"),
+    )
+    matched = [label for label, pattern in cue_patterns if re.search(pattern, text)]
+    return len(matched), matched
+
+
+def _add_situation_strategy_nodes(
+    *,
+    nodes: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+    strategy_evidence: list[dict[str, Any]],
+    source_file_count: int,
+) -> None:
+    if source_file_count < 2 or len(strategy_evidence) < 2:
+        return
+    specs = [
+        {
+            "candidate_id": "no-investigation-no-decision",
+            "required": {"investigation", "anti-dogmatism"},
+            "label": "no-investigation-no-decision",
+            "mechanism": "ground decision in field evidence before applying doctrine or templates",
+        },
+        {
+            "candidate_id": "principal-contradiction-focus",
+            "required": {"contradiction", "strategy"},
+            "label": "principal-contradiction-focus",
+            "mechanism": "identify the principal contradiction before allocating action and attention",
+        },
+    ]
+    for spec in specs:
+        selected = [
+            item for item in strategy_evidence if spec["required"] & set(item.get("keywords", []))
+        ]
+        if len(selected) < 1:
+            continue
+        selected = sorted(
+            selected,
+            key=lambda item: (-int(item.get("score", 0) or 0), str(item.get("chunk_id", ""))),
+        )[:6]
+        primary = selected[0]
+        node_id = f"situation-strategy::{spec['candidate_id']}"
+        nodes.append(
+            {
+                "id": node_id,
+                "type": "situation_strategy_pattern",
+                "label": spec["label"],
+                "source_file": primary["source_file"],
+                "source_location": {"line_start": primary["line_start"], "line_end": primary["line_end"]},
+                "extraction_kind": "INFERRED",
+                "extractor_kind": "situation-strategy",
+                "situation": "complex_decision_under_context",
+                "principal_contradiction": "main_constraint_or_conflict_to_focus",
+                "force_balance": "available_resources_vs_opposing_constraints",
+                "policy_boundary": "left_right_or_over_under_reaction_boundary",
+                "action_program": "focused_next_action_program",
+                "feedback_loop": "field_feedback_to_policy_adjustment",
+                "mechanism": spec["mechanism"],
+                "transfer_conditions": [
+                    "current_situation_is_explicit",
+                    "field_or_context_evidence_is_available",
+                    "strategy_choice_depends_on_context_fit",
+                ],
+                "anti_conditions": [
+                    "context_transfer_abuse",
+                    "pure_author_position_query",
+                    "stance_commentary_without_user_decision",
+                ],
+                "routing_hints": {
+                    "workflow_cues": 0,
+                    "context_cues": 5,
+                    "agentic_priority": 90,
+                    "matched_keywords": [*sorted(set().union(*(set(item.get("keywords", [])) for item in selected))), "transfer_conditions", "anti_conditions"],
+                    "evidence_chunk_ids": [item["chunk_id"] for item in selected],
+                },
+            }
+        )
+        for index, item in enumerate(selected, start=1):
+            edges.append(
+                {
+                    "id": f"situation-strategy-evidence::{spec['candidate_id']}::{index:04d}",
+                    "type": "supported_by_evidence",
+                    "from": node_id,
+                    "to": item["evidence_id"],
+                    "source_file": item["source_file"],
+                    "source_location": {"line_start": item["line_start"], "line_end": item["line_end"]},
+                    "extraction_kind": "EXTRACTED",
+                    "confidence": 1.0,
+                    "inference_basis": "situation_strategy_support",
+                    "chunk_id": item["chunk_id"],
+                }
+            )
+
+
+def _situation_strategy_score(text: str) -> tuple[int, list[str]]:
+    cue_patterns = (
+        ("investigation", r"(调查|研究|事实|现场|群众|经验|材料|发言权)"),
+        ("anti-dogmatism", r"(本本|照搬|教条|过去经验|模板|主观主义|空谈)"),
+        ("contradiction", r"(矛盾|主要矛盾|形势|阶段|力量|敌我|问题)"),
+        ("strategy", r"(战略|策略|方针|政策|路线|任务|办法|原则|集中优势)"),
+        ("boundary", r"(必须|不能|不要|防止|纠正|左|右|错误|边界|独立自主)"),
+        ("action", r"(组织|动员|开展|实行|执行|领导|工作|行动|纲领)"),
+    )
+    matched = [label for label, pattern in cue_patterns if re.search(pattern, text)]
+    return len(matched), matched
+
+
+def _add_role_boundary_pattern_signal(
+    *,
+    nodes: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+    role_boundary_evidence: list[dict[str, Any]],
+    source_file_count: int,
+) -> None:
+    if source_file_count < 3 or len(role_boundary_evidence) < 2:
+        return
+    selected = sorted(
+        role_boundary_evidence,
+        key=lambda item: (-int(item.get("score", 0) or 0), str(item.get("chunk_id", ""))),
+    )[:8]
+    primary = selected[0]
+    node_id = "narrative-pattern::role-boundary-before-action"
+    keywords = sorted(
+        {
+            keyword
+            for item in selected
+            for keyword in item.get("keywords", [])
+            if isinstance(keyword, str) and keyword
+        }
+    )
+    nodes.append(
+        {
+            "id": node_id,
+            "type": "narrative_pattern_signal",
+            "label": "role-boundary-before-action",
+            "source_file": primary["source_file"],
+            "source_location": {
+                "line_start": primary["line_start"],
+                "line_end": primary["line_end"],
+            },
+            "extraction_kind": "INFERRED",
+            "extractor_kind": "narrative-pattern",
+            "inference_basis": "multi_case_role_authority_boundary_pattern",
+            "routing_hints": {
+                "workflow_cues": 0,
+                "context_cues": 4,
+                "matched_keywords": [
+                    "role_boundary",
+                    "authority",
+                    "delegation",
+                    "overreach_risk",
+                    *keywords[:6],
+                ],
+                "evidence_chunk_ids": [item["chunk_id"] for item in selected],
+            },
+        }
+    )
+    for index, item in enumerate(selected, start=1):
+        edges.append(
+            {
+                "id": f"role-boundary-pattern-evidence::{index:04d}",
+                "type": "supported_by_evidence",
+                "from": node_id,
+                "to": item["evidence_id"],
+                "source_file": item["source_file"],
+                "source_location": {
+                    "line_start": item["line_start"],
+                    "line_end": item["line_end"],
+                },
+                "extraction_kind": "EXTRACTED",
+                "confidence": 1.0,
+                "inference_basis": "role_authority_boundary_support",
+                "chunk_id": item["chunk_id"],
+            }
+        )
+
+
+def _role_boundary_decision_score(text: str) -> tuple[int, list[str]]:
+    cue_patterns = (
+        ("role", r"(臣|君|使者|将|主|相|吏|官|职|任|部|团队|老板|授权|职责|身份)"),
+        ("authority", r"(命|令|奉命|受节|授权|权|专断|便宜|请|奏|裁|可|不得|未得)"),
+        ("boundary", r"(越|擅|界|分|职分|法度|不宜|不可|不审|失其|坏)"),
+        ("consequence", r"(疑|惧|乱|败|祸|诛|坏|失|成|功|卒|遂|故|是以)"),
+    )
+    matched = [label for label, pattern in cue_patterns if re.search(pattern, text)]
+    return len(matched), matched
 
 
 def _safe_id(raw: str) -> str:

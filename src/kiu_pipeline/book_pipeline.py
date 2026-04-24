@@ -25,6 +25,10 @@ from .extraction_bundle import scaffold_extraction_bundle
 from .load import extract_yaml_section, parse_sections
 from .load import load_source_bundle
 from .normalize import normalize_graph
+from .pipeline_provenance import (
+    build_raw_book_cold_start_provenance,
+    write_pipeline_provenance,
+)
 from .preflight import validate_generated_bundle
 from .quality import assess_run_quality
 from .refiner import refine_bundle_candidates
@@ -118,6 +122,16 @@ def run_book_pipeline(
         drafting_mode=drafting_mode,
         llm_budget_tokens=llm_budget_tokens,
     )
+    provenance_doc = build_raw_book_cold_start_provenance(
+        input_path=input_path,
+        source_bundle_root=source_bundle_root,
+        run_root=run_root,
+        source_chunks_path=source_chunks_path,
+        extraction_result_path=extraction_result_path,
+        graph_path=graph_path,
+        deterministic_pass=deterministic_pass,
+    )
+    provenance_path = write_pipeline_provenance(run_root, provenance_doc)
     write_generated_smoke_usage_reviews(run_root)
     review_doc = review_generated_run(
         run_root=run_root,
@@ -136,6 +150,7 @@ def run_book_pipeline(
         "graph_report_path": str(graph_report_path),
         "run_root": str(run_root),
         "three_layer_review_path": str(run_root / "reports" / "three-layer-review.json"),
+        "pipeline_provenance_path": str(provenance_path),
     }
 
 

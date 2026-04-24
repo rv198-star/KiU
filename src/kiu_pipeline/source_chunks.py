@@ -5,12 +5,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from kiu_pipeline.source_shape import classify_source_shape
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 @dataclass(frozen=True)
 class Paragraph:
+    source_file: str
     headings: tuple[tuple[int, str, int], ...]
     line_start: int
     line_end: int
@@ -26,9 +29,23 @@ def build_source_chunks_from_markdown(
     max_chars: int = 1200,
 ) -> dict[str, Any]:
     path = Path(input_path)
-    lines = path.read_text(encoding="utf-8").splitlines()
     source_file = _to_repo_relative(path)
-    section_map, paragraphs = _parse_markdown(lines)
+    source_files = _discover_markdown_sources(path)
+    section_map: list[dict[str, Any]] = []
+    paragraphs: list[Paragraph] = []
+    for source_path in source_files:
+        file_source = _to_repo_relative(source_path)
+        file_sections, file_paragraphs = _parse_markdown(
+            source_path.read_text(encoding="utf-8").splitlines(),
+            source_file=file_source,
+        )
+        section_map.extend(file_sections)
+        paragraphs.extend(file_paragraphs)
+    section_map, paragraphs = _remove_repeated_boilerplate_headings(
+        section_map=section_map,
+        paragraphs=paragraphs,
+        source_file_count=len(source_files),
+    )
     chunks = _paragraphs_to_chunks(
         paragraphs=paragraphs,
         source_id=source_id,
@@ -36,7 +53,7 @@ def build_source_chunks_from_markdown(
         language=language,
         max_chars=max_chars,
     )
-    return {
+    doc = {
         "schema_version": "kiu.source-chunks/v0.1",
         "bundle_id": bundle_id,
         "source_id": source_id,
@@ -45,9 +62,17 @@ def build_source_chunks_from_markdown(
         "section_map": section_map,
         "chunks": chunks,
     }
+    doc["source_shape"] = classify_source_shape(doc)
+    if len(source_files) != 1 or path.is_dir():
+        doc["source_files"] = [_to_repo_relative(item) for item in source_files]
+    return doc
 
 
-def _parse_markdown(lines: list[str]) -> tuple[list[dict[str, Any]], list[Paragraph]]:
+def _parse_markdown(
+    lines: list[str],
+    *,
+    source_file: str,
+) -> tuple[list[dict[str, Any]], list[Paragraph]]:
     section_map: list[dict[str, Any]] = []
     paragraphs: list[Paragraph] = []
     headings: list[tuple[int, str, int]] = []
@@ -66,6 +91,7 @@ def _parse_markdown(lines: list[str]) -> tuple[list[dict[str, Any]], list[Paragr
         if text:
             paragraphs.append(
                 Paragraph(
+                    source_file=source_file,
                     headings=tuple(headings),
                     line_start=paragraph_start,
                     line_end=line_end,
@@ -101,6 +127,7 @@ def _parse_markdown(lines: list[str]) -> tuple[list[dict[str, Any]], list[Paragr
                 {
                     "level": level,
                     "title": title,
+                    "source_file": source_file,
                     "line_start": line_no,
                     "path": [item[1] for item in headings],
                 }
@@ -121,6 +148,56 @@ def _parse_markdown(lines: list[str]) -> tuple[list[dict[str, Any]], list[Paragr
 
     flush_paragraph(len(lines))
     return section_map, paragraphs
+
+
+def _remove_repeated_boilerplate_headings(
+    *,
+    section_map: list[dict[str, Any]],
+    paragraphs: list[Paragraph],
+    source_file_count: int,
+) -> tuple[list[dict[str, Any]], list[Paragraph]]:
+    if source_file_count < 3:
+        return section_map, paragraphs
+    title_files: dict[str, set[str]] = {}
+    for entry in section_map:
+        title = entry.get("title")
+        source_file = entry.get("source_file")
+        level = entry.get("level")
+        if not isinstance(title, str) or not isinstance(source_file, str):
+            continue
+        if not isinstance(level, int) or level <= 1:
+            continue
+        title_files.setdefault(title, set()).add(source_file)
+    repeat_threshold = max(3, int(source_file_count * 0.3))
+    boilerplate_titles = {
+        title for title, files in title_files.items() if len(files) >= repeat_threshold
+    }
+    if not boilerplate_titles:
+        return section_map, paragraphs
+
+    filtered_sections: list[dict[str, Any]] = []
+    for entry in section_map:
+        if entry.get("title") in boilerplate_titles:
+            continue
+        section_doc = dict(entry)
+        path = section_doc.get("path")
+        if isinstance(path, list):
+            section_doc["path"] = [item for item in path if item not in boilerplate_titles]
+        filtered_sections.append(section_doc)
+
+    filtered_paragraphs = [
+        Paragraph(
+            source_file=paragraph.source_file,
+            headings=tuple(
+                item for item in paragraph.headings if item[1] not in boilerplate_titles
+            ),
+            line_start=paragraph.line_start,
+            line_end=paragraph.line_end,
+            text=paragraph.text,
+        )
+        for paragraph in paragraphs
+    ]
+    return filtered_sections, filtered_paragraphs
 
 
 def _paragraphs_to_chunks(
@@ -146,7 +223,7 @@ def _paragraphs_to_chunks(
             {
                 "chunk_id": f"{source_id}:{chunk_index:04d}",
                 "source_id": source_id,
-                "source_file": source_file,
+                "source_file": current[0].source_file if current else source_file,
                 "chapter": chapter,
                 "section": section,
                 "line_start": current[0].line_start,
@@ -210,9 +287,30 @@ def _should_skip_line(line: str) -> bool:
     return False
 
 
+def _discover_markdown_sources(path: Path) -> list[Path]:
+    if path.is_file():
+        return [path]
+    if not path.is_dir():
+        raise FileNotFoundError(f"markdown source not found: {path}")
+    markdown_files = [item for item in path.rglob("*.md") if item.is_file()]
+    if not markdown_files:
+        raise FileNotFoundError(f"no markdown files found under source directory: {path}")
+    return sorted(markdown_files, key=_natural_path_key)
+
+
+def _natural_path_key(path: Path) -> tuple[object, ...]:
+    parts: list[object] = []
+    for raw_part in path.parts:
+        for token in re.split(r"(\d+)", raw_part):
+            if not token:
+                continue
+            parts.append((0, int(token)) if token.isdigit() else (1, token))
+    return tuple(parts)
+
+
 def _to_repo_relative(path: Path) -> str:
     resolved = path.resolve()
     try:
         return resolved.relative_to(REPO_ROOT).as_posix()
     except ValueError:
-        return resolved.as_posix()
+        return path.as_posix()

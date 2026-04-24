@@ -52,6 +52,8 @@ def main() -> int:
                 "usage_outputs": review["usage_outputs"]["score_100"],
                 "release_gate_overall_ready": review["release_gate"]["overall_ready"],
                 "release_gate_reasons": review["release_gate"]["reasons"],
+                "raw_book_no_seed_cold_start": review["cold_start"]["raw_book_no_seed_cold_start"],
+                "pipeline_mode": review["cold_start"]["pipeline_mode"],
             },
             ensure_ascii=False,
         )

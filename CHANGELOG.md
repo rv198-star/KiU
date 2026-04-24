@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+### Added
+- Added generated-run pipeline provenance so reports distinguish `raw_book_no_seed_cold_start` from `source_bundle_regeneration`.
+- Added multi-file markdown directory ingestion with per-file source coordinate preservation through source chunks, graph materialization, and scaffolded bundles.
+- Added v0.6.3 cold-start production gate planning and backlog tickets `KIU-672` through `KIU-675`.
+- Added v0.6.4 borrowed-value maximization for biography/history/case/argument-heavy sources, including source-shape classification, `case_mechanism`, `situation_strategy_pattern`, and explicit transfer/anti-condition contracts.
+- Added dual-sample regression evidence for Shiji and Mao anthology raw markdown cold-start runs in `reports/2026-04-24-v0.6.4-borrowed-value-evidence.md`.
+
+### Changed
+- Reference benchmark scorecards now expose `book_to_skill_cold_start_proven` instead of allowing stage-presence evidence to imply cold-start proof.
+- Repeated collection boilerplate headings such as author names are filtered before chunking so they cannot become false skill/workflow candidates.
+- v0.7 world-alignment planning is now explicitly gated on closing the v0.6.x cold-start production boundary.
+- Borrowed-value judgment skills now reject pure summary, translation, fact lookup, biography intro, author-position query, and stance commentary as triggers while preserving the underlying evidence in the graph/source layer.
+- Seed ranking now carries source-derived `agentic_priority`, so transferable mechanism skills are not buried behind high-support workflow or chapter-title candidates.
+- Degenerate pure numeral/chapter IDs are filtered out of publishable candidate IDs during seed mining.
+
+### Verified
+- Shiji raw markdown cold-start run: Source `90.0`, Generated `96.4`, Usage `95.8`, Overall `94.3`, release gate PASS; generated `historical-analogy-transfer-gate`, `historical-case-consequence-judgment`, and `role-boundary-before-action`.
+- Mao anthology raw markdown cold-start run: Source `91.7`, Generated `93.2`, Usage `97.3`, Overall `94.0`, release gate PASS; generated `no-investigation-no-decision`, `principal-contradiction-focus`, and `historical-analogy-transfer-gate` as the first three judgment skills.
+
 ## [0.6.2] - 2026-04-24
 
 ### Added

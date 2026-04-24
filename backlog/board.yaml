@@ -596,6 +596,261 @@ tickets:
   - src/kiu_pipeline/review.py
   - tests/test_pipeline.py
   - reports/2026-04-24-v0.6.2-effective-requirements-evidence-pack.md
+- id: KIU-672
+  title: cold-start claim provenance and anti-misreport gate
+  target_version: v0.6.3
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: provenance
+  summary: Distinguish raw-book no-seed cold start from existing source-bundle regeneration in every generated run, review, and benchmark report.
+  acceptance:
+  - run_book_pipeline emits reports/pipeline-provenance.json with pipeline_mode raw_book_no_seed_cold_start when source_bundle_skill_count is 0.
+  - build_candidates emits pipeline_mode source_bundle_regeneration and cannot be claimed as cold start.
+  - review and reference benchmark expose the provenance fields and cold-start proof score.
+  evidence:
+  - src/kiu_pipeline/pipeline_provenance.py
+  - src/kiu_pipeline/review.py
+  - src/kiu_pipeline/reference_benchmark.py
+  - tests/test_pipeline.py
+  - tests/test_reference_benchmark.py
+- id: KIU-673
+  title: no-seed raw-book cold-start experiment design
+  target_version: v0.6.3
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: cold-start
+  summary: Define the first true raw markdown to graph to skill experiment without existing KiU seed skills or external final SKILL.md ingestion.
+  acceptance:
+  - Select at least one same-source benchmark book not represented by pre-existing KiU source skills.
+  - Record commands that start from raw markdown and keep reference pack outputs separate.
+  - Define quality gates for cold-start generated skills, workflows, usage, and cangjie comparison.
+  evidence:
+  - docs/2026-04-24-v0.6.3-cold-start-production-plan.md
+  - reports/2026-04-24-v0.6.3-shiji-cold-start-smoke.md
+- id: KIU-674
+  title: cangjie production-methodology absorption gap plan
+  target_version: v0.6.3
+  status: todo
+  priority: P0
+  blocker_level: hard
+  area: methodology
+  summary: Convert the audit finding that RIA-TV++, five extractor prompts, triple validation, and decoy pressure tests are not yet absorbed into explicit follow-up work.
+  acceptance:
+  - The gap is recorded separately from Graphify core absorption.
+  - Benchmark reports no longer imply stage presence equals full cangjie production-methodology absorption.
+  - Follow-up tickets exist for extractor responsibilities, triple verification, and decoy pressure tests.
+  evidence:
+  - docs/2026-04-24-v0.6.3-cold-start-production-plan.md
+- id: KIU-675
+  title: cold-start evidence pack and comparison closure
+  target_version: v0.6.3
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: evidence
+  summary: Produce release evidence that separately reports source-bundle regeneration and true raw-book no-seed cold-start results.
+  acceptance:
+  - Evidence pack lists pipeline_mode for every generated run.
+  - Poor Charlie existing-bundle same-source comparison is relabeled with its correct boundary.
+  - True cold-start result is reported without substituting old seed-bundle evidence.
+  evidence:
+  - docs/2026-04-24-v0.6.3-cold-start-production-plan.md
+  - reports/2026-04-24-v0.6.3-shiji-cold-start-smoke.md
+  - scripts/build_cangjie_protocol_baseline.py
+  - src/kiu_pipeline/cangjie_protocol.py
+- id: KIU-676
+  title: multi-file markdown source coordinate preservation
+  target_version: v0.6.3
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: ingestion
+  summary: Absorb the missing Graphify-core capability for multi-file source materials by preserving per-file source_file anchors from source chunks through graph and scaffolded bundles.
+  acceptance:
+  - build_source_chunks accepts a markdown directory input.
+  - scaffold_extraction_bundle copies every markdown source file and rewrites chunk, section, and graph source_file values to bundle-local paths.
+  - Shiji smoke shows 130 source files copied and zero unmapped graph node source files.
+  evidence:
+  - src/kiu_pipeline/source_chunks.py
+  - src/kiu_pipeline/extraction_bundle.py
+  - tests/test_pipeline.py
+  - reports/2026-04-24-v0.6.3-shiji-cold-start-smoke.md
+- id: KIU-677
+  title: repeated collection boilerplate heading filter
+  target_version: v0.6.3
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: ingestion
+  summary: Prevent repeated per-file metadata headings such as author names from becoming false skill or workflow candidates in multi-file collections.
+  acceptance:
+  - Repeated non-top-level headings across large collections are filtered before chunking.
+  - Shiji no longer produces the bogus `汉-司马迁` workflow candidate.
+  - Filtering does not collapse per-volume top-level headings.
+  evidence:
+  - src/kiu_pipeline/source_chunks.py
+  - tests/test_pipeline.py
+  - reports/2026-04-24-v0.6.3-shiji-cold-start-smoke.md
+- id: KIU-678
+  title: narrative-history cold-start extractor gap
+  target_version: v0.6.3
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: extraction
+  summary: Add narrative case and cross-volume pattern extraction so history-style corpora can produce useful skills without relying on workflow/procedure cues or manual generated-output edits.
+  acceptance:
+  - Shiji or another narrative-history sample produces at least one non-gateway skill from raw-book no-seed cold start.
+  - The skill is grounded in per-file source anchors and non-empty usage evidence.
+  - Quality gains do not reintroduce boilerplate-heading false positives.
+  evidence:
+  - src/kiu_pipeline/extraction.py
+  - src/kiu_pipeline/contracts.py
+  - tests/test_pipeline.py
+  - reports/2026-04-24-v0.6.3-shiji-cold-start-smoke.md
+- id: KIU-679
+  title: cangjie protocol benchmark adapter and boundary labeling
+  target_version: v0.6.3
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: benchmark
+  summary: Add an explicit benchmark-only cangjie RIA-TV++ adapter so same-source comparisons can be run when local cangjie has no executable official runtime.
+  acceptance:
+  - Adapter consumes raw markdown source material and writes a reference pack with BOOK_OVERVIEW.md, INDEX.md, candidates/, rejected/, SKILL.md, and test-prompts.json.
+  - metadata.json labels official_cangjie_run false, benchmark_only true, and external final skill pack input false.
+  - reference benchmark preserves the protocol metadata in reports.
+  evidence:
+  - src/kiu_pipeline/cangjie_protocol.py
+  - scripts/build_cangjie_protocol_baseline.py
+  - src/kiu_pipeline/reference_benchmark.py
+  - tests/test_reference_benchmark.py
+  - reports/2026-04-24-v0.6.3-shiji-cold-start-smoke.md
+- id: KIU-680
+  title: Shiji cold-start usage quality gap closure
+  target_version: v0.6.3
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: quality
+  summary: Close the Shiji same-source usage gap where KiU loses to the cangjie protocol baseline despite higher artifact structure scores.
+  acceptance:
+  - KiU Shiji cold-start same-scenario usage score is >= cangjie_protocol baseline by at least 3 points.
+  - Failure tags generic_reasoning, boundary_leak, and next_step_blunt are reduced or explained with case-level evidence.
+  - Fixes are made in extraction, contract, drafting, or review logic, not by manually editing generated /tmp artifacts.
+  evidence:
+  - reports/2026-04-24-v0.6.3-shiji-cold-start-smoke.md
+  - /tmp/kiu-v063-shiji-cangjie-protocol/shiji-kiu-vs-cangjie-protocol-benchmark-r8.json
+- id: KIU-681
+  title: narrative-history skill decomposition depth
+  target_version: v0.6.3
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: extraction
+  summary: Improve raw-book narrative-history extraction so KiU can produce more than one useful skill when the source supports distinct judgment patterns.
+  acceptance:
+  - Shiji cold start produces at least two non-gateway skills without seed skills.
+  - At least one additional skill covers role-boundary, power-transition, incentive/appointment, or military-deception judgment.
+  - Workflow-vs-agentic boundary remains clean; pure chronology and translation tasks remain rejected.
+  evidence:
+  - reports/2026-04-24-v0.6.3-shiji-cold-start-smoke.md
+  - src/kiu_pipeline/extraction.py
+  - src/kiu_pipeline/contracts.py
+  - src/kiu_pipeline/extraction_bundle.py
+  - tests/test_pipeline.py
+- id: KIU-682
+  title: borrowed value maximization source strategy
+  target_version: v0.6.4
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: source-strategy
+  summary: Define and implement a source-shape-driven strategy for biography, history, and case-heavy sources that maximizes transferable use value rather than textual coverage.
+  acceptance:
+  - Strategy is triggered by source shape tags, not book names.
+  - Source shapes include narrative_case_heavy, biography_heavy, history_heavy, argument_strategy_heavy, policy_boundary_heavy, and action_program_heavy.
+  - Strategy output distinguishes graph extraction scope from judgment-skill trigger scope.
+  - Documentation states that graph layer may extract summaries, entities, positions, chronology, and original segments even when judgment skills reject pure summary/fact/translation triggers.
+  evidence:
+  - docs/2026-04-24-v0.6.4-borrowed-value-maximization-plan.md
+  - src/kiu_pipeline/source_shape.py
+  - /tmp/kiu-v064-shiji-final/sources/shiji-md/bundle/ingestion/source-chunks-v0.1.json
+  - /tmp/kiu-v064-mao-final/sources/mao-anthology/bundle/ingestion/source-chunks-v0.1.json
+- id: KIU-683
+  title: case mechanism and situation-strategy graph schema
+  target_version: v0.6.4
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: graph-schema
+  summary: Add graph-level structures for transferable case mechanisms and situation-strategy patterns without suppressing factual/entity/summary extraction.
+  acceptance:
+  - Graph can represent case_mechanism fields including actor, role, objective, constraint, action, immediate_gain, delayed_consequence, mechanism, transfer_conditions, and anti_conditions.
+  - Graph can represent situation_strategy_pattern fields including situation, principal_contradiction, force_balance, policy_boundary, action_program, feedback_loop, transfer_conditions, and anti_conditions.
+  - These graph structures are source-anchored with source_file and source_location.
+  - Existing factual/entity/summary/position extraction remains available as evidence and retrieval anchors.
+  evidence:
+  - docs/2026-04-24-v0.6.4-borrowed-value-maximization-plan.md
+  - src/kiu_pipeline/extraction.py
+  - /tmp/kiu-v064-shiji-final/sources/shiji-md/bundle/graph/graph.json
+  - /tmp/kiu-v064-mao-final/sources/mao-anthology/bundle/graph/graph.json
+- id: KIU-684
+  title: transfer conditions and abuse gates in skill distillation
+  target_version: v0.6.4
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: distillation
+  summary: Distill transferable mechanisms into judgment skills with explicit transfer conditions, anti-conditions, and context-transfer-abuse refusal logic.
+  acceptance:
+  - Borrowed-value judgment skills include transfer_conditions and anti_conditions in contract or scenario families.
+  - Skills reject pure_summary_request, pure_translation_request, fact_lookup_request, biography_intro_request, author_position_query, and stance_commentary_without_user_decision as triggers.
+  - At least one gate detects single_case_overreach and at least one detects context_transfer_abuse such as copying a book, historical case, competitor, big-company process, or past success without context fit.
+  - Refusal/routing language sends rejected queries to retrieval_qa, summarization, translation, source_browser, or workflow_candidate where appropriate.
+  evidence:
+  - docs/2026-04-24-v0.6.4-borrowed-value-maximization-plan.md
+  - src/kiu_pipeline/contracts.py
+  - src/kiu_pipeline/extraction_bundle.py
+  - /tmp/kiu-v064-mao-final/generated/mao-anthology-source-v0.6/mao-v064-final/bundle/skills/no-investigation-no-decision/usage/scenarios.yaml
+- id: KIU-685
+  title: Shiji and Mao anthology dual-sample regression
+  target_version: v0.6.4
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: regression
+  summary: Validate borrowed value maximization on two independent raw markdown corpora, Shiji and MaoZeDongAnthology-master, without book-specific hardcoding.
+  acceptance:
+  - Shiji raw-book cold start produces at least two non-gateway judgment skills after borrowed-value strategy changes.
+  - MaoZeDongAnthology-master raw-book cold start produces at least two non-gateway judgment skills from argument_strategy or policy_boundary patterns.
+  - Both generated bundles pass release gate and remain installable.
+  - Both samples reject summary, translation, fact lookup, biography intro, and stance commentary as judgment-skill triggers while retaining the underlying graph evidence.
+  - A report compares per-sample source, generated, usage, and same-scenario or smoke benchmark scores.
+  evidence:
+  - docs/2026-04-24-v0.6.4-borrowed-value-maximization-plan.md
+  - examples/shiji_md/
+  - examples/MaoZeDongAnthology-master/
+  - reports/2026-04-24-v0.6.4-borrowed-value-evidence.md
+- id: KIU-686
+  title: v0.6.4 evidence and release closure
+  target_version: v0.6.4
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: release
+  summary: Close v0.6.4 with documentation, changelog, dual-sample evidence, known limits, and explicit separation from v0.7 world-alignment.
+  acceptance:
+  - Evidence pack records commands, artifact paths, source shapes, generated skill ids, quality scores, and refusal/abuse-gate outcomes.
+  - CHANGELOG includes v0.6.4 with borrowed value maximization and dual-sample regression notes.
+  - Known limits include any remaining graph_to_skill_distillation gaps and whether source-shape classifier is heuristic or LLM-assisted.
+  - Release notes state that v0.6.4 does not perform world-alignment and does not use external final skill packs as generation input.
+  evidence:
+  - docs/2026-04-24-v0.6.4-borrowed-value-maximization-plan.md
+  - reports/2026-04-24-v0.6.4-borrowed-value-evidence.md
+  - CHANGELOG.md
 - id: KIU-700
   title: freeze v0.7 temporal-aware world-alignment charter
   target_version: v0.7.0

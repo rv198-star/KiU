@@ -6,6 +6,7 @@ from typing import Any
 
 import yaml
 
+from .pipeline_provenance import load_pipeline_provenance
 from .preflight import validate_generated_bundle
 from kiu_validator.core import validate_bundle
 
@@ -31,6 +32,7 @@ def review_generated_run(
     generated_report = validate_generated_bundle(bundle_root)
     metrics = _load_json(run_root / "reports" / "metrics.json")
     production_quality = _load_json(run_root / "reports" / "production-quality.json")
+    pipeline_provenance = load_pipeline_provenance(run_root)
     usage_docs = _load_usage_reviews(usage_root)
     usage_docs = [
         doc
@@ -67,6 +69,17 @@ def review_generated_run(
         "run_root": str(run_root),
         "source_bundle_path": str(Path(source_bundle_path)),
         "usage_review_dir": str(usage_root),
+        "pipeline_provenance": pipeline_provenance,
+        "cold_start": {
+            "raw_book_no_seed_cold_start": bool(
+                pipeline_provenance.get("raw_book_no_seed_cold_start")
+            ),
+            "pipeline_mode": pipeline_provenance.get("pipeline_mode", "unknown"),
+            "source_bundle_skill_count": int(
+                pipeline_provenance.get("source_bundle_skill_count", 0) or 0
+            ),
+            "claim_boundary": pipeline_provenance.get("claim_boundary"),
+        },
         "source_bundle": source_bundle,
         "generated_bundle": generated_bundle,
         "usage_outputs": usage_outputs,

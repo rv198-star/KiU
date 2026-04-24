@@ -25,7 +25,13 @@ from kiu_pipeline.local_paths import resolve_output_root
 from kiu_pipeline.normalize import normalize_graph
 from kiu_pipeline.regression import DEFAULT_V06_CHECK_IDS
 from kiu_pipeline.reference_benchmark import _evaluate_kiu_usage_case
-from kiu_pipeline.seed import mine_candidate_seeds, mine_candidate_seed_assessment
+from kiu_pipeline.seed import (
+    _candidate_seed_score,
+    _infer_candidate_kind,
+    _is_degenerate_candidate_id,
+    mine_candidate_seed_assessment,
+    mine_candidate_seeds,
+)
 
 
 class CandidatePipelineTests(unittest.TestCase):
@@ -603,6 +609,15 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertEqual(payload["summary"]["workflow_script_candidates"], 1)
             self.assertTrue(workflow_candidate.exists())
             self.assertTrue((run_root / "reports" / "final-decision.json").exists())
+            provenance_path = Path(payload["pipeline_provenance_path"])
+            self.assertEqual(provenance_path, run_root / "reports" / "pipeline-provenance.json")
+            self.assertTrue(provenance_path.exists())
+            provenance_doc = json.loads(provenance_path.read_text(encoding="utf-8"))
+            self.assertEqual(provenance_doc["pipeline_mode"], "source_bundle_regeneration")
+            self.assertFalse(provenance_doc["raw_book_no_seed_cold_start"])
+            self.assertEqual(provenance_doc["input_kind"], "source_bundle")
+            self.assertGreater(provenance_doc["source_bundle_skill_count"], 0)
+            self.assertTrue(provenance_doc["uses_existing_source_skills"])
             usage_docs = sorted((run_root / "usage-review").glob("*.yaml"))
             self.assertTrue(usage_docs)
             usage_doc = yaml.safe_load(usage_docs[0].read_text(encoding="utf-8"))
@@ -740,6 +755,8 @@ class CandidatePipelineTests(unittest.TestCase):
             review_cli_payload = json.loads(review.stdout)
             self.assertIn("release_gate_overall_ready", review_cli_payload)
             self.assertIn("release_gate_reasons", review_cli_payload)
+            self.assertEqual(review_cli_payload["pipeline_mode"], "source_bundle_regeneration")
+            self.assertFalse(review_cli_payload["raw_book_no_seed_cold_start"])
 
             report_path = run_root / "reports" / "three-layer-review.json"
             self.assertTrue(report_path.exists())
@@ -751,6 +768,9 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertIn("score_100", report["source_bundle"])
             self.assertIn("score_100", report["generated_bundle"])
             self.assertIn("score_100", report["usage_outputs"])
+            self.assertEqual(report["cold_start"]["pipeline_mode"], "source_bundle_regeneration")
+            self.assertFalse(report["cold_start"]["raw_book_no_seed_cold_start"])
+            self.assertGreater(report["cold_start"]["source_bundle_skill_count"], 0)
             self.assertEqual(report["generated_bundle"]["workflow_candidate_count"], 1)
             self.assertEqual(report["usage_outputs"]["sample_count"], 2)
             self.assertIn("failure_tag_counts", report["usage_outputs"])
@@ -2510,6 +2530,16 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertTrue(run_root.exists())
             self.assertTrue(graph_report_path.exists())
             self.assertTrue(review_path.exists())
+            provenance_path = Path(payload["pipeline_provenance_path"])
+            self.assertTrue(provenance_path.exists())
+            self.assertEqual(provenance_path, run_root / "reports" / "pipeline-provenance.json")
+            provenance_doc = json.loads(provenance_path.read_text(encoding="utf-8"))
+            self.assertEqual(provenance_doc["pipeline_mode"], "raw_book_no_seed_cold_start")
+            self.assertTrue(provenance_doc["raw_book_no_seed_cold_start"])
+            self.assertEqual(provenance_doc["input_kind"], "raw_markdown_book")
+            self.assertEqual(provenance_doc["source_bundle_skill_count"], 0)
+            self.assertFalse(provenance_doc["uses_existing_source_skills"])
+            self.assertFalse(provenance_doc["uses_reference_pack_as_generation_input"])
 
             metrics = json.loads((run_root / "reports" / "metrics.json").read_text(encoding="utf-8"))
             self.assertGreaterEqual(metrics["summary"]["workflow_script_candidates"], 2)
@@ -2521,6 +2551,9 @@ class CandidatePipelineTests(unittest.TestCase):
             self.assertEqual(len(skill_ids), len(set(skill_ids)))
 
             review_doc = json.loads(review_path.read_text(encoding="utf-8"))
+            self.assertEqual(review_doc["cold_start"]["pipeline_mode"], "raw_book_no_seed_cold_start")
+            self.assertTrue(review_doc["cold_start"]["raw_book_no_seed_cold_start"])
+            self.assertEqual(review_doc["cold_start"]["source_bundle_skill_count"], 0)
             self.assertIn("overall_score_100", review_doc)
             self.assertGreaterEqual(review_doc["generated_bundle"]["skill_count"], 1)
             self.assertGreaterEqual(review_doc["generated_bundle"]["workflow_candidate_count"], 2)
@@ -2882,6 +2915,421 @@ class CandidatePipelineTests(unittest.TestCase):
                     entry["title"] == "Business Interface Analysis"
                     for entry in doc["section_map"]
                 )
+            )
+
+    def test_build_source_chunks_cli_supports_multi_markdown_directory_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_dir = tmp_root / "mini-book"
+            source_dir.mkdir()
+            first = source_dir / "001__alpha.md"
+            second = source_dir / "002__beta.md"
+            first.write_text(
+                "# 第一卷\n\n## 第一节\n\n第一段提出约束不明则执行失真。\n",
+                encoding="utf-8",
+            )
+            second.write_text(
+                "# 第二卷\n\n## 第二节\n\n第二段提出利害错位则判断偏移。\n",
+                encoding="utf-8",
+            )
+            output_path = tmp_root / "source-chunks.json"
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_source_chunks.py"),
+                    "--input",
+                    str(source_dir),
+                    "--bundle-id",
+                    "multi-markdown-book",
+                    "--source-id",
+                    "mini-book",
+                    "--output",
+                    str(output_path),
+                    "--max-chars",
+                    "80",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            doc = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertEqual(validate_source_chunks_doc(doc), [])
+            self.assertEqual(doc["source_file"], str(source_dir))
+            self.assertEqual(len(doc["source_files"]), 2)
+            self.assertIn("source_shape", doc)
+            self.assertEqual({chunk["source_file"] for chunk in doc["chunks"]}, {str(first), str(second)})
+            self.assertTrue(
+                any(
+                    entry["source_file"] == str(second) and entry["title"] == "第二卷"
+                    for entry in doc["section_map"]
+                )
+            )
+
+    def test_build_source_chunks_sorts_mixed_summary_and_numbered_markdown_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_dir = tmp_root / "mdbook"
+            source_dir.mkdir()
+            (source_dir / "SUMMARY.md").write_text("# Summary\n", encoding="utf-8")
+            (source_dir / "001-调查研究.md").write_text(
+                "# 调查研究\n\n没有调查就没有发言权，必须反对照搬本本。\n",
+                encoding="utf-8",
+            )
+            (source_dir / "010-集中优势.md").write_text(
+                "# 集中优势\n\n在形势复杂时，策略上必须集中优势资源解决主要矛盾，明确战略方针、政策边界、任务办法和行动原则。\n",
+                encoding="utf-8",
+            )
+            output_path = tmp_root / "source-chunks.json"
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_source_chunks.py"),
+                    "--input",
+                    str(source_dir),
+                    "--bundle-id",
+                    "mdbook-source",
+                    "--source-id",
+                    "mdbook-source",
+                    "--output",
+                    str(output_path),
+                    "--max-chars",
+                    "120",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            doc = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertEqual(validate_source_chunks_doc(doc), [])
+            self.assertEqual(len(doc["source_files"]), 3)
+            self.assertIn("argument_strategy_heavy", doc["source_shape"]["tags"])
+            self.assertEqual(
+                doc["source_shape"]["borrowed_value_strategy"],
+                "borrowed_value_maximization",
+            )
+
+    def test_build_source_chunks_filters_repeated_author_headings_in_collections(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_dir = tmp_root / "collection"
+            source_dir.mkdir()
+            for index in range(1, 5):
+                (source_dir / f"{index:03d}.md").write_text(
+                    f"# 第{index}卷\n\n## 汉·司马迁\n\n第{index}卷正文说明人物判断和势变。\n",
+                    encoding="utf-8",
+                )
+            output_path = tmp_root / "source-chunks.json"
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_source_chunks.py"),
+                    "--input",
+                    str(source_dir),
+                    "--bundle-id",
+                    "collection-book",
+                    "--source-id",
+                    "collection-book",
+                    "--output",
+                    str(output_path),
+                    "--max-chars",
+                    "80",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            doc = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertFalse(any(entry["title"] == "汉·司马迁" for entry in doc["section_map"]))
+            self.assertEqual({chunk["section"] for chunk in doc["chunks"]}, {f"第{index}卷" for index in range(1, 5)})
+
+    def test_run_book_pipeline_cli_promotes_narrative_pattern_skill_for_history_collection(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_dir = tmp_root / "history-collection"
+            source_dir.mkdir()
+            samples = [
+                "将欲攻强敌，群臣议利害，主将不若先据虚实，于是改策而胜。",
+                "谋迁远地者先计贫富强弱，若只取近利则终失其势，是以独取远处。",
+                "使人专决于名而失人情，故不能守真实，后续判断遂偏。",
+                "请救者若只从表面，必失成败之机；因其势而利导之，乃得解围。",
+                "臣奉命监军，未得专断而擅发号令，越其职分，诸将疑惧，卒败。",
+                "使者受节出疆，权在便宜；若不审授权边界而先斩后奏，则功虽成而法度坏。",
+            ]
+            for index, text in enumerate(samples, start=1):
+                (source_dir / f"{index:03d}.md").write_text(
+                    f"# 第{index}卷\n\n## 汉·司马迁\n\n{text}\n",
+                    encoding="utf-8",
+                )
+            output_root = tmp_root / "artifacts"
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "run_book_pipeline.py"),
+                    "--input",
+                    str(source_dir),
+                    "--bundle-id",
+                    "history-cold-start",
+                    "--source-id",
+                    "history-collection",
+                    "--run-id",
+                    "narrative-skill-smoke",
+                    "--output-root",
+                    str(output_root),
+                    "--max-chars",
+                    "120",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            payload = json.loads(result.stdout)
+            run_root = Path(payload["run_root"])
+            source_bundle_root = Path(payload["source_bundle_root"])
+            provenance = json.loads(Path(payload["pipeline_provenance_path"]).read_text(encoding="utf-8"))
+            self.assertTrue(provenance["raw_book_no_seed_cold_start"])
+
+            source_chunks_doc = json.loads(
+                (source_bundle_root / "ingestion" / "source-chunks-v0.1.json").read_text(encoding="utf-8")
+            )
+            self.assertFalse(any(entry["title"] == "汉·司马迁" for entry in source_chunks_doc["section_map"]))
+            self.assertEqual(len(source_chunks_doc["source_files"]), 6)
+
+            source_graph = json.loads((source_bundle_root / "graph" / "graph.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                sum(1 for node in source_graph["nodes"] if node.get("type") == "narrative_pattern_signal"),
+                2,
+            )
+            self.assertGreaterEqual(
+                sum(1 for node in source_graph["nodes"] if node.get("type") == "case_mechanism"),
+                1,
+            )
+
+            manifest = yaml.safe_load((run_root / "bundle" / "manifest.yaml").read_text(encoding="utf-8"))
+            skill_ids = [entry["skill_id"] for entry in manifest["skills"]]
+            self.assertIn("historical-case-consequence-judgment", skill_ids)
+            self.assertIn("role-boundary-before-action", skill_ids)
+            verification = json.loads(
+                (run_root / "reports" / "verification-summary.json").read_text(encoding="utf-8")
+            )
+            self.assertIn(
+                "historical-case-consequence-judgment",
+                [item["candidate_id"] for item in verification["accepted"]],
+            )
+            self.assertIn(
+                "role-boundary-before-action",
+                [item["candidate_id"] for item in verification["accepted"]],
+            )
+
+    def test_run_book_pipeline_cli_promotes_situation_strategy_skill_for_argument_collection(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_dir = tmp_root / "strategy-collection"
+            source_dir.mkdir()
+            samples = [
+                "没有调查就没有发言权。只照搬本本和过去经验，不看现场事实，就会把政策带偏。",
+                "复杂形势下必须先抓主要矛盾，明确战略方针和阶段任务，不能平均用力。",
+                "统一战线需要合作，但必须保持独立自主；只求合作不守边界，就会丧失主动权。",
+                "政策执行要防止左的错误和右的保守，既要行动纲领，也要边界校准。",
+            ]
+            for index, text in enumerate(samples, start=1):
+                (source_dir / f"{index:03d}.md").write_text(
+                    f"# 第{index}篇\n\n{text}\n",
+                    encoding="utf-8",
+                )
+            output_root = tmp_root / "artifacts"
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "run_book_pipeline.py"),
+                    "--input",
+                    str(source_dir),
+                    "--bundle-id",
+                    "strategy-cold-start",
+                    "--source-id",
+                    "strategy-collection",
+                    "--run-id",
+                    "strategy-skill-smoke",
+                    "--output-root",
+                    str(output_root),
+                    "--max-chars",
+                    "160",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            payload = json.loads(result.stdout)
+            run_root = Path(payload["run_root"])
+            source_bundle_root = Path(payload["source_bundle_root"])
+            source_chunks_doc = json.loads(
+                (source_bundle_root / "ingestion" / "source-chunks-v0.1.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                source_chunks_doc["source_shape"]["borrowed_value_strategy"],
+                "borrowed_value_maximization",
+            )
+
+            source_graph = json.loads((source_bundle_root / "graph" / "graph.json").read_text(encoding="utf-8"))
+            self.assertGreaterEqual(
+                sum(1 for node in source_graph["nodes"] if node.get("type") == "situation_strategy_pattern"),
+                1,
+            )
+
+            manifest = yaml.safe_load((run_root / "bundle" / "manifest.yaml").read_text(encoding="utf-8"))
+            skill_ids = [entry["skill_id"] for entry in manifest["skills"]]
+            self.assertIn("no-investigation-no-decision", skill_ids)
+            self.assertIn("principal-contradiction-focus", skill_ids)
+
+            first_skill = run_root / "bundle" / "skills" / "no-investigation-no-decision"
+            scenarios = yaml.safe_load((first_skill / "usage" / "scenarios.yaml").read_text(encoding="utf-8"))
+            rendered = yaml.safe_dump(scenarios, allow_unicode=True)
+            self.assertIn("transfer_conditions", rendered)
+            self.assertIn("anti_conditions", rendered)
+            self.assertIn("context_transfer_abuse", rendered)
+
+    def test_borrowed_value_agentic_priority_survives_routing_and_seed_score(self) -> None:
+        node = {
+            "id": "situation-strategy::no-investigation-no-decision",
+            "type": "situation_strategy_pattern",
+            "label": "no-investigation-no-decision",
+            "routing_hints": {
+                "workflow_cues": 0,
+                "context_cues": 5,
+                "agentic_priority": 90,
+                "matched_keywords": ["transfer_conditions", "anti_conditions"],
+            },
+        }
+        support = {
+            "supporting_edge_ids": ["edge-1", "edge-2"],
+            "community_ids": ["community-1"],
+            "evidence_support_count": 2,
+            "extracted_evidence_support_count": 2,
+            "tri_state_support_count": 0,
+            "support_entity_count": 4,
+        }
+        candidate_kind, routing_evidence = _infer_candidate_kind(
+            node=node,
+            support=support,
+            profile={
+                "candidate_kinds": {
+                    "general_agentic": {
+                        "workflow_certainty": "medium",
+                        "context_certainty": "high",
+                    }
+                },
+                "routing_inference": {"default_candidate_kind": "general_agentic"},
+            },
+        )
+
+        self.assertEqual(candidate_kind, "general_agentic")
+        self.assertEqual(routing_evidence["agentic_priority"], 90)
+        self.assertGreaterEqual(
+            _candidate_seed_score(
+                seed_content={"trace_refs": ["traces/canonical/no-investigation.yaml"]},
+                source_skill=None,
+                support=support,
+                routing_evidence=routing_evidence,
+            ),
+            94,
+        )
+
+    def test_degenerate_chapter_ids_are_not_publishable_candidate_ids(self) -> None:
+        self.assertTrue(_is_degenerate_candidate_id("一"))
+        self.assertTrue(_is_degenerate_candidate_id("八"))
+        self.assertTrue(_is_degenerate_candidate_id("12"))
+        self.assertFalse(_is_degenerate_candidate_id("no-investigation-no-decision"))
+        self.assertFalse(_is_degenerate_candidate_id("第五章-战略防御"))
+
+    def test_scaffold_extraction_bundle_preserves_multi_file_source_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_root = Path(tmp_dir)
+            source_dir = tmp_root / "mini-book"
+            source_dir.mkdir()
+            first = source_dir / "001__alpha.md"
+            second = source_dir / "002__beta.md"
+            first.write_text("# 第一卷\n\n## 第一节\n\n约束不明则执行失真。\n", encoding="utf-8")
+            second.write_text("# 第二卷\n\n## 第二节\n\n利害错位则判断偏移。\n", encoding="utf-8")
+            source_chunks_path = tmp_root / "source-chunks.json"
+            graph_path = tmp_root / "graph.json"
+            output_root = tmp_root / "sources"
+
+            build_chunks = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_source_chunks.py"),
+                    "--input",
+                    str(source_dir),
+                    "--bundle-id",
+                    "multi-markdown-book",
+                    "--source-id",
+                    "mini-book",
+                    "--output",
+                    str(source_chunks_path),
+                    "--max-chars",
+                    "80",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(build_chunks.returncode, 0, build_chunks.stdout + build_chunks.stderr)
+
+            graph_doc = {
+                "graph_version": "kiu.graph/v0.2",
+                "source_snapshot": "mini-book",
+                "nodes": [
+                    {
+                        "id": "n_second",
+                        "type": "principle_signal",
+                        "label": "利害错位",
+                        "source_file": str(second),
+                        "source_location": {"line_start": 5, "line_end": 5},
+                        "extraction_kind": "EXTRACTED",
+                        "confidence": 1.0,
+                    }
+                ],
+                "edges": [],
+                "communities": [],
+            }
+            graph_path.write_text(json.dumps(graph_doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+            bundle_root = scaffold_extraction_bundle(
+                source_chunks_path=source_chunks_path,
+                graph_path=graph_path,
+                output_root=output_root,
+            )
+
+            copied_first = bundle_root / "sources" / "mini-book" / first.name
+            copied_second = bundle_root / "sources" / "mini-book" / second.name
+            self.assertTrue(copied_first.exists())
+            self.assertTrue(copied_second.exists())
+
+            persisted_chunks = json.loads(
+                (bundle_root / "ingestion" / "source-chunks-v0.1.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                {chunk["source_file"] for chunk in persisted_chunks["chunks"]},
+                {f"sources/mini-book/{first.name}", f"sources/mini-book/{second.name}"},
+            )
+            persisted_graph = json.loads((bundle_root / "graph" / "graph.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                persisted_graph["nodes"][0]["source_file"],
+                f"sources/mini-book/{second.name}",
             )
 
     def test_build_source_chunks_cli_supports_example_regression_books(self) -> None:
