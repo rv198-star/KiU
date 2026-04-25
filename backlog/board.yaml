@@ -1366,3 +1366,103 @@ tickets:
   evidence:
   - reports/2026-04-25-v0.7.1-world-alignment-gate-evidence.md
   - reports/2026-04-25-v0.7.0-basic-world-alignment-implementation-evidence.md
+
+
+- id: KIU-719
+  title: alignment on/off ablation harness
+  target_version: v0.7.1
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: value-metrics
+  summary: Compare deterministic proxy usage with world alignment on versus source-only/off behavior on the same sample and prompt set.
+  acceptance:
+  - The same generated sample bundles and fixed prompt cases are used for on/off scoring.
+  - alignment_usage_delta is reported with release gate and stretch target.
+  - Report states that ablation is internal proxy evidence, not real user validation.
+  evidence:
+  - src/kiu_pipeline/world_alignment_metrics.py
+  - scripts/report_world_alignment_value_metrics.py
+  - reports/2026-04-25-v0.7.1-world-alignment-value-metrics.md
+
+- id: KIU-720
+  title: misuse intercept fixture pack
+  target_version: v0.7.1
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: value-metrics
+  summary: Measure whether world alignment intercepts known misuse requests such as summary, translation, fact lookup, character evaluation, viewpoint summary, workflow-template requests, and high-risk direct advice.
+  acceptance:
+  - misuse_intercept_rate is reported from deterministic misuse fixtures.
+  - Release gate is at least 95 percent.
+  - Fixture evidence is separated from external human preference evidence.
+  evidence:
+  - src/kiu_pipeline/world_alignment_metrics.py
+  - tests/test_world_alignment.py
+  - reports/2026-04-25-v0.7.1-world-alignment-value-metrics.md
+
+- id: KIU-721
+  title: no-forced-enhancement distribution metric
+  target_version: v0.7.1
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: value-metrics
+  summary: Measure whether low-need principle skills can honestly decline off-domain world-context enhancement instead of forcing weak modernization.
+  acceptance:
+  - no_forced_enhancement_rate is reported for low-need intervention records.
+  - Release gate is at least 20 percent and stretch target is at least 30 percent.
+  - Report distinguishes no-forced-enhancement from missing world-alignment artifacts.
+  evidence:
+  - src/kiu_pipeline/world_alignment_metrics.py
+  - reports/2026-04-25-v0.7.1-world-alignment-value-metrics.md
+
+- id: KIU-722
+  title: temporal sensitivity response fixture
+  target_version: v0.7.1
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: value-metrics
+  summary: Measure high-temporal no-web behavior when current facts are missing and the user asks for direct current application.
+  acceptance:
+  - temporal_sensitivity_response is reported for high-temporal or ask/refuse records.
+  - Release gate is at least 90 percent and stretch target is at least 95 percent.
+  - Correct response means ask_more_context or refuse, not unverified apply.
+  evidence:
+  - src/kiu_pipeline/world_alignment_metrics.py
+  - reports/2026-04-25-v0.7.1-world-alignment-value-metrics.md
+
+- id: KIU-723
+  title: verdict diversity and partial-apply coverage
+  target_version: v0.7.1
+  status: done
+  priority: P1
+  blocker_level: medium
+  area: value-metrics
+  summary: Report verdict diversity so world alignment cannot pass with a one-sided application gate distribution.
+  acceptance:
+  - verdict_diversity_score is reported.
+  - Release gate requires at least four verdict types.
+  - Stretch target is five verdict types, but partial_apply is not forced if its semantics are not stable.
+  evidence:
+  - src/kiu_pipeline/world_alignment_metrics.py
+  - reports/2026-04-25-v0.7.1-world-alignment-value-metrics.md
+
+- id: KIU-724
+  title: v0.7.1 value metrics report and release gate
+  target_version: v0.7.1
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: release-evidence
+  summary: Close v0.7.1 value metrics by publishing actuals, release gates, stretch targets, and claim boundaries.
+  acceptance:
+  - Value metrics report includes alignment_usage_delta, misuse_intercept_rate, no_forced_enhancement_rate, verdict_diversity_score, temporal_sensitivity_response, source_pollution_errors, application_gate_cases, and samples_passed.
+  - All release gates pass.
+  - Stretch misses are explicitly shown rather than hidden.
+  - Report states that internal proxy and ablation evidence is not external validation.
+  evidence:
+  - reports/2026-04-25-v0.7.1-world-alignment-value-metrics.md
+  - reports/2026-04-25-v0.7.1-world-alignment-value-metrics.json

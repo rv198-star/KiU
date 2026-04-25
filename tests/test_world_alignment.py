@@ -9,6 +9,7 @@ from pathlib import Path
 import yaml
 
 from kiu_pipeline.review import _score_generated_bundle
+from kiu_pipeline.world_alignment_metrics import build_world_alignment_value_metrics
 from kiu_pipeline.world_alignment import (
     build_world_alignment_gate_evidence,
     build_world_alignment_artifacts,
@@ -317,6 +318,53 @@ class WorldAlignmentTests(unittest.TestCase):
             self.assertFalse(evidence["passed"])
             self.assertFalse(evidence["checks"]["source_fidelity_preserved"]["passed"])
             self.assertGreater(evidence["checks"]["source_pollution_errors"]["actual"], 0)
+
+
+    def test_builds_value_metrics_with_release_gate_and_stretch_targets(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bundles = [
+                _write_bundle(
+                    root / "poor",
+                    {
+                        "circle-of-competence": "Circle Of Competence",
+                        "invert-the-problem": "Invert The Problem",
+                        "bias-self-audit": "Bias Self Audit",
+                        "value-assessment-source-note": "Value Assessment Source Note",
+                        "role-boundary-before-action": "Role Boundary Before Action",
+                    },
+                ),
+                _write_bundle(
+                    root / "requirements",
+                    {
+                        "business-first-subsystem-decomposition": "Business First Subsystem Decomposition",
+                        "stakeholder-conflict-clarification": "Stakeholder Conflict Clarification",
+                    },
+                ),
+                _write_bundle(
+                    root / "finance",
+                    {
+                        "financial-statement-current-investment-check": "Financial Statement Current Investment Check",
+                        "challenge-price-with-value": "Challenge Price With Value",
+                    },
+                ),
+                _write_bundle(root / "refuse", {"current-investment-advice": "Current Investment Advice"}),
+            ]
+            for bundle in bundles:
+                build_world_alignment_artifacts(bundle, no_web_mode=True)
+
+            metrics = build_world_alignment_value_metrics(bundles)
+
+            self.assertTrue(metrics["passed"])
+            self.assertGreaterEqual(metrics["metrics"]["alignment_usage_delta"], 0.3)
+            self.assertGreaterEqual(metrics["metrics"]["misuse_intercept_rate"], 95.0)
+            self.assertGreaterEqual(metrics["metrics"]["temporal_sensitivity_response"], 90.0)
+            self.assertGreaterEqual(metrics["metrics"]["verdict_diversity_score"], 4)
+            self.assertGreaterEqual(metrics["metrics"]["no_forced_enhancement_rate"], 20.0)
+            self.assertGreaterEqual(metrics["metrics"]["application_gate_cases"], 30)
+            self.assertEqual(metrics["metrics"]["source_pollution_errors"], 0)
+            self.assertIn("misuse_intercept", metrics["case_type_counts"])
+            self.assertIn("temporal_missing_current_fact", metrics["case_type_counts"])
 
     def test_no_web_hallucination_fixture_matrix_blocks_unsafe_claims_and_allows_safe_caveats(self) -> None:
         unsafe_claims = [
