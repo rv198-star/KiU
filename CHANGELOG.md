@@ -3,6 +3,25 @@
 ## Unreleased
 
 
+## [0.7.1] - 2026-04-25
+
+### Added
+- Added release-grade v0.7.1 world-alignment gate evidence with actual values, thresholds, pass/fail status, mechanism run counts, and source-pollution detection method.
+- Added internal value metrics for world-alignment usefulness signals: `alignment_usage_delta`, `misuse_intercept_rate`, `no_forced_enhancement_rate`, `verdict_diversity_score`, and `temporal_sensitivity_response`.
+- Added condition-dependent validation backlog for external blind review, real user validation, live-web factual validation, and domain-expert validation.
+- Added v0.7.1 evaluation synthesis covering three-layer output comparison and same-book cangjie reference comparison.
+
+### Verified
+- Gate evidence: `PASS`, with `samples_passed=4`, `application_gate_cases=10`, `source_pollution_errors=0`, `world_alignment_score_min=93.2`, and `world_context_depth_score_min=88.0`.
+- Value metrics: release gate `PASS`; stretch target `PARTIAL` because `partial_apply` was not forced only to satisfy verdict diversity.
+- Three-layer output comparison: Effective Requirements, Financial Statement, and Poor Charlie remain release-gate ready with no Source/Generated/Usage regression.
+- Same-book cangjie reference comparison: `37` scenarios across `4` matched pairs, KiU usage `97.0`, reference usage `96.4`, average delta `+0.5`, weighted pass rate delta `0.0`.
+
+### Limits
+- v0.7.1 does not claim external blind preference, real-user validation, live-web factual correctness, domain-expert validation, strict same-source-data A/B victory, or cangjie methodology closure.
+- Proxy usage and ablation metrics are internal regression/value-signal evidence only; they are not real usage evidence.
+- Poor Charlie proxy usage remains weak for principle-heavy high-risk and edge prompts, and is retained as a future proxy-generator/runtime-gate quality backlog.
+
 ## [0.7.0] - 2026-04-25
 
 ### Added

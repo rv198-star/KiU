@@ -1031,7 +1031,7 @@ tickets:
 - id: KIU-700
   title: freeze v0.7 basic isolated world-alignment charter
   target_version: v0.7.0
-  status: todo
+  status: done
   priority: P0
   blocker_level: hard
   area: version-charter
