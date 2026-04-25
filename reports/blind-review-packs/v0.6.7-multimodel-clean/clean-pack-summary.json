@@ -1,0 +1,17 @@
+{
+  "schema_version": "kiu.multimodel-blind-clean-pack-summary/v0.1",
+  "source": "reports/blind-review-packs/v0.6.7-shiji-cangjie-protocol/reviewer-pack.json",
+  "output": "/tmp/kiu-v067-multimodel-blind/clean-pack.json",
+  "pair_count": 26,
+  "review_id": "blind-eval-2026-04-25",
+  "sha256": "c1025848f0fc27c007decc1539b2560d9460ca23fde4f7e9e4dd1669b2e74b35",
+  "leak_scan": {
+    "bad_review_id_hits": 0,
+    "bad_pair_id_count": 0,
+    "source_path_hits": 0,
+    "option_roles_hits": 0,
+    "kiu_literal_hits": 0,
+    "cangjie_literal_hits": 0,
+    "private_key_hits": 0
+  }
+}
