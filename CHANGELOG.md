@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Added
+- Added v0.7.3 evaluation taxonomy docs separating method integrity, source/fact safety, action value, and evidence confidence.
+- Added Class C action-value metric definitions based on the recursive five-step method: signal discovery, problem definition, action resolution, and feedback calibration.
+- Added a reusable A/B/C evaluation report template and a v0.7.2 evidence retrofit report.
+- Added a v0.7.3 Effective Requirements trial-run action-value review using the existing generation path without changing default generation behavior.
+- Added a five-book C-class scorecard mapping Effective Requirements, Financial Statement, Mao Anthology, Poor Charlie, and Shiji to their generated SKILLS/workflow artifacts and action-value scores.
+
+### Limits
+- v0.7.3 taxonomy work defines and tests evaluation vocabulary; it does not claim real-user value, external blind preference, domain-expert validation, or universal high-value advice.
+- Internal action-value scores remain evidence-level scoped and must not override source/fact safety or workflow-vs-agentic boundary failures.
+
 ## [0.7.2] - 2026-04-26
 
 ### Added

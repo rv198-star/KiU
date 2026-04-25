@@ -1936,3 +1936,19 @@ tickets:
   - External blind review and same-source cangjie victory remain unclaimed unless separately proven.
   evidence:
   - reports/2026-04-26-v0.7.2-application-readiness-evidence.md
+
+- id: KIU-800
+  title: project narrative and unified concept language
+  target_version: v0.8.0
+  status: todo
+  priority: P1
+  blocker_level: soft
+  area: project-narrative
+  summary: Rebuild KiU's external-facing architecture narrative and concept language so first-time reviewers can understand the project without learning Graphify, cangjie-skill, or release-history-specific internal terminology.
+  acceptance:
+  - A project-level architecture narrative explains KiU / 学以致用 from book ingestion to skills, workflows, world gates, live facts, and A/B/C evaluation in KiU-native language.
+  - External reference terms such as Graphify and cangjie-skill are removed from the main explanatory path and moved to attribution or historical/reference sections.
+  - The narrative preserves third-party attribution and does not hide reference influence.
+  - A glossary maps old/internal terms to stable KiU-native concepts for maintainers.
+  - README or usage-guide entry points are updated so new readers can understand the project before reading release evidence.
+  evidence: []
