@@ -5,6 +5,7 @@
 ### Added
 - Added `reports/2026-04-26-v0.7.1-audit-response-addendum.md` to clarify v0.7.1 review findings, value-metrics evidence paths, same-book benchmark attribution limits, mechanism counter grain, and real-vs-fixture sample counting before starting v0.7.2.
 - Added the v0.7.2 live fact verification design spec, including real live retrieval as a hard release gate and value/regression attribution requirements for live world-alignment evidence.
+- Added v0.7.2 live fact verification foundation: claim ledger, external fact pack, bounded live retrieval, claim-level verification, freshness gate overlays, hallucination regression fixtures, source-pollution preflight, and live-fact evidence reporting.
 
 
 ## [0.7.1] - 2026-04-25

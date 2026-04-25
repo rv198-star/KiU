@@ -16,7 +16,10 @@ def verify_claim_against_evidence(claim: str, evidence: list[dict[str, Any]], re
     if any(item.get("retrieval_error") for item in evidence):
         return _result(claim, "retrieval_failed", evidence, "Retrieval failed before evidence could be checked.")
 
-    evidence_text = " ".join(str(item.get("text") or item.get("snippet") or "") for item in evidence).strip()
+    evidence_text = " ".join(
+        " ".join(str(item.get(key) or "") for key in ("source_title", "text", "snippet"))
+        for item in evidence
+    ).strip()
     if _is_current_claim(claim) and any(not item.get("published_at") for item in evidence):
         return _result(claim, "undated", evidence, "Current claim evidence lacks a published date.")
     if _is_current_claim(claim) and _is_stale(evidence, retrieved_at):

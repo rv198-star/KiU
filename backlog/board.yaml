@@ -1546,3 +1546,171 @@ tickets:
   - Decision is backed by fresh three-layer, value-metric, and same-book-reference evidence.
   evidence:
   - reports/2026-04-25-v0.7.1-evaluation-synthesis.md
+
+- id: KIU-730
+  title: claim ledger and no-web bridge
+  target_version: v0.7.2
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: live-fact-verification
+  summary: Convert high-temporal no-web current-world claims into structured verification tasks without disabling source-faithful skills.
+  acceptance:
+  - High-temporal current-world claims become verification_required=true.
+  - Low-temporal source-faithful applications do not force live retrieval.
+  - No-web behavior blocks direct current-fact application without disabling source-faithful skills.
+  evidence:
+  - src/kiu_pipeline/claim_ledger.py
+  - tests/test_live_fact_verification.py
+  - reports/2026-04-26-v0.7.2-live-fact-verification-evidence.md
+
+- id: KIU-731
+  title: external fact pack schema
+  target_version: v0.7.2
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: live-fact-verification
+  summary: Define an isolated external fact pack for live retrieval evidence under world-alignment semantics.
+  acceptance:
+  - Fact pack records URL, title, retrieval time, relation to claim, freshness, confidence, and decision effect.
+  - Fact pack remains external context and not source evidence.
+  - Missing citation metadata fails validation.
+  evidence:
+  - src/kiu_pipeline/live_facts.py
+  - tests/test_live_fact_verification.py
+
+- id: KIU-732
+  title: live retrieval adapter
+  target_version: v0.7.2
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: live-fact-verification
+  summary: Add bounded live retrieval for specific claim checks with explicit retrieval failure states.
+  acceptance:
+  - Adapter fetches evidence for specific claims.
+  - Retrieval records URL, title, retrieval time, and support text.
+  - Network failures become retrieval_failed facts rather than fabricated evidence.
+  evidence:
+  - src/kiu_pipeline/live_facts.py
+  - scripts/report_live_fact_verification.py
+  - reports/2026-04-26-v0.7.2-live-fact-verification-evidence.md
+
+- id: KIU-733
+  title: claim-level fact verification
+  target_version: v0.7.2
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: live-fact-verification
+  summary: Classify live evidence relationship to claims and block unsafe direct application.
+  acceptance:
+  - Verification statuses cover supported, partial, unsupported, conflicting, stale, undated, insufficient evidence, and retrieval failure.
+  - Unsupported, conflicting, stale, insufficient, and retrieval-failed claims cannot directly apply.
+  - Positive and negative status examples are tested.
+  evidence:
+  - src/kiu_pipeline/fact_verification.py
+  - tests/test_live_fact_verification.py
+
+- id: KIU-734
+  title: application gate fact consumption
+  target_version: v0.7.2
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: live-fact-verification
+  summary: Consume verification results as isolated live application-gate overlays without mutating source skills.
+  acceptance:
+  - Supported facts can enable cited caveated application.
+  - Unsupported, conflicting, stale, and retrieval-failed claims produce refuse or ask behavior.
+  - Source SKILL.md remains unchanged.
+  evidence:
+  - src/kiu_pipeline/freshness_gate.py
+  - src/kiu_pipeline/world_alignment.py
+  - tests/test_live_fact_verification.py
+
+- id: KIU-735
+  title: hallucination regression matrix
+  target_version: v0.7.2
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: validation
+  summary: Extend no-web hallucination fixtures into live/no-live regression coverage.
+  acceptance:
+  - Positive live-supported cases pass.
+  - Unsupported, conflicting, stale, and retrieval-failed cases are blocked.
+  - Low-temporal source-faithful prompts do not require live claims.
+  evidence:
+  - tests/test_live_fact_verification.py
+  - reports/2026-04-26-v0.7.2-live-fact-verification-evidence.md
+
+- id: KIU-736
+  title: source pollution and citation preflight
+  target_version: v0.7.2
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: preflight
+  summary: Prevent live fact URLs from leaking into source-derived SKILL.md evidence anchors.
+  acceptance:
+  - Live URLs do not appear in source-derived SKILL.md evidence anchors.
+  - Fact pack citation and relation metadata are validated.
+  - Pollution scanner is covered by tests.
+  evidence:
+  - src/kiu_pipeline/preflight.py
+  - src/kiu_pipeline/live_facts.py
+  - tests/test_live_fact_verification.py
+
+- id: KIU-737
+  title: v0.7.2 live freshness evidence pack
+  target_version: v0.7.2
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: release-evidence
+  summary: Produce release evidence for deterministic fixtures, real live retrieval, and value/regression attribution.
+  acceptance:
+  - Evidence pack reports actuals, thresholds, status, and evidence paths.
+  - Live run evidence includes retrieval time and source list.
+  - Value delta and regression attribution is present.
+  evidence:
+  - scripts/report_live_fact_verification.py
+  - reports/2026-04-26-v0.7.2-live-fact-verification-evidence.md
+  - reports/2026-04-26-v0.7.2-live-fact-verification-evidence.json
+
+- id: KIU-738
+  title: live check claim boundary and release notes
+  target_version: v0.7.2
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: release
+  summary: Document v0.7.2 live-check claim boundaries and high-stakes caveats.
+  acceptance:
+  - Release notes state what v0.7.2 can and cannot claim.
+  - Fixture validation and real live retrieval evidence are distinguished.
+  - High-stakes domains retain human-judgment caveats.
+  evidence:
+  - CHANGELOG.md
+  - reports/2026-04-26-v0.7.2-live-fact-verification-evidence.md
+
+- id: KIU-739
+  title: real live retrieval release gate
+  target_version: v0.7.2
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: release-evidence
+  summary: Make real live retrieval a hard release gate rather than an optional smoke test.
+  acceptance:
+  - At least three live retrievals succeed.
+  - At least two claim verifications succeed from live evidence.
+  - Live citation completeness is 100%.
+  - Network failure fabrication count is zero.
+  - External fact pack is written and archived.
+  evidence:
+  - scripts/report_live_fact_verification.py
+  - reports/2026-04-26-v0.7.2-live-fact-verification-evidence.md
+  - reports/2026-04-26-v0.7.2-live-fact-verification-evidence.json

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import urllib.request
+import gzip
 from typing import Any
 
 from kiu_pipeline.fact_verification import verify_claim_against_evidence
@@ -101,9 +102,17 @@ def retrieve_live_facts_for_claims(
 
 
 def _fetch_url(url: str) -> dict[str, str]:
-    request = urllib.request.Request(url, headers={"User-Agent": "KiU-live-fact-verification/0.7.2"})
+    request = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "KiU-live-fact-verification/0.7.2",
+            "Accept-Encoding": "gzip, identity",
+        },
+    )
     with urllib.request.urlopen(request, timeout=10) as response:
         raw = response.read(120_000)
+        if response.headers.get("Content-Encoding", "").lower() == "gzip":
+            raw = gzip.decompress(raw)
     text = raw.decode("utf-8", errors="replace")
     title = _extract_title(text) or url
     return {"source_url": url, "source_title": title, "text": text[:20_000]}

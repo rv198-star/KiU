@@ -261,5 +261,40 @@ class LiveFactPreflightTests(unittest.TestCase):
         self.assertTrue(any("live fact URL" in error for error in polluted))
 
 
+class LiveFactEvidenceTests(unittest.TestCase):
+    def test_fixture_evidence_contains_release_gates_and_value_attribution(self) -> None:
+        from scripts.report_live_fact_verification import build_fixture_evidence, render_markdown
+
+        evidence = build_fixture_evidence()
+
+        self.assertTrue(evidence["passed"])
+        self.assertTrue(evidence["checks"]["deterministic_fixture_matrix_passed"]["passed"])
+        self.assertEqual(evidence["checks"]["unsupported_claim_direct_apply_count"]["actual"], 0)
+        self.assertTrue(evidence["value_delta_and_regression_attribution"]["written"])
+        self.assertEqual(evidence["sample_counts"]["fixture_samples"], 1)
+        self.assertIn("mechanism_counter_grain", evidence)
+        markdown = render_markdown(evidence)
+        self.assertIn("Value Delta And Regression Attribution", markdown)
+        self.assertIn("Evidence Paths", markdown)
+
+    def test_live_gate_summary_requires_real_retrieval_successes(self) -> None:
+        from scripts.report_live_fact_verification import build_live_evidence_from_pack
+
+        pack = {
+            "facts": [
+                {"verification_status": "supported", "evidence": [{"source_url": "https://example.gov/a", "source_title": "A", "retrieved_at": "2026-04-26T00:00:00Z", "relation_to_claim": "supports"}]},
+                {"verification_status": "supported", "evidence": [{"source_url": "https://example.gov/b", "source_title": "B", "retrieved_at": "2026-04-26T00:00:00Z", "relation_to_claim": "supports"}]},
+                {"verification_status": "unsupported", "evidence": [{"source_url": "https://example.gov/c", "source_title": "C", "retrieved_at": "2026-04-26T00:00:00Z", "relation_to_claim": "related_but_not_supporting"}]},
+            ]
+        }
+
+        evidence = build_live_evidence_from_pack(pack)
+
+        self.assertTrue(evidence["checks"]["real_live_retrieval_success_count"]["passed"])
+        self.assertTrue(evidence["checks"]["real_live_claim_verification_success_count"]["passed"])
+        self.assertTrue(evidence["checks"]["real_live_citation_completeness"]["passed"])
+        self.assertTrue(evidence["checks"]["real_live_external_fact_pack_written"]["passed"])
+
+
 if __name__ == "__main__":
     unittest.main()
