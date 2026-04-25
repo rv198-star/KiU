@@ -1843,3 +1843,90 @@ tickets:
   - boundary_leak and wrong_verdict are zero in release evidence.
   evidence:
   - reports/2026-04-26-v0.7.2-evaluation-pass.md
+
+- id: KIU-748
+  title: application readiness schema
+  target_version: v0.7.2
+  status: todo
+  priority: P0
+  blocker_level: hard
+  area: application-readiness
+  summary: Define the shared readiness schema used by coverage, mechanism evidence, transfer fit, and final artifact value review.
+  acceptance:
+  - Readiness statuses include pass, warn, fail, and not_applicable.
+  - Findings carry model, severity, reason, evidence, and recommended_action.
+  - Aggregation keeps warnings visible even when numeric scores are high.
+  - The schema has focused tests and no sample-specific fields.
+  evidence:
+  - docs/superpowers/specs/2026-04-26-v0.7.2-application-readiness-model-design.md
+  - docs/superpowers/plans/2026-04-26-v0.7.2-application-readiness-model.md
+
+- id: KIU-749
+  title: coverage model orchestration
+  target_version: v0.7.2
+  status: todo
+  priority: P0
+  blocker_level: hard
+  area: application-readiness
+  summary: Model source capability coverage so narrow output shape is diagnosed through coverage readiness rather than fixed skill counts.
+  acceptance:
+  - Coverage reports list coverage_units, covered_units, uncovered_units, and narrow_output_justification.
+  - Workflow candidates count as coverage only when routing evidence and gateway or audit trail exist.
+  - A single published skill can pass only with explicit model-backed justification.
+  - No book title, sample name, or source path appears in production coverage logic.
+  evidence:
+  - src/kiu_pipeline/coverage_model.py
+  - tests/test_coverage_model.py
+  - reports/coverage-readiness.json
+
+- id: KIU-750
+  title: mechanism evidence model
+  target_version: v0.7.2
+  status: todo
+  priority: P0
+  blocker_level: hard
+  area: application-readiness
+  summary: Rank anchors by mechanism evidence so judgment skills prefer evidence with actor, action, constraint, consequence, counter-signal, and transfer support.
+  acceptance:
+  - Mechanism density scoring covers actor, action, constraint, consequence, counter-signal, mechanism bridge, transfer conditions, and anti-conditions.
+  - Mechanism-weak evidence can remain source context but cannot be primary judgment proof.
+  - Chapter-title hygiene is enforced through mechanism evidence guardrails, not sample-specific filters.
+  - No source form is globally banned by type alone.
+  evidence:
+  - src/kiu_pipeline/mechanism_evidence.py
+  - tests/test_mechanism_evidence.py
+
+- id: KIU-751
+  title: transfer fit model
+  target_version: v0.7.2
+  status: todo
+  priority: P0
+  blocker_level: hard
+  area: application-readiness
+  summary: Generate concrete transfer-readiness questions from mechanism dimensions when a user tries to apply source knowledge to a present situation.
+  acceptance:
+  - Transfer candidate gates include specific questions for mechanism fit, incentive mismatch, context mismatch, time horizon, resource or authority mismatch, disconfirming evidence, and anti-condition checks.
+  - Questions are derived from mechanism dimensions, not fixed generic templates.
+  - Low-risk reflection remains minimal or light and is not forced into operational transfer checks.
+  - Use-state, proxy, and world-alignment tests cover the integration.
+  evidence:
+  - src/kiu_pipeline/transfer_fit.py
+  - tests/test_transfer_fit.py
+
+- id: KIU-752
+  title: cross-sample readiness evaluation
+  target_version: v0.7.2
+  status: todo
+  priority: P0
+  blocker_level: hard
+  area: release-evidence
+  summary: Rerun the five diagnostic samples after Application Readiness Model integration and report final artifact value without external-validation overclaims.
+  acceptance:
+  - Five-sample proxy average remains at least 90.
+  - Release proxy evidence has zero wrong_verdict and zero boundary_leak.
+  - Internal final artifact value average reaches at least 92.
+  - Narrow-output and weak-anchor issues are explained by model reports, not sample-specific patches.
+  - Source pollution remains zero and source-only mode remains supported.
+  - External blind review and same-source cangjie victory remain unclaimed unless separately proven.
+  evidence:
+  - reports/2026-04-26-v0.7.2-application-readiness-evidence.md
