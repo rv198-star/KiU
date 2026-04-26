@@ -2,8 +2,15 @@
 
 ## Unreleased
 
+## [0.8.1] - 2026-04-26
+
 ### Changed
 - Reorganized repository structure for v0.8.1: public docs, engineering docs, release-history records, evidence, examples, review pack, and archived process material now have separate homes.
+
+### Verified
+- Re-ran the five-book generation and scoring set from the reorganized repository paths: Financial Statement, Effective Requirements, Mao Anthology, Poor Charlie, and Shiji.
+- All five generated runs reported `release_gate_overall_ready=true`.
+- Full unittest discovery reported `280` tests passing after the structure migration.
 
 ## [0.8.0] - 2026-04-26
 
