@@ -28,14 +28,14 @@ KiU（`学以致用`）把原书知识转化为可执行的行动力。
 
 ## 从这里开始
 
-- [项目架构叙事](docs/project-architecture-narrative.md)
+- [项目架构叙事](docs/public/project-architecture-narrative.md)
 - [方法论工具箱](docs/methodologies/README.md)
 - [当前评审包](review-pack/current/README.md)
-- [概念语言对照表](docs/concept-language-glossary.md)
-- [用户侧评分指南](docs/user-facing-evaluation-guide.md)
-- [使用指南](docs/usage-guide.md)
+- [概念语言对照表](docs/public/concept-language-glossary.md)
+- [用户侧评分指南](docs/public/user-facing-evaluation-guide.md)
+- [使用指南](docs/engineering/usage-guide.md)
 - [Backlog 看板](backlog/board.yaml)
-- [KiU 技能规范 v0.6](docs/kiu-skill-spec-v0.6.md)
+- [KiU 技能规范 v0.6](docs/engineering/skill-specs/kiu-skill-spec-v0.6.md)
 - [参考 bundle](bundles/poor-charlies-almanack-v0.1/manifest.yaml)
 - [工程参考 bundle](bundles/engineering-postmortem-v0.1/manifest.yaml)
 

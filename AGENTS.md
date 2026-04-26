@@ -24,7 +24,7 @@ KiU，再讨论历史版本术语或外部参照项目术语。
 Required rules:
 
 - 不要为了改名而重写历史报告、release evidence、旧计划或 attribution 记录。
-- 历史术语保留在 `docs/concept-language-glossary.md` 中，用于追溯。
+- 历史术语保留在 `docs/public/concept-language-glossary.md` 中，用于追溯。
 - 新的公共文档应优先使用：读准原书、提炼判断、生成技能、分流流程、
   校准应用、验证行动价值。
 - Graphify absorption、cangjie methodology absorption、RIA-TV++、C-class、

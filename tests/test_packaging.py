@@ -73,7 +73,7 @@ class PackagingMetadataTests(unittest.TestCase):
         self.assertIn("RIA-TV++", attribution)
 
     def test_v06_schema_and_example_assets_exist(self) -> None:
-        self.assertTrue((ROOT / "docs" / "kiu-skill-spec-v0.6.md").exists())
+        self.assertTrue((ROOT / "docs" / "engineering" / "skill-specs" / "kiu-skill-spec-v0.6.md").exists())
         self.assertTrue((ROOT / "schemas" / "source-chunks-v0.1.json").exists())
         self.assertTrue((ROOT / "schemas" / "graph-v0.2.json").exists())
         self.assertTrue((ROOT / "schemas" / "extraction-results-v0.1.json").exists())

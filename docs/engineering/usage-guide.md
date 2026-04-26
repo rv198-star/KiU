@@ -566,9 +566,9 @@ The pipeline exists to reduce drafting overhead while preserving evidence discip
 
 If someone is new to the project, this order works well:
 
-1. `docs/kiu-skill-spec-v0.1.md`
-2. `docs/usage-guide.md`
-3. `docs/kiu-v0.2-pipeline.md`
+1. `docs/engineering/skill-specs/kiu-skill-spec-v0.1.md`
+2. `docs/engineering/usage-guide.md`
+3. `docs/engineering/kiu-v0.2-pipeline.md`
 4. `bundles/poor-charlies-almanack-v0.1/manifest.yaml`
 5. one published skill directory
 6. `src/kiu_validator/core.py`
