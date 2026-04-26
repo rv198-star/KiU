@@ -52,6 +52,9 @@ Methodology categories:
   `docs/methodologies/recursive-five-step-method.md` and
   `docs/methodologies/extreme-deduction-and-scenario-projection.md`, and
   `docs/methodologies/top-level-decision-philosophy.md`.
+- External tool methodologies: optional outside tools used for bounded module
+  audit or experimental development only. Current external tool: `模块价值增益法`.
+  See `docs/methodologies/external-thinking-value-gain-methodology.md`.
 
 Required usage:
 
@@ -65,6 +68,12 @@ Required usage:
 - Use `系统效率碾压局部优势` only for macro direction decisions, and never to
   excuse weak evidence honesty, workflow-vs-agentic boundary drift, or ethical
   floor violations.
+- Use external `模块价值增益法` only when a concrete module already exists but may
+  be structurally complete and value-thin. It can guide audits, generation
+  orchestration, or improvement backlog items, but it must not be pasted into
+  source-derived generated SKILL bodies or treated as KiU-native evidence.
+- Do not generalize a single-book value-gain experiment into a project-wide claim.
+  Cross-book claims require five-book validation or an explicit narrower scope.
 - Treat general thinking tools as portable methods, not KiU-owned product
   methodology. When used inside KiU, they must obey KiU project boundaries.
 
