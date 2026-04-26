@@ -81,6 +81,10 @@ class PackagingMetadataTests(unittest.TestCase):
         self.assertTrue(examples_readme.exists())
 
         content = examples_readme.read_text(encoding="utf-8")
+        self.assertIn("fixtures", content)
+        self.assertIn("source-materials", content)
+        self.assertIn("legacy", content)
+        self.assertIn("review-pack/current", content)
         self.assertIn("有效需求分析（第2版）", content)
         self.assertIn("财务报表分析_Markdown版", content)
         self.assertIn("source/extraction", content)
