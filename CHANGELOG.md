@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## [0.8.2] - 2026-04-27
+
+### Changed
+- Aligned `master` with the v0.8.1 repository-structure line so the main worktree now reflects the current `evidence/`, `review-pack/`, `_archive/`, and reorganized docs layout instead of the older v0.7.1-era structure.
+- Added the default value-driven enhancer to generated SKILL rendering: `value_gain_*` output fields, `Downstream Use Check`, and `Minimum Pressure Pass`.
+- Consolidated the external value-gain method documentation into `docs/methodologies/value-gain-enhancer.md`; historical A/B/C labels remain evidence-only and are not product paths.
+
+### Verified
+- Five-book value-gain pressure-chain rerun kept release gates green for Financial Statement, Effective Requirements, Mao Anthology, Poor Charlie, and Shiji.
+- Internal user-perspective A/B/C review improved from `20.92/25` original to `23.08/25` with the pressure-chain enhancer.
+- Full unittest discovery reported `281` tests passing after mainline alignment and value-gain enhancer integration.
+
+### Notes
+- v0.8.0 and v0.8.1 remain published historical tags/releases. v0.8.2 does not rewrite them; it closes the mainline alignment gap and should be treated as the stable v0.8 repository baseline.
+
 ## [0.8.1] - 2026-04-26
 
 ### Changed

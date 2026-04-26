@@ -4,7 +4,7 @@ domain: financial-statement-analysis
 inherits_from: default
 language: zh-CN
 bundle_version: 0.1.0
-source_markdown: examples/sources/financial-statement-analysis-source.md
+source_markdown: examples/source-materials/sources/financial-statement-analysis-source.md
 nodes:
   - id: n_business_not_ticker
     label: Buy The Business Not The Ticker
