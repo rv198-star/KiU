@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Added
-- Added v0.8 architecture language design for `学以致用`, defining the public flow: 读准原书, 提炼判断, 生成技能, 分流流程, 校准应用, and 验证价值.
+- Added v0.8 architecture language design for `学以致用`, defining the public flow: 读准原书, 提炼判断, 生成技能, 分流流程, 校准应用, and 验证行动价值.
 - Added first-time-reader project architecture narrative, historical concept glossary, and user-facing evaluation guide.
 
 ### Changed

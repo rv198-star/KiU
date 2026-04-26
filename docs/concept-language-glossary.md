@@ -13,7 +13,7 @@ It is not the main project narrative. New user-facing and reviewer-facing docume
 | 生成技能 | Publish bounded skills that help users judge, choose, refuse, act, or recalibrate. | README, skill docs, scorecards. |
 | 分流流程 | Keep deterministic procedures as workflows instead of thick skills. | README, workflow docs, boundary reviews. |
 | 校准应用 | Add isolated current context, fact checks, caveats, and safety gates. | README, current-fact and application docs. |
-| 验证价值 | Evaluate whether outputs create action value at a stated evidence level. | README, evaluation guides, release notes. |
+| 验证行动价值 | Evaluate whether outputs create action value at a stated evidence level. | README, evaluation guides, release notes. |
 
 ## Historical To v0.8 Mapping
 
@@ -25,7 +25,7 @@ It is not the main project narrative. New user-facing and reviewer-facing docume
 | cangjie core closure | 生成方法就绪度 / production-method readiness | Historical evidence only. |
 | RIA-TV++ | 提炼阶段链路 / extraction-to-skill stage chain | Historical implementation detail. |
 | triple verification | 证据校验 / evidence verification | Current public language when needed. |
-| C-class action value | 验证价值 / action-value evaluation | Current public language. |
+| C-class action value | 验证行动价值 / action-value evaluation | Current public language. |
 | A/B/C taxonomy | method integrity, source/fact safety, action value, evidence confidence | Internal metric taxonomy. |
 | three-layer review | source/generated/usage review | Internal evidence format. |
 | proxy usage | 内部场景校验 / internal scenario check | Evidence tier, not user validation. |

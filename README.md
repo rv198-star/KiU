@@ -2,19 +2,19 @@
 
 [![CI](https://github.com/rv198-star/rv198-start/actions/workflows/ci.yml/badge.svg)](https://github.com/rv198-star/rv198-start/actions/workflows/ci.yml)
 
-KiU (`学以致用`) turns source knowledge into usable judgment.
+KiU (`学以致用`) turns source knowledge into executable action capacity.
 
-It is not a summary engine, quote database, translator, or generic RAG notebook. KiU preserves what the source says, then distills bounded skills that help users judge, choose, refuse, act, or recalibrate.
+It is not a summary engine, quote database, translator, or generic RAG notebook. KiU preserves what the source says, then turns it into bounded skills that help users notice signals, define problems, judge tradeoffs, choose actions, refuse misuse, and recalibrate from feedback.
 
 Two rules define the project:
 
-- `技能不是摘要`: a skill must be usable judgment, not a compressed chapter summary.
-- `用而不染`: application context may gate or caveat use, but it must not rewrite the source-derived skill.
+- `技能不是摘要`: a skill must create action capacity, not a compressed chapter summary.
+- `学到最后要能用`: learning is not complete until the source can improve concrete judgment, choice, action, refusal, or feedback.
 
 ## Architecture
 
 ```text
-Book -> Read Accurately -> Distill Judgment -> Skill or Workflow -> Calibrate Use -> Verify Value
+Book -> Read Accurately -> Distill Judgment -> Skill or Workflow -> Calibrate Use -> Verify Action Value
 ```
 
 | Step | What it means |
@@ -23,8 +23,8 @@ Book -> Read Accurately -> Distill Judgment -> Skill or Workflow -> Calibrate Us
 | 提炼判断 | Distill transferable judgment from the source without reducing the book to notes. |
 | 生成技能 | Publish only skills that help users judge, choose, refuse, act, or recalibrate. |
 | 分流流程 | Keep deterministic procedures as workflows instead of inflating them into skills. |
-| 校准应用 | Add isolated context, current-fact checks, caveats, and safety gates when needed. |
-| 验证价值 | Evaluate whether outputs create action value at the stated evidence level. |
+| 校准应用 | Add isolated context, current-fact checks, caveats, and safety gates when needed without rewriting the source skill. |
+| 验证行动价值 | Evaluate whether outputs create action value at the stated evidence level. |
 
 ## Start Here
 

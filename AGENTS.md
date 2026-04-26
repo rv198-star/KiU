@@ -6,8 +6,8 @@
 Starting with `v0.7`, KiU's Chinese project name is `学以致用`.
 
 This name is not a cosmetic translation. It reinforces the project goal: source
-knowledge should become usable judgment while preserving evidence, boundaries,
-and user choice about whether to apply additional context layers.
+knowledge should become executable action capacity while preserving evidence,
+boundaries, and user choice about whether to apply additional context layers.
 
 Required rules:
 
@@ -29,12 +29,13 @@ Required rules:
 - Keep historical terms available in `docs/concept-language-glossary.md` for
   traceability.
 - New public-facing docs should lead with: 读准原书, 提炼判断, 生成技能,
-  分流流程, 校准应用, and 验证价值.
+  分流流程, 校准应用, and 验证行动价值.
 - Historical terms such as Graphify absorption, cangjie methodology absorption,
   RIA-TV++, C-class, and world alignment may appear in new docs only when
   explicitly labeled as historical/internal terminology or when required for
   attribution.
-- Use `技能不是摘要` and `用而不染` as the two preferred memorable phrases.
+- Use `技能不是摘要` and `学到最后要能用` as the two preferred public memorable
+  phrases. Keep `用而不染` as the application-calibration boundary principle.
   Do not introduce additional branded terminology unless it removes more
   confusion than it adds.
 - README and release notes should lead with the new architecture language, not

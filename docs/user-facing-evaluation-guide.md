@@ -37,7 +37,7 @@ For example, a score of `94` under internal artifact review means the generated 
 | 生成技能 | Action helpfulness, boundary clarity. |
 | 分流流程 | Boundary clarity, coverage fit. |
 | 校准应用 | Context application safety, source trust. |
-| 验证价值 | Evidence confidence, action helpfulness. |
+| 验证行动价值 | Evidence confidence, action helpfulness. |
 
 ## Claim Discipline
 
