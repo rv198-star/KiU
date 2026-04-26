@@ -2,33 +2,44 @@
 
 [![CI](https://github.com/rv198-star/rv198-start/actions/workflows/ci.yml/badge.svg)](https://github.com/rv198-star/rv198-start/actions/workflows/ci.yml)
 
-KiU (学以致用, starting with v0.7) is a graph-first, evidence-backed skill bundle format for turning source knowledge into usable judgment while preserving provenance, boundaries, and review evidence.
+KiU (`学以致用`) turns source knowledge into usable judgment.
 
-Current release framing:
+It is not a summary engine, quote database, translator, or generic RAG notebook. KiU preserves what the source says, then distills bounded skills that help users judge, choose, refuse, act, or recalibrate.
 
-- `v0.5.0` closes the foundation line: multi-domain validation, cross-bundle graph merge, workflow-vs-agentic boundary enforcement, and three-layer review evidence.
-- `v0.5.1` closes the corrective `cangjie-skill` gap-closure line: fresh same-source evidence shows a small but explicit usage lead without workflow-boundary drift.
-- `v0.6.8` seals the v0.6.x line: raw-book cold start, Graphify-core source/provenance absorption, boundary/scenario audit infrastructure, explicit reference-source selection, and release evidence honesty are complete for this line.
-- `v0.6.8` does not claim external blind-review closure; real external preference validation remains a v0.7 validation backlog item rather than a v0.6.x blocker.
-- `v0.7` starts the `学以致用 · World Alignment` line. Its core rule is isolation enhancement, not fusion rewrite: world context may gate or caveat application in isolated artifacts, but it must not silently rewrite source-faithful skills. v0.7.0 explicitly defers live web search and multi-world / multi-stance modeling.
+Two rules define the project:
 
-Start here:
+- `技能不是摘要`: a skill must be usable judgment, not a compressed chapter summary.
+- `用而不染`: application context may gate or caveat use, but it must not rewrite the source-derived skill.
 
+## Architecture
+
+```text
+Book -> Read Accurately -> Distill Judgment -> Skill or Workflow -> Calibrate Use -> Verify Value
+```
+
+| Step | What it means |
+| --- | --- |
+| 读准原书 | Preserve source passages, claims, structure, anchors, and provenance. |
+| 提炼判断 | Distill transferable judgment from the source without reducing the book to notes. |
+| 生成技能 | Publish only skills that help users judge, choose, refuse, act, or recalibrate. |
+| 分流流程 | Keep deterministic procedures as workflows instead of inflating them into skills. |
+| 校准应用 | Add isolated context, current-fact checks, caveats, and safety gates when needed. |
+| 验证价值 | Evaluate whether outputs create action value at the stated evidence level. |
+
+## Start Here
+
+- [Project Architecture Narrative](docs/project-architecture-narrative.md)
+- [Concept Language Glossary](docs/concept-language-glossary.md)
+- [User-Facing Evaluation Guide](docs/user-facing-evaluation-guide.md)
 - [Usage Guide](docs/usage-guide.md)
 - [Backlog Board](backlog/board.yaml)
-- [Version Roadmap Realignment](docs/2026-04-24-version-roadmap-v051-v06-v07.md)
-- [v0.7 World Alignment Charter](docs/2026-04-24-v0.7-world-alignment-charter.md)
-- [KiU Skill Spec v0.1](docs/kiu-skill-spec-v0.1.md)
-- [KiU Skill Spec v0.3](docs/kiu-skill-spec-v0.3.md)
-- [KiU Skill Spec v0.4](docs/kiu-skill-spec-v0.4.md)
 - [KiU Skill Spec v0.6](docs/kiu-skill-spec-v0.6.md)
-- [v0.6 Final Evidence Pack](reports/2026-04-24-v0.6.0-final-release-evidence-pack.md)
-- [v0.4.1 Assessment and v0.4.2 Plan](docs/2026-04-22-v0.4.1-assessment-and-v0.4.2-plan.md)
-- [v0.5 Workflow Boundary Hardening Plan](docs/superpowers/plans/2026-04-22-v0.5-workflow-boundary-hardening.md)
-- [v0.5 Workflow Delivery And Three-Layer Scoring Plan](docs/superpowers/plans/2026-04-22-v0.5-workflow-delivery-and-three-layer-scoring.md)
-- [KiU v0.2 Candidate Pipeline](docs/kiu-v0.2-pipeline.md)
 - [Reference Bundle](bundles/poor-charlies-almanack-v0.1/manifest.yaml)
 - [Engineering Reference Bundle](bundles/engineering-postmortem-v0.1/manifest.yaml)
+
+## Current Evidence Boundary
+
+The current project has strong internal generation, routing, and evaluation evidence. External blind review, real-user validation, and domain-expert validation remain separate evidence levels and should not be inferred from internal scores.
 
 Install locally:
 
