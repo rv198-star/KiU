@@ -3960,11 +3960,31 @@ class CandidatePipelineTests(unittest.TestCase):
                     report = validate_generated_bundle(generated_bundle)
                     self.assertEqual(report["errors"], [], report["errors"])
                     self.assertEqual(report["warnings"], [], report["warnings"])
+                    manifest = yaml.safe_load(
+                        (generated_bundle / "manifest.yaml").read_text(encoding="utf-8")
+                    )
+                    published_skill_ids = {entry["skill_id"] for entry in manifest["skills"]}
+                    run_root = generated_bundle.parent
 
                     for node in fixture["nodes"]:
                         with self.subTest(skill=node["candidate_id"]):
                             skill_seed = node["skill_seed"]
                             skill_dir = generated_bundle / "skills" / node["candidate_id"]
+                            if node["candidate_id"] not in published_skill_ids:
+                                routed_matches = list(
+                                    (run_root / "routed_source_values").glob(
+                                        f"*/{node['candidate_id']}/route.yaml"
+                                    )
+                                )
+                                self.assertEqual(len(routed_matches), 1)
+                                route_doc = yaml.safe_load(
+                                    routed_matches[0].read_text(encoding="utf-8")
+                                )
+                                self.assertEqual(
+                                    route_doc["reason"],
+                                    "action_skill_identity_below_publish_threshold",
+                                )
+                                continue
                             skill_markdown = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
                             sections = parse_sections(skill_markdown)
                             contract = extract_yaml_section(sections["Contract"])
@@ -3975,7 +3995,11 @@ class CandidatePipelineTests(unittest.TestCase):
                             )
 
                             self.assertEqual(contract, skill_seed["contract"])
-                            self.assertEqual(relations, skill_seed["relations"])
+                            expected_relations = {
+                                key: [target for target in value if target in published_skill_ids]
+                                for key, value in skill_seed["relations"].items()
+                            }
+                            self.assertEqual(relations, expected_relations)
                             self.assertEqual(sections["Rationale"], skill_seed["rationale"].strip())
                             self.assertEqual(
                                 sections["Evidence Summary"],

@@ -1952,3 +1952,89 @@ tickets:
   - A glossary maps old/internal terms to stable KiU-native concepts for maintainers.
   - README or usage-guide entry points are updated so new readers can understand the project before reading release evidence.
   evidence: []
+
+- id: KIU-810
+  title: action-skill identity model
+  target_version: v0.7.4
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: evaluation-routing
+  summary: Define and test action-skill identity so source value, action value, and published skill identity are no longer conflated.
+  acceptance:
+  - Positive judgment-skill fixtures route to publish_skill.
+  - Container, exercise, case-library, and concept-note fixtures route outside bundle/skills.
+  - Workflow gateway routes to publish_gateway.
+  - The model reports primary action layer, score, route, dimension scores, route reason, and container signals.
+  evidence:
+  - src/kiu_pipeline/action_identity.py
+  - tests/test_action_identity.py
+  - reports/2026-04-26-v0.7.4-action-identity-baseline.md
+
+- id: KIU-811
+  title: action identity report and routed source-value audit
+  target_version: v0.7.4
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: evaluation-routing
+  summary: Emit action-skill identity diagnostics and preserve non-skill source value without publishing it as installable skills.
+  acceptance:
+  - Generated runs write reports/action-skill-identity.json.
+  - Non-skill source value is written under routed_source_values/ with route.yaml and candidate.yaml.
+  - Batch-1 diagnostic baseline catches Financial Statement container leakage without false positives on Poor Charlie, Shiji, Mao, or Effective Requirements.
+  evidence:
+  - src/kiu_pipeline/render.py
+  - reports/2026-04-26-v0.7.4-action-identity-baseline.md
+
+- id: KIU-812
+  title: action identity publication gate
+  target_version: v0.7.4
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: generation-routing
+  summary: Gate published skills by action-skill identity while preserving workflow candidates and gateway compatibility.
+  acceptance:
+  - Non-gateway publish_skill requires action_skill_identity_score at or above the publish threshold.
+  - Workflow_script candidates remain in workflow_candidates/ and do not enter bundle/skills/.
+  - Workflow-gateway remains publishable when workflow candidates exist.
+  - Generated skill relations are filtered against the final published skill set.
+  evidence:
+  - src/kiu_pipeline/render.py
+  - tests/test_action_identity.py
+  - tests/test_pipeline.py
+
+- id: KIU-813
+  title: semantic action identity normalization
+  target_version: v0.7.4
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: generation-routing
+  summary: Normalize heading-like source labels with real action value into stable action-skill identities instead of publishing source section titles.
+  acceptance:
+  - Financial value-screening section labels can map to a stable action identity.
+  - The mapping is model-level and does not edit generated artifacts directly.
+  - Container candidates remain routed out rather than renamed into skills.
+  evidence:
+  - src/kiu_pipeline/action_identity.py
+  - src/kiu_pipeline/extraction_bundle.py
+  - tests/test_action_identity.py
+
+- id: KIU-814
+  title: five-book C-class rerun
+  target_version: v0.7.4
+  status: done
+  priority: P0
+  blocker_level: hard
+  area: release-evidence
+  summary: Rerun the five sample books and evaluate whether action identity routing improves C-class action value without regressing existing samples.
+  acceptance:
+  - Financial Statement improves materially from the v0.7.3 C-class score.
+  - The other four books reach at least 90 under internal C-class review.
+  - container_candidate_leak_count is zero for all five runs.
+  - Traditional three-layer release gates remain pass.
+  evidence:
+  - reports/2026-04-26-v0.7.4-five-book-rerun-evidence.md
+  - reports/2026-04-26-v0.7.4-five-book-c-class-scorecard.md

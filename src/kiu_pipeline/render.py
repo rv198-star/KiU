@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import shutil
+from dataclasses import replace
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -10,6 +11,8 @@ from typing import Any
 import yaml
 
 from .anchors import build_candidate_anchors
+from .action_identity import build_action_identity_report
+from .action_identity import assess_action_skill_identity
 from .coverage_model import build_coverage_report
 from .diff import build_metrics
 from .draft import build_candidate_skill_markdown
@@ -53,17 +56,39 @@ def render_generated_run(
     workflow_only_seeds: list[CandidateSeed] = []
     filtered_seeds: list[dict[str, Any]] = []
     manifest_skills: list[dict[str, Any]] = []
+    publish_decisions = {seed.candidate_id: should_publish_skill_seed(seed) for seed in seeds}
+    published_skill_ids = {
+        seed.candidate_id
+        for seed in seeds
+        if publish_decisions[seed.candidate_id]["publish"]
+        and seed.metadata.get("disposition") != "workflow_script_candidate"
+    }
 
     for seed in seeds:
-        publish_decision = should_publish_skill_seed(seed)
+        publish_decision = publish_decisions[seed.candidate_id]
         if not publish_decision["publish"]:
             filtered_seeds.append(
                 {
                     "candidate_id": seed.candidate_id,
                     "reason": publish_decision["reason"],
                     "candidate_kind": seed.candidate_kind,
+                    "route": publish_decision.get("route"),
+                    "route_reason": publish_decision.get("route_reason"),
+                    "action_skill_identity_score": publish_decision.get("action_skill_identity_score"),
                 }
             )
+            if publish_decision.get("route") in {
+                "route_concept_note",
+                "route_case_library",
+                "route_evaluation_material",
+                "route_source_context",
+            }:
+                _render_routed_source_value_candidate(
+                    run_root=run_root,
+                    source_bundle=source_bundle,
+                    seed=seed,
+                    publish_decision=publish_decision,
+                )
             continue
         if seed.metadata["disposition"] == "workflow_script_candidate":
             _render_workflow_candidate(
@@ -79,6 +104,7 @@ def render_generated_run(
             source_bundle=source_bundle,
             seed=seed,
             skill_revision=1,
+            valid_relation_targets=published_skill_ids,
         )
         rendered_seeds.append(seed)
         manifest_skills.append(
@@ -106,6 +132,7 @@ def render_generated_run(
             source_bundle=source_bundle,
             seed=gateway_seed,
             skill_revision=1,
+            valid_relation_targets={*published_skill_ids, gateway_seed.candidate_id},
         )
         _write_workflow_gateway_trace(bundle_root=bundle_root, seed=gateway_seed)
         _append_gateway_trigger_definitions(bundle_root=bundle_root, seed=gateway_seed)
@@ -178,6 +205,14 @@ def render_generated_run(
         json.dumps(coverage_report, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+    action_identity_report = build_action_identity_report(
+        seeds,
+        published_candidate_ids=[seed.candidate_id for seed in rendered_seeds],
+    )
+    (reports_root / "action-skill-identity.json").write_text(
+        json.dumps(action_identity_report, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
     return run_root
 
@@ -202,8 +237,32 @@ def _artifact_texts(*, bundle_root: Path, seeds: list[CandidateSeed]) -> dict[st
 
 def should_publish_skill_seed(seed: CandidateSeed) -> dict[str, Any]:
     if _is_chapter_title_style_seed(seed):
-        return {"publish": False, "reason": "chapter_title_style_candidate"}
-    return {"publish": True, "reason": "publishable"}
+        return {"publish": False, "reason": "chapter_title_style_candidate", "route": "reject"}
+    assessment = assess_action_skill_identity(seed)
+    route = assessment["route"]
+    if route == "route_workflow_candidate":
+        return {
+            "publish": True,
+            "reason": "workflow_candidate_routed_outside_bundle_skills",
+            "route": route,
+            "route_reason": assessment["route_reason"],
+            "action_skill_identity_score": assessment["action_skill_identity_score"],
+        }
+    if route in {"publish_skill", "publish_gateway"}:
+        return {
+            "publish": True,
+            "reason": "publishable",
+            "route": route,
+            "route_reason": assessment["route_reason"],
+            "action_skill_identity_score": assessment["action_skill_identity_score"],
+        }
+    return {
+        "publish": False,
+        "reason": "action_skill_identity_below_publish_threshold",
+        "route": route,
+        "route_reason": assessment["route_reason"],
+        "action_skill_identity_score": assessment["action_skill_identity_score"],
+    }
 
 
 def _is_chapter_title_style_seed(seed: CandidateSeed) -> bool:
@@ -648,7 +707,9 @@ def _render_skill_candidate(
     source_bundle: SourceBundle,
     seed: CandidateSeed,
     skill_revision: int,
+    valid_relation_targets: set[str] | None = None,
 ) -> None:
+    seed = _seed_with_filtered_relations(seed, valid_relation_targets=valid_relation_targets)
     skill_dir = bundle_root / "skills" / seed.candidate_id
     (skill_dir / "eval").mkdir(parents=True, exist_ok=True)
     (skill_dir / "iterations").mkdir(parents=True, exist_ok=True)
@@ -711,6 +772,40 @@ def _render_skill_candidate(
         )
         candidate_metadata["distillation_contract"] = _build_distillation_quality_contract(seed)
     _write_yaml(skill_dir / "candidate.yaml", candidate_metadata)
+
+
+def _seed_with_filtered_relations(
+    seed: CandidateSeed,
+    *,
+    valid_relation_targets: set[str] | None,
+) -> CandidateSeed:
+    if not valid_relation_targets or seed.source_skill is not None:
+        return seed
+    seed_content = seed.seed_content if isinstance(seed.seed_content, dict) else {}
+    relations = seed_content.get("relations")
+    if not isinstance(relations, dict):
+        return seed
+    filtered_relations: dict[str, list[str]] = {}
+    removed: dict[str, list[str]] = {}
+    changed = False
+    for relation_name, targets in relations.items():
+        target_list = [str(target) for target in targets] if isinstance(targets, list) else []
+        kept = [target for target in target_list if target in valid_relation_targets]
+        dropped = [target for target in target_list if target not in valid_relation_targets]
+        filtered_relations[str(relation_name)] = kept
+        if dropped:
+            removed[str(relation_name)] = dropped
+            changed = True
+    if not changed:
+        return seed
+    next_content = dict(seed_content)
+    next_content["relations"] = filtered_relations
+    next_content["relation_filter_audit"] = {
+        "schema_version": "kiu.relation-filter-audit/v0.1",
+        "reason": "relation_target_not_published_as_skill",
+        "removed": removed,
+    }
+    return replace(seed, seed_content=next_content)
 
 
 def _build_distillation_quality_contract(seed: CandidateSeed) -> dict[str, Any]:
@@ -784,6 +879,44 @@ def _render_workflow_candidate(
     (candidate_dir / "README.md").write_text(note, encoding="utf-8")
     (candidate_dir / "CHECKLIST.md").write_text(
         _build_workflow_checklist(workflow_doc),
+        encoding="utf-8",
+    )
+
+
+def _render_routed_source_value_candidate(
+    *,
+    run_root: Path,
+    source_bundle: SourceBundle,
+    seed: CandidateSeed,
+    publish_decision: dict[str, Any],
+) -> None:
+    route_root = run_root / "routed_source_values" / str(publish_decision.get("route") or "route_source_context")
+    candidate_dir = route_root / seed.candidate_id
+    candidate_dir.mkdir(parents=True, exist_ok=True)
+    route_doc = {
+        "schema_version": "kiu.routed-source-value/v0.1",
+        "candidate_id": seed.candidate_id,
+        "source_bundle_id": source_bundle.manifest.get("bundle_id"),
+        "route": publish_decision.get("route"),
+        "route_reason": publish_decision.get("route_reason"),
+        "reason": publish_decision.get("reason"),
+        "action_skill_identity_score": publish_decision.get("action_skill_identity_score"),
+        "candidate_kind": seed.candidate_kind,
+        "primary_node_id": seed.primary_node_id,
+        "supporting_node_ids": seed.supporting_node_ids,
+        "supporting_edge_ids": seed.supporting_edge_ids,
+        "audit_note": (
+            "This candidate may preserve source value, but it is not published as a thick KiU skill "
+            "because it lacks sufficient action-skill identity."
+        ),
+    }
+    _write_yaml(candidate_dir / "route.yaml", route_doc)
+    _write_yaml(candidate_dir / "candidate.yaml", seed.metadata)
+    (candidate_dir / "README.md").write_text(
+        f"# {seed.candidate_id}\n\n"
+        f"Route: `{publish_decision.get('route')}`\n\n"
+        f"Reason: {publish_decision.get('route_reason')}\n\n"
+        "This item is preserved for audit but excluded from `bundle/skills/`.\n",
         encoding="utf-8",
     )
 

@@ -3,15 +3,44 @@
 ## Unreleased
 
 ### Added
+- Nothing yet.
+
+## [0.7.4] - 2026-04-26
+
+### Release Note
+- v0.7.4 closes the C-class action-value loop: v0.7.3 defined the value/action metric system, and v0.7.4 uses that system to repair the generation boundary between real action skills and source-value containers.
+- The release goal is not to add a new product feature. It is to make `bundle/skills/` mean published action-skill identities, while keeping concepts, exercises, case libraries, workflow material, and source context auditable outside the installable skill set.
+- Financial Statement is the key proof case: the previous C-class score of `72` exposed fake thick-skill publication; the v0.7.4 rerun reaches `90` by routing container material out and recovering one real action-skill identity.
+- This release does not claim external blind preference, real-user validation, domain-expert validation, or complete Financial Statement domain coverage.
+
+### Added
 - Added v0.7.3 evaluation taxonomy docs separating method integrity, source/fact safety, action value, and evidence confidence.
 - Added Class C action-value metric definitions based on the recursive five-step method: signal discovery, problem definition, action resolution, and feedback calibration.
 - Added a reusable A/B/C evaluation report template and a v0.7.2 evidence retrofit report.
 - Added a v0.7.3 Effective Requirements trial-run action-value review using the existing generation path without changing default generation behavior.
 - Added a five-book C-class scorecard mapping Effective Requirements, Financial Statement, Mao Anthology, Poor Charlie, and Shiji to their generated SKILLS/workflow artifacts and action-value scores.
+- Added v0.7.4 action-skill identity routing: published skills, workflow gateways, workflow candidates, concept notes, case libraries, evaluation material, and source context now have separate semantic routes.
+- Added `reports/action-skill-identity.json` to generated runs with route distribution, container leakage, publishable action-skill ratio, minimum identity score, and per-candidate diagnostics.
+- Added routed source-value audit artifacts under `routed_source_values/` so non-skill source value is preserved without entering `bundle/skills/`.
+- Added v0.7.4 five-book rerun evidence and C-class scorecard showing Financial Statement improvement and no container leakage across the five sample set.
+
+### Changed
+- Published non-gateway skills now pass an action-skill identity gate before entering `bundle/skills/`.
+- Deterministic workflow candidates remain publishable only as routed workflow artifacts under `workflow_candidates/`, preserving the workflow-vs-agentic boundary.
+- Relations among generated skills are filtered against the final published skill set so routed-out candidates do not leave dangling skill references.
+- Heading-like financial-analysis candidates with real action value can be normalized into stable action-skill identities instead of being published under source section titles.
+
+### Verified
+- Five-book v0.7.4 rerun: `container_candidate_leak_count=0`, `publishable_action_skill_ratio=1.0000`, and release gates pass for Financial Statement, Effective Requirements, Mao Anthology, Poor Charlie, and Shiji.
+- Financial Statement C-class score improves from `72` to `90` under internal manual review, while the other four books reach `90+`.
+- Focused action-identity and generation-hygiene tests pass.
+- Pipeline, world-alignment, and proxy-usage regression subset: `94/94` pass.
 
 ### Limits
 - v0.7.3 taxonomy work defines and tests evaluation vocabulary; it does not claim real-user value, external blind preference, domain-expert validation, or universal high-value advice.
 - Internal action-value scores remain evidence-level scoped and must not override source/fact safety or workflow-vs-agentic boundary failures.
+- v0.7.4 C-class scores are internal manual judgments over generated artifacts; they do not claim external blind preference, real-user validation, or domain-expert validation.
+- Financial Statement v0.7.4 fixes fake thick-skill publication and recovers an action-skill identity, but it does not claim complete financial-analysis domain coverage.
 
 ## [0.7.2] - 2026-04-26
 

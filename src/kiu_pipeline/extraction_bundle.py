@@ -13,6 +13,7 @@ from kiu_graph.clustering import derive_graph_communities
 from kiu_graph.migrate import canonical_graph_hash
 
 from .contracts import build_semantic_contract, identify_semantic_family
+from .action_identity import derive_semantic_action_slug
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -2324,7 +2325,11 @@ def _derive_candidate_id(node: dict[str, Any]) -> str:
         section_title = str(node.get("section_title") or "").strip()
         if section_title:
             return _slugify(f"{section_title}-counter-example")
-    return _slugify(str(node.get("label", node["id"])))
+    label = str(node.get("label", node["id"]))
+    semantic_slug = derive_semantic_action_slug(label)
+    if semantic_slug:
+        return semantic_slug
+    return _slugify(label)
 
 
 def _slugify(text: str) -> str:
