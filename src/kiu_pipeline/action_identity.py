@@ -96,6 +96,13 @@ def assess_action_skill_identity(seed: Any) -> dict[str, Any]:
     container_signals = _container_signals(candidate_id=candidate_id, text=text)
     is_gateway = candidate_id == "workflow-gateway" or candidate_kind == "workflow_gateway"
     is_workflow_candidate = disposition == "workflow_script_candidate" or candidate_kind == "workflow_script"
+    is_recovered_action_workflow = _is_action_rich_workflow_recovery_candidate(
+        candidate_id=candidate_id,
+        metadata=metadata,
+        text=text,
+        container_signals=container_signals,
+        is_workflow_candidate=is_workflow_candidate,
+    )
 
     dimension_scores = _dimension_scores(
         candidate_id=candidate_id,
@@ -106,6 +113,7 @@ def assess_action_skill_identity(seed: Any) -> dict[str, Any]:
         container_signals=container_signals,
         is_gateway=is_gateway,
         is_workflow_candidate=is_workflow_candidate,
+        is_recovered_action_workflow=is_recovered_action_workflow,
     )
     score = round(sum(dimension_scores.values()) / len(dimension_scores), 4)
     primary_action_layer = _primary_action_layer(text)
@@ -113,6 +121,9 @@ def assess_action_skill_identity(seed: Any) -> dict[str, Any]:
     if is_gateway:
         route = "publish_gateway"
         route_reason = "workflow_gateway_entrypoint"
+    elif is_recovered_action_workflow and score >= PUBLISH_SKILL_THRESHOLD:
+        route = "publish_skill"
+        route_reason = "action_rich_workflow_misroute_recovered"
     elif is_workflow_candidate:
         route = "route_workflow_candidate"
         route_reason = "high_workflow_certainty_candidate_kept_outside_thick_skills"
@@ -139,6 +150,7 @@ def assess_action_skill_identity(seed: Any) -> dict[str, Any]:
         "dimension_scores": dimension_scores,
         "route_reason": route_reason,
         "container_signals": container_signals,
+        "workflow_recovery": is_recovered_action_workflow,
     }
 
 
@@ -184,6 +196,7 @@ def _dimension_scores(
     container_signals: list[str],
     is_gateway: bool,
     is_workflow_candidate: bool,
+    is_recovered_action_workflow: bool = False,
 ) -> dict[str, float]:
     if is_gateway:
         return {
@@ -194,7 +207,7 @@ def _dimension_scores(
             "boundary_and_misuse_control": 0.82,
             "feedback_or_disconfirmation": 0.70,
         }
-    if is_workflow_candidate:
+    if is_workflow_candidate and not is_recovered_action_workflow:
         return {
             "primary_action_layer_fit": 0.70,
             "judgment_trigger_clarity": 0.55,
@@ -234,7 +247,8 @@ def _dimension_scores(
         verification_identity_bonus = 0.06
     container_penalty = 0.32 if container_signals else 0.0
     short_text_penalty = 0.10 if len(text.strip()) < 80 else 0.0
-    identity_bonus = routing_identity_bonus + verification_identity_bonus
+    recovery_identity_bonus = 0.12 if is_recovered_action_workflow else 0.0
+    identity_bonus = routing_identity_bonus + verification_identity_bonus + recovery_identity_bonus
 
     return {
         "primary_action_layer_fit": _clamp(0.72 + action_density * 0.45 + identity_bonus - container_penalty - short_text_penalty),
@@ -250,6 +264,101 @@ def _candidate_id(seed: Any) -> str:
     if isinstance(seed, dict):
         return str(seed.get("candidate_id") or seed.get("skill_id") or "")
     return str(getattr(seed, "candidate_id", ""))
+
+
+def _is_action_rich_workflow_recovery_candidate(
+    *,
+    candidate_id: str,
+    metadata: dict[str, Any],
+    text: str,
+    container_signals: list[str],
+    is_workflow_candidate: bool,
+) -> bool:
+    """Recover semantic action skills that were over-routed as workflows.
+
+    This is a narrow boundary correction, not a workflow bypass: deterministic
+    workflows still stay outside thick skills unless the candidate has a stable
+    semantic action identity, strong evidence, and judgment/deferral language.
+    """
+    if (
+        not is_workflow_candidate
+        or container_signals
+        or _looks_like_source_section_identity(candidate_id)
+        or not _looks_like_normalized_action_identity(candidate_id)
+    ):
+        return False
+    routing = metadata.get("routing_evidence", {}) if isinstance(metadata, dict) else {}
+    routing = routing if isinstance(routing, dict) else {}
+    verification = metadata.get("verification", {}) if isinstance(metadata, dict) else {}
+    verification = verification if isinstance(verification, dict) else {}
+    extracted_support = int(routing.get("extracted_evidence_support_count", 0) or 0)
+    tri_state_support = int(routing.get("tri_state_support_count", 0) or 0)
+    matched_keywords = routing.get("matched_keywords", [])
+    matched_keyword_count = len(matched_keywords) if isinstance(matched_keywords, list) else 0
+    verification_overall = float(verification.get("overall_score", 0.0) or 0.0)
+    predictive = float(verification.get("predictive_usefulness_score", 0.0) or 0.0)
+    distinctive = float(verification.get("distinctiveness_score", 0.0) or 0.0)
+    action_identity = _has_recoverable_action_identity(text)
+    return (
+        extracted_support >= 8
+        and tri_state_support >= 4
+        and matched_keyword_count >= 3
+        and verification_overall >= 0.90
+        and predictive >= 0.85
+        and distinctive >= 0.75
+        and action_identity
+    )
+
+
+def _has_recoverable_action_identity(text: str) -> bool:
+    """Detect workflow-routed candidates whose value is judgment, not procedure.
+
+    The recovery gate is deliberately semantic rather than source-title based:
+    recover only when the candidate exposes a tri-state judgment output, depends
+    on incomplete or conflicting context, and is not merely a fixed checklist.
+    """
+    if re.search(r"fixed steps|checklist completion|all inputs are known|机械模板|固定步骤|逐项执行|完成状态", text, flags=re.IGNORECASE):
+        return False
+    tri_state_output = bool(
+        re.search(
+            r"verdict|apply|defer|do_not_apply|ask_more_context|evidence_to_check|结论|适用|暂缓|不适用|补充上下文|待查证据",
+            text,
+            flags=re.IGNORECASE,
+        )
+    )
+    uncertainty_context = bool(
+        re.search(
+            r"whether|depends|conflict|incomplete|unsafe|risk|disconfirm|uncertain|live decision|是否|取决于|冲突|不完整|不安全|风险|反证|不确定|决策",
+            text,
+            flags=re.IGNORECASE,
+        )
+    )
+    judgment_boundary = bool(
+        re.search(
+            r"boundary|judg|decision|quality|signal|tradeoff|evidence|边界|判断|决策|质量|信号|取舍|证据",
+            text,
+            flags=re.IGNORECASE,
+        )
+    )
+    return tri_state_output and uncertainty_context and judgment_boundary
+
+
+def _looks_like_source_section_identity(candidate_id: str) -> bool:
+    text = str(candidate_id or "").strip()
+    return bool(re.match(r"^(?:\d+|[a-zA-Z]?\d+(?:\.\d+)*)[-_.、\s]", text))
+
+
+def _looks_like_normalized_action_identity(candidate_id: str) -> bool:
+    """Require recovery candidates to have a generated action identity, not a raw heading."""
+    text = str(candidate_id or "").strip()
+    if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)+", text):
+        return False
+    return bool(
+        re.search(
+            r"gate|check|risk|quality|anchor|tradeoff|boundary|judgment|decision|screen|reframe|signal",
+            text,
+        )
+    )
 
 
 def _candidate_kind(seed: Any) -> str:

@@ -18,14 +18,14 @@ DIMENSIONS = (
 def score_mechanism_evidence(text: str) -> dict[str, Any]:
     normalized = str(text or "").strip().lower()
     dimensions = {
-        "actor_present": _has_any(normalized, ("团队", "负责人", "用户", "业务方", "组织", "公司", "管理者", "actor", "team", "user")),
-        "action_present": _has_any(normalized, ("调查", "访谈", "识别", "调整", "决定", "行动", "执行", "检查", "apply", "decide")),
-        "constraint_present": _has_any(normalized, ("约束", "边界", "条件", "资源", "权限", "限制", "constraint", "boundary")),
-        "consequence_present": _has_any(normalized, ("导致", "后果", "下降", "提升", "失败", "风险", "返工", "consequence", "result")),
+        "actor_present": _has_any(normalized, ("团队", "负责人", "用户", "业务方", "组织", "公司", "管理者", "诸侯", "君", "臣", "王", "司马", "actor", "team", "user")),
+        "action_present": _has_any(normalized, ("调查", "访谈", "识别", "调整", "决定", "行动", "执行", "检查", "争论", "使", "伐", "守", "察", "决", "apply", "decide")),
+        "constraint_present": _has_any(normalized, ("约束", "边界", "条件", "资源", "权限", "限制", "名", "法", "度", "时", "守", "责实", "constraint", "boundary")),
+        "consequence_present": _has_any(normalized, ("导致", "后果", "下降", "提升", "失败", "风险", "返工", "失", "弱", "归", "遂", "不生", "consequence", "result")),
         "counter_signal_present": _has_any(normalized, ("反证", "反例", "否则", "但", "冲突", "counter", "disconfirm")),
-        "mechanism_bridge_present": _has_any(normalized, ("因为", "所以", "再", "后来", "从而", "因此", "therefore", "because")),
-        "supports_transfer_conditions": _has_any(normalized, ("条件", "适用", "迁移", "借鉴", "fit", "transfer")),
-        "supports_anti_conditions": _has_any(normalized, ("不", "不能", "反证", "边界", "除非", "anti", "misuse")),
+        "mechanism_bridge_present": _has_any(normalized, ("因为", "所以", "再", "后来", "从而", "因此", "故", "乃", "遂", "因而", "於是", "therefore", "because")),
+        "supports_transfer_conditions": _has_any(normalized, ("条件", "适用", "迁移", "借鉴", "因时", "有度", "责实", "fit", "transfer")),
+        "supports_anti_conditions": _has_any(normalized, ("不", "不能", "反证", "边界", "除非", "不可不察", "失人情", "anti", "misuse")),
     }
     raw_score = sum(1 for value in dimensions.values() if value) / len(DIMENSIONS)
     if _looks_like_context_only(normalized):

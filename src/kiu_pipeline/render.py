@@ -61,7 +61,7 @@ def render_generated_run(
         seed.candidate_id
         for seed in seeds
         if publish_decisions[seed.candidate_id]["publish"]
-        and seed.metadata.get("disposition") != "workflow_script_candidate"
+        and publish_decisions[seed.candidate_id].get("route") in {"publish_skill", "publish_gateway"}
     }
 
     for seed in seeds:
@@ -90,7 +90,7 @@ def render_generated_run(
                     publish_decision=publish_decision,
                 )
             continue
-        if seed.metadata["disposition"] == "workflow_script_candidate":
+        if publish_decision.get("route") == "route_workflow_candidate":
             _render_workflow_candidate(
                 workflow_root=workflow_root,
                 source_bundle=source_bundle,
@@ -98,6 +98,11 @@ def render_generated_run(
             )
             workflow_only_seeds.append(seed)
             continue
+        if (
+            publish_decision.get("route") == "publish_skill"
+            and seed.metadata.get("disposition") == "workflow_script_candidate"
+        ):
+            seed = _seed_recovered_from_workflow_candidate(seed, publish_decision=publish_decision)
 
         _render_skill_candidate(
             bundle_root=bundle_root,
@@ -215,6 +220,33 @@ def render_generated_run(
     )
 
     return run_root
+
+
+def _seed_recovered_from_workflow_candidate(
+    seed: CandidateSeed,
+    *,
+    publish_decision: dict[str, Any],
+) -> CandidateSeed:
+    metadata = dict(seed.metadata)
+    metadata["candidate_kind_before_recovery"] = seed.candidate_kind
+    metadata["disposition_before_recovery"] = seed.metadata.get("disposition")
+    metadata["recommended_execution_mode_before_recovery"] = seed.metadata.get("recommended_execution_mode")
+    metadata["candidate_kind"] = "general_agentic"
+    metadata["disposition"] = "skill_candidate"
+    metadata["recommended_execution_mode"] = "llm_agentic"
+    metadata["workflow_certainty"] = "medium"
+    metadata["context_certainty"] = seed.metadata.get("context_certainty", "high")
+    metadata["action_skill_recovery"] = {
+        "schema_version": "kiu.action-skill-recovery/v0.1",
+        "recovered_from_workflow_candidate": True,
+        "route_reason": publish_decision.get("route_reason"),
+        "action_skill_identity_score": publish_decision.get("action_skill_identity_score"),
+        "boundary_rule": (
+            "Recovered only because the candidate has semantic action identity, strong evidence, "
+            "and judgment/deferral language; deterministic workflows still remain routed out."
+        ),
+    }
+    return replace(seed, candidate_kind="general_agentic", metadata=metadata)
 
 
 def _gateway_routes(seeds: list[CandidateSeed]) -> list[str]:

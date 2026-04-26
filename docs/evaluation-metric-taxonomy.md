@@ -65,6 +65,29 @@ Class C uses the recursive five-step method from `AGENTS.md`. A high-value artif
 | `comparative_decision_lift_100` | `action_value` | Whether skill-assisted output is better than baseline or reference output for decision quality. | Real-user preference unless externally reviewed. | `same_book_reference_comparison` or `internal_proxy_scenario` |
 | `action_value_score_100` | `action_value` | Overall internal action-value proxy after layer fit, primary layer value, comparative lift, and feedback/boundary value. | Real-world value closure. | Must disclose underlying evidence level |
 
+## User-Facing Metric View
+
+The A/B/C taxonomy is useful for engineering review, but it is not the language a user should need to understand. v0.7.4 therefore treats user-facing evaluation as a projection of existing metrics, not as a separate hidden scoring system.
+
+User-facing scores answer: if I install or use these skills, what should I trust them for, what should I not trust them for, and where is the evidence still weak?
+
+| User Question | User-Facing Dimension | Primary Internal Signals | Interpretation Rule |
+| --- | --- | --- | --- |
+| Did the skill stay faithful to the book? | `source_trust` | `source_fidelity_preserved`, `source_pollution_errors`, `extraction_kind`, `hallucination_risk_score` | This is a floor. If it fails, user-facing value cannot be claimed even when action value looks high. |
+| Will it help me think or act better? | `action_helpfulness` | `action_value_score_100`, `skill_action_value_average_100`, `signal_discovery_value_100`, `problem_definition_value_100`, `action_resolution_value_100`, `feedback_calibration_value_100` | This is the core user-value score, but it must disclose whether evidence is internal, external, or real-user. |
+| Does it know when not to fire? | `boundary_clarity` | `action_layer_fit_100`, `workflow_action_value_status`, trigger/anti-trigger checks, `no_forced_enhancement_rate`, `misuse_intercept_rate` | A skill that fires in the wrong situation is user-hostile even if its prose is good. |
+| Did the book's useful value get covered? | `coverage_fit` | `book_to_skill_action_coverage_100`, routed workflow candidates, gateways, named caveats | A few excellent skills do not prove that the book's expected value is broadly covered. |
+| Is application context helping or diluting the source? | `context_application_safety` | `source_fit_score`, `dilution_risk_score`, `world_context_depth_score`, `freshness_gate`, `claim_ledger` | World/live context must improve application safety without rewriting or weakening the source idea. |
+| How strong is the evidence behind the score? | `evidence_confidence` | evidence level table below | Evidence confidence is not averaged into the score; it is displayed beside every user-facing claim. |
+
+The recommended user-facing report shape is therefore:
+
+```text
+Book or Skill -> source_trust -> action_helpfulness -> boundary_clarity -> coverage_fit -> context_application_safety -> evidence_confidence -> caveats
+```
+
+This view keeps the engineering scorecard available for maintainers while giving users a smaller set of questions that match their real concern: can I trust this, can I use this, when should I avoid it, and how much evidence supports the claim?
+
 ## Evidence Confidence Layer
 
 Every Class A, B, or C metric must carry an evidence level. The evidence level determines claim strength.

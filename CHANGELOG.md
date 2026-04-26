@@ -5,12 +5,18 @@
 ### Added
 - Nothing yet.
 
+### Changed
+- Added a v0.7.4 documentation addendum that projects internal A/B/C metrics into user-facing dimensions: source trust, action helpfulness, boundary clarity, coverage fit, context application safety, and evidence confidence.
+- Recorded post-v0.7.4 project optimization directions for v0.8: unified architecture language, user-facing evaluation guide, standard scorecard consolidation, and later usage feedback loops.
+- Added an internal user-perspective five-book skill review for v0.7.4 that scores visible generated skills against user-facing dimensions and reconciles the result with C-class engineering scores.
+- Added a model-level user-facing optimization pass: action-rich workflow misroute recovery, explicit mechanism-chain rendering, classical-history mechanism evidence scoring, and workflow-gateway thin-router presentation.
+
 ## [0.7.4] - 2026-04-26
 
 ### Release Note
 - v0.7.4 closes the C-class action-value loop: v0.7.3 defined the value/action metric system, and v0.7.4 uses that system to repair the generation boundary between real action skills and source-value containers.
 - The release goal is not to add a new product feature. It is to make `bundle/skills/` mean published action-skill identities, while keeping concepts, exercises, case libraries, workflow material, and source context auditable outside the installable skill set.
-- Financial Statement is the key proof case: the previous C-class score of `72` exposed fake thick-skill publication; the v0.7.4 rerun reaches `90` by routing container material out and recovering one real action-skill identity.
+- Financial Statement is the key proof case: the previous C-class score of `72` exposed fake thick-skill publication; the v0.7.4 rerun reaches `90` by routing container material out and publishing two real action-skill identities.
 - This release does not claim external blind preference, real-user validation, domain-expert validation, or complete Financial Statement domain coverage.
 
 ### Added

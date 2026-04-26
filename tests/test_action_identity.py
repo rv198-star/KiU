@@ -101,6 +101,165 @@ class ActionIdentityTests(unittest.TestCase):
         self.assertEqual(assessment["route"], "publish_gateway")
         self.assertGreaterEqual(assessment["action_skill_identity_score"], 0.75)
 
+    def test_action_rich_financial_workflow_misroute_recovers_as_skill(self) -> None:
+        seed = _seed(
+            "accounting-quality-signal-check",
+            summary=(
+                "Decide whether accounting quality signals, abnormal earnings, and disconfirming "
+                "evidence make the current valuation unsafe to apply as a mechanical workflow."
+            ),
+            trigger="When a live valuation decision depends on accounting quality and evidence conflicts.",
+            output="A verdict, evidence_to_check, accounting quality risk, and defer/do_not_apply boundary.",
+            boundaries=["Do not use as a checklist when evidence conflicts or context is incomplete."],
+            candidate_kind="workflow_script",
+            disposition="workflow_script_candidate",
+        )
+        seed.metadata["routing_evidence"] = {
+            "workflow_cues": 2,
+            "context_cues": 3,
+            "extracted_evidence_support_count": 12,
+            "tri_state_support_count": 15,
+            "matched_keywords": ["如果-则", "输入", "业务", "质量"],
+        }
+        seed.metadata["verification"] = {
+            "overall_score": 0.96,
+            "predictive_usefulness_score": 0.95,
+            "distinctiveness_score": 0.92,
+        }
+
+        assessment = assess_action_skill_identity(seed)
+
+        self.assertEqual(assessment["route"], "publish_skill")
+        self.assertEqual(assessment["route_reason"], "action_rich_workflow_misroute_recovered")
+        self.assertGreaterEqual(assessment["action_skill_identity_score"], 0.85)
+
+    def test_plain_deterministic_workflow_stays_outside_thick_skills(self) -> None:
+        assessment = assess_action_skill_identity(
+            _seed(
+                "monthly-close-checklist",
+                summary="Run fixed monthly close steps after all inputs are known.",
+                trigger="When the user already selected the monthly close workflow.",
+                output="Checklist completion status.",
+                candidate_kind="workflow_script",
+                disposition="workflow_script_candidate",
+            )
+        )
+
+        self.assertEqual(assessment["route"], "route_workflow_candidate")
+
+    def test_action_rich_workflow_recovery_is_semantic_not_slug_whitelist(self) -> None:
+        seed = _seed(
+            "cash-flow-quality-risk-gate",
+            summary=(
+                "Decide whether conflicting cash-flow evidence makes a live credit decision unsafe. "
+                "Use a verdict rather than a fixed workflow when evidence is incomplete."
+            ),
+            trigger="When the decision depends on uncertain cash-flow quality signals and disconfirming evidence.",
+            output="A verdict, evidence_to_check, defer/do_not_apply boundary, and next evidence action.",
+            boundaries=["Do not apply mechanically when evidence conflicts or context is incomplete."],
+            candidate_kind="workflow_script",
+            disposition="workflow_script_candidate",
+        )
+        seed.metadata["routing_evidence"] = {
+            "workflow_cues": 2,
+            "context_cues": 3,
+            "extracted_evidence_support_count": 10,
+            "tri_state_support_count": 8,
+            "matched_keywords": ["evidence", "risk", "quality"],
+        }
+        seed.metadata["verification"] = {
+            "overall_score": 0.95,
+            "predictive_usefulness_score": 0.94,
+            "distinctiveness_score": 0.90,
+        }
+
+        assessment = assess_action_skill_identity(seed)
+
+        self.assertEqual(assessment["route"], "publish_skill")
+        self.assertEqual(assessment["route_reason"], "action_rich_workflow_misroute_recovered")
+
+    def test_high_evidence_deterministic_workflow_is_not_recovered(self) -> None:
+        seed = _seed(
+            "monthly-close-checklist",
+            summary="Run fixed steps after all inputs are known and return checklist completion status.",
+            trigger="When the monthly close workflow is already selected and context is explicit.",
+            output="Checklist completion status for each fixed step.",
+            candidate_kind="workflow_script",
+            disposition="workflow_script_candidate",
+        )
+        seed.metadata["routing_evidence"] = {
+            "workflow_cues": 4,
+            "context_cues": 4,
+            "extracted_evidence_support_count": 12,
+            "tri_state_support_count": 8,
+            "matched_keywords": ["workflow", "input", "step"],
+        }
+        seed.metadata["verification"] = {
+            "overall_score": 0.98,
+            "predictive_usefulness_score": 0.96,
+            "distinctiveness_score": 0.90,
+        }
+
+        assessment = assess_action_skill_identity(seed)
+
+        self.assertEqual(assessment["route"], "route_workflow_candidate")
+        self.assertFalse(assessment["workflow_recovery"])
+
+    def test_numbered_source_section_workflow_is_not_recovered_even_with_judgment_terms(self) -> None:
+        seed = _seed(
+            "2-日常需求分析",
+            summary="判断需求证据是否完整，并输出适用、暂缓或不适用的边界。",
+            trigger="当日常需求分析流程被选中且需要按章节步骤执行时。",
+            output="流程步骤、证据检查和完成状态。",
+            boundaries=["不要跳过章节流程中的固定输入。"],
+            candidate_kind="workflow_script",
+            disposition="workflow_script_candidate",
+        )
+        seed.metadata["routing_evidence"] = {
+            "workflow_cues": 4,
+            "context_cues": 4,
+            "extracted_evidence_support_count": 12,
+            "tri_state_support_count": 8,
+            "matched_keywords": ["需求", "证据", "边界"],
+        }
+        seed.metadata["verification"] = {
+            "overall_score": 0.98,
+            "predictive_usefulness_score": 0.96,
+            "distinctiveness_score": 0.90,
+        }
+
+        assessment = assess_action_skill_identity(seed)
+
+        self.assertEqual(assessment["route"], "route_workflow_candidate")
+        self.assertFalse(assessment["workflow_recovery"])
+
+    def test_raw_source_column_heading_workflow_is_not_recovered(self) -> None:
+        seed = _seed(
+            "思考题",
+            summary="判断证据是否完整，并输出适用、暂缓或不适用的边界。",
+            trigger="当用户阅读章节后的思考题栏目时。",
+            output="问题列表、证据检查和完成状态。",
+            candidate_kind="workflow_script",
+            disposition="workflow_script_candidate",
+        )
+        seed.metadata["routing_evidence"] = {
+            "workflow_cues": 4,
+            "context_cues": 4,
+            "extracted_evidence_support_count": 12,
+            "tri_state_support_count": 8,
+            "matched_keywords": ["判断", "证据", "边界"],
+        }
+        seed.metadata["verification"] = {
+            "overall_score": 0.98,
+            "predictive_usefulness_score": 0.96,
+            "distinctiveness_score": 0.90,
+        }
+
+        assessment = assess_action_skill_identity(seed)
+
+        self.assertEqual(assessment["route"], "route_workflow_candidate")
+        self.assertFalse(assessment["workflow_recovery"])
+
     def test_report_summarizes_route_distribution_and_leaks(self) -> None:
         report = build_action_identity_report(
             [
@@ -176,6 +335,70 @@ class ActionIdentityTests(unittest.TestCase):
         self.assertEqual(report["candidate_route_distribution"]["route_evaluation_material"], 1)
         self.assertNotIn("练习题", {entry["skill_id"] for entry in manifest["skills"]})
         self.assertTrue(routed_route_exists)
+
+    def test_generated_run_publishes_recovered_action_rich_workflow_as_skill(self) -> None:
+        recovered = _seed(
+            "accounting-quality-signal-check",
+            summary="Decide whether accounting quality evidence makes a valuation unsafe to apply mechanically.",
+            trigger="When a live valuation decision depends on accounting quality and evidence conflicts.",
+            output="A verdict, evidence_to_check, accounting quality risk, and defer/do_not_apply boundary.",
+            boundaries=["Do not use as a checklist when evidence conflicts or context is incomplete."],
+            candidate_kind="workflow_script",
+            disposition="workflow_script_candidate",
+        )
+        recovered.metadata["routing_evidence"] = {
+            "workflow_cues": 2,
+            "context_cues": 3,
+            "extracted_evidence_support_count": 12,
+            "tri_state_support_count": 15,
+            "matched_keywords": ["如果-则", "输入", "业务", "质量"],
+        }
+        recovered.metadata["verification"] = {
+            "overall_score": 0.96,
+            "predictive_usefulness_score": 0.95,
+            "distinctiveness_score": 0.92,
+        }
+        recovered.metadata["recommended_execution_mode"] = "workflow_script"
+        recovered.metadata["workflow_certainty"] = "high"
+        recovered.metadata["context_certainty"] = "high"
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            source_root = Path(tmp_dir) / "source"
+            for relative in ("graph", "traces", "evaluation", "sources"):
+                (source_root / relative).mkdir(parents=True)
+
+            class SourceBundleStub:
+                root = source_root
+                domain = "test"
+                manifest = {
+                    "bundle_id": "recovered-action-workflow-fixture",
+                    "bundle_version": "0.1",
+                    "language": "zh-CN",
+                    "graph": {"path": "graph.yaml", "graph_version": "0.1", "graph_hash": "hash"},
+                    "shared_assets": {},
+                }
+                profile = {"profile_version": "test", "max_candidate_skills": 10}
+                graph_doc = {"nodes": [], "edges": []}
+                skills = {}
+                evaluation_cases = []
+
+            run_root = render_generated_run(
+                source_bundle=SourceBundleStub(),
+                seeds=[recovered],
+                output_root=Path(tmp_dir),
+                run_id="recovered-workflow",
+            )
+            manifest = yaml.safe_load((run_root / "bundle" / "manifest.yaml").read_text(encoding="utf-8"))
+            skill_path = run_root / "bundle" / "skills" / "accounting-quality-signal-check" / "SKILL.md"
+            candidate_path = run_root / "bundle" / "skills" / "accounting-quality-signal-check" / "candidate.yaml"
+            workflow_path = run_root / "workflow_candidates" / "accounting-quality-signal-check" / "workflow.yaml"
+            candidate_doc = yaml.safe_load(candidate_path.read_text(encoding="utf-8"))
+
+            self.assertIn("accounting-quality-signal-check", {entry["skill_id"] for entry in manifest["skills"]})
+            self.assertTrue(skill_path.exists())
+            self.assertFalse(workflow_path.exists())
+            self.assertEqual(candidate_doc["disposition"], "skill_candidate")
+            self.assertTrue(candidate_doc["action_skill_recovery"]["recovered_from_workflow_candidate"])
 
     def test_identity_gate_blocks_container_from_published_skills(self) -> None:
         decision = render_publish_decision(

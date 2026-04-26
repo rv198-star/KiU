@@ -8,6 +8,7 @@ import yaml
 from .models import CandidateSeed, SourceBundle
 from .contracts import build_semantic_contract
 from .distillation import augment_scenario_families, build_distillation_note
+from .mechanism_evidence import decide_anchor_role, score_mechanism_evidence
 
 
 EMPTY_RELATIONS = {
@@ -74,6 +75,17 @@ def build_candidate_skill_markdown(
             f"RIA-TV++ mechanism chain: this draft must map source evidence into a current "
             f"judgment mechanism, name transfer conditions, and preserve anti-misuse boundaries.\n\n"
             f"{rationale}"
+        )
+    if not source_skill and _should_append_user_visible_mechanism_chain(seed, source_bundle=source_bundle):
+        mechanism_chain = _build_user_visible_mechanism_chain(source_bundle, seed, contract=contract)
+        if mechanism_chain and "source anchor -> mechanism observed" not in rationale.lower():
+            rationale = f"{rationale}\n\n{mechanism_chain}"
+    if seed.candidate_id == "workflow-gateway" and "thin workflow router" not in rationale.lower():
+        rationale = (
+            f"{rationale}\n\n"
+            "User-facing role: this is a thin workflow router, not a thick judgment skill. "
+            "It should select, sequence, or defer workflow candidates while keeping deterministic "
+            "steps in `workflow_candidates/`."
         )
     evidence_summary = _build_evidence_summary(
         source_bundle,
@@ -261,6 +273,73 @@ def _fallback_rationale(source_bundle: SourceBundle, seed: CandidateSeed) -> str
     )
 
 
+def _build_user_visible_mechanism_chain(
+    source_bundle: SourceBundle,
+    seed: CandidateSeed,
+    *,
+    contract: dict[str, Any],
+) -> str:
+    anchors = _collect_anchor_descriptors(source_bundle, seed)
+    if not anchors:
+        return ""
+    primary = anchors[0]
+    trigger_patterns = _contract_symbols(contract, "trigger", "patterns")
+    anti_conditions = _contract_symbols(contract, "boundary", "do_not_fire_when")
+    mechanism_observed = _mechanism_observed_from_anchor(primary)
+    transferable_judgment = _transferable_judgment_for_seed(seed)
+    user_trigger = trigger_patterns[0] if trigger_patterns else f"live decision suited to `{seed.candidate_id}`"
+    anti_boundary = anti_conditions[0] if anti_conditions else "do not fire when source fit or decision context is missing"
+    return (
+        "Mechanism chain: source anchor -> mechanism observed -> transferable judgment -> "
+        "user trigger -> anti-misuse boundary.\n\n"
+        f"- source anchor: `{primary['label']}` — {primary['snippet']}[^anchor:{primary['anchor_id']}]\n"
+        f"- mechanism observed: {mechanism_observed}\n"
+        f"- transferable judgment: {transferable_judgment}\n"
+        f"- user trigger: `{user_trigger}`\n"
+        f"- anti-misuse boundary: `{anti_boundary}`"
+    )
+
+
+def _should_append_user_visible_mechanism_chain(seed: CandidateSeed, *, source_bundle: SourceBundle) -> bool:
+    seed_content = seed.seed_content if isinstance(seed.seed_content, dict) else {}
+    metadata = seed.metadata if isinstance(seed.metadata, dict) else {}
+    if seed.candidate_id == "workflow-gateway":
+        return True
+    if metadata.get("action_skill_recovery"):
+        return True
+    if not str(seed_content.get("rationale", "") or "").strip():
+        return True
+    bundle_id = str(source_bundle.manifest.get("bundle_id", ""))
+    return bundle_id.endswith("-source-v0.6")
+
+
+def _contract_symbols(contract: dict[str, Any], section: str, key: str) -> list[str]:
+    section_doc = contract.get(section, {}) if isinstance(contract, dict) else {}
+    if not isinstance(section_doc, dict):
+        return []
+    values = section_doc.get(key, [])
+    if isinstance(values, list):
+        return [str(item).strip() for item in values if str(item).strip()]
+    return [str(values).strip()] if str(values or "").strip() else []
+
+
+def _mechanism_observed_from_anchor(anchor: dict[str, str]) -> str:
+    snippet = anchor.get("snippet", "")
+    label = anchor.get("label", "source anchor")
+    score = anchor.get("mechanism_density_score")
+    if score is not None:
+        return f"`{label}` contains mechanism-density `{score}`; extract actor, action, constraint, and consequence before transfer."
+    return f"Extract actor, action, constraint, and consequence from `{label}` before transfer."
+
+
+def _transferable_judgment_for_seed(seed: CandidateSeed) -> str:
+    title = str(seed.seed_content.get("title") or seed.candidate_id).strip()
+    summary = str(seed.seed_content.get("summary") or "").strip()
+    if summary:
+        return f"Use `{title}` only when the current decision matches this source mechanism: {summary[:180]}"
+    return f"Use `{title}` only when the current decision matches the source mechanism and boundary checks pass."
+
+
 def _build_seed_evaluation_summary(seed: CandidateSeed) -> str:
     eval_summary = seed.seed_content.get("eval_summary", {})
     scenario_families = seed.seed_content.get("scenario_families", {})
@@ -436,14 +515,24 @@ def _collect_anchor_descriptors(source_bundle: SourceBundle, seed: CandidateSeed
             )
         if not snippet:
             continue
+        mechanism_score = score_mechanism_evidence(snippet)
+        anchor_role = decide_anchor_role(mechanism_score)
         descriptors.append(
             {
                 "anchor_id": f"{seed.candidate_id}-{node_id}",
                 "label": node_doc.get("label", node_id),
                 "snippet": snippet,
+                "mechanism_density_score": str(mechanism_score["mechanism_density_score"]),
+                "anchor_role": str(anchor_role["anchor_role"]),
             }
         )
-    return descriptors
+    return sorted(
+        descriptors,
+        key=lambda item: (
+            0 if item.get("anchor_role") == "primary" else 1,
+            -float(item.get("mechanism_density_score", 0.0) or 0.0),
+        ),
+    )
 
 
 def _read_snippet_from_bundle(

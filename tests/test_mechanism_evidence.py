@@ -39,6 +39,19 @@ class MechanismEvidenceTests(unittest.TestCase):
         self.assertEqual(role["anchor_role"], "supporting")
         self.assertIn("supporting_context", role["reason"])
 
+    def test_classical_history_action_constraint_consequence_chain_scores_as_mechanism(self) -> None:
+        evidence = (
+            "司马氏世典周史。当周宣王时，失其守而为司马氏。"
+            "在秦者名错，与张仪争论，於是惠王使错将伐蜀，遂拔，因而守之。"
+            "名家苛察缴绕，使人不得反其意，专决於名而失人情，故曰不可不察。"
+        )
+
+        score = score_mechanism_evidence(evidence)
+        role = decide_anchor_role(score)
+
+        self.assertGreaterEqual(score["mechanism_density_score"], 0.75)
+        self.assertTrue(role["primary_anchor_allowed"])
+
 
 if __name__ == "__main__":
     unittest.main()
