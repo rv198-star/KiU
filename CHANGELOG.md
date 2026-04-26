@@ -11,12 +11,14 @@
 - Added a repository-structure contract test covering tracked root directories, forbidden legacy/local output paths, current review-pack manifest consistency, fixture source paths, local build ignores, and archive boundaries.
 - Added `_archive/README.md` to make historical imports explicitly non-current and outside the default generation pipeline.
 - Added build-output ignore rules for `dist/`, `build/`, and `src/*.egg-info/` so release artifacts stay out of source control.
+- Regenerated `review-pack/current/` from the v0.8.2 value-gain pressure-chain renderer so the repository-visible SKILLS match the current generation chain.
 
 ### Verified
 - Five-book value-gain pressure-chain rerun kept release gates green for Financial Statement, Effective Requirements, Mao Anthology, Poor Charlie, and Shiji.
 - Internal user-perspective A/B/C review improved from `20.92/25` original to `23.08/25` with the pressure-chain enhancer.
-- Repository-structure gate reported `6` tests passing after the final v0.8.2 cleanup pass.
-- Full unittest discovery reported `287` tests passing after mainline alignment, value-gain enhancer integration, and repository-structure gate coverage.
+- Repository-structure gate reported `7` tests passing after the final v0.8.2 cleanup pass, including the current review-pack value-gain artifact contract.
+- Current review-pack value-gain audit reports `21/21` published SKILLS containing `value_gain_*`, `Downstream Use Check`, and `Minimum Pressure Pass`, with external method-name pollution `0`.
+- Full unittest discovery reported `288` tests passing after mainline alignment, value-gain enhancer integration, review-pack regeneration, and repository-structure gate coverage.
 
 ### Notes
 - v0.8.0 and v0.8.1 remain published historical tags/releases. v0.8.2 does not rewrite them; it closes the mainline alignment gap and should be treated as the stable v0.8 repository baseline.

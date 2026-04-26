@@ -1,0 +1,56 @@
+{
+  "candidate_count": 6,
+  "terminal_states": {
+    "ready_for_review": 6
+  },
+  "candidates": [
+    {
+      "candidate_id": "circle-of-competence",
+      "terminal_state": "ready_for_review",
+      "overall_quality": 0.9463,
+      "production_quality": 0.9743,
+      "quality_grade": "excellent",
+      "net_positive_value": 0.1355
+    },
+    {
+      "candidate_id": "value-assessment-source-note",
+      "terminal_state": "ready_for_review",
+      "overall_quality": 0.927,
+      "production_quality": 0.9745,
+      "quality_grade": "excellent",
+      "net_positive_value": 0.1162
+    },
+    {
+      "candidate_id": "bias-self-audit",
+      "terminal_state": "ready_for_review",
+      "overall_quality": 0.9463,
+      "production_quality": 0.9743,
+      "quality_grade": "excellent",
+      "net_positive_value": 0.1355
+    },
+    {
+      "candidate_id": "margin-of-safety-sizing",
+      "terminal_state": "ready_for_review",
+      "overall_quality": 0.9463,
+      "production_quality": 0.9743,
+      "quality_grade": "excellent",
+      "net_positive_value": 0.1355
+    },
+    {
+      "candidate_id": "invert-the-problem",
+      "terminal_state": "ready_for_review",
+      "overall_quality": 0.9463,
+      "production_quality": 0.9648,
+      "quality_grade": "excellent",
+      "net_positive_value": 0.1355
+    },
+    {
+      "candidate_id": "opportunity-cost-of-the-next-best-idea",
+      "terminal_state": "ready_for_review",
+      "overall_quality": 0.9463,
+      "production_quality": 0.9743,
+      "quality_grade": "excellent",
+      "net_positive_value": 0.1355
+    }
+  ]
+}

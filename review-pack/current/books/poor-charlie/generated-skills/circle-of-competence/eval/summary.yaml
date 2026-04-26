@@ -1,6 +1,6 @@
 skill_id: circle-of-competence
 bundle_version: 0.2.0
-skill_revision: 1
+skill_revision: 3
 status: under_evaluation
 kiu_test:
   trigger_test: pass
@@ -10,24 +10,24 @@ subsets:
   real_decisions:
     cases:
     - ../../../evaluation/real_decisions/*.yaml
-    passed: 20
+    passed: 18
     total: 20
     threshold: 0.7
-    status: pass
+    status: under_evaluation
   synthetic_adversarial:
     cases:
     - ../../../evaluation/synthetic_adversarial/*.yaml
-    passed: 20
+    passed: 18
     total: 20
     threshold: 0.85
-    status: pass
+    status: under_evaluation
   out_of_distribution:
     cases:
     - ../../../evaluation/out_of_distribution/*.yaml
-    passed: 10
+    passed: 9
     total: 10
     threshold: 0.9
-    status: pass
+    status: under_evaluation
 key_failure_modes:
 - Surface familiarity can look like depth unless the contract asks for missing knowledge
   explicitly.

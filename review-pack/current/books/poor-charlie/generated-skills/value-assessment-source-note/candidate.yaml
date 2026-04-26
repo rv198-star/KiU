@@ -23,8 +23,8 @@ disposition: skill_candidate
 gold_match_hint: value-assessment
 drafting_mode: deterministic
 loop_mode: refinement_scheduler
-current_round: 0
-terminal_state: pending
+current_round: 5
+terminal_state: ready_for_review
 human_gate: skipped
 routing_evidence:
   inference_mode: manual_override
@@ -181,3 +181,16 @@ distillation_contract:
   - user_request_is_short_term_trading
   - user_request_is_pure_scale_comparison
   - user_request_is_concept_query_without_live_decision
+boundary_quality: 0.85
+eval_aggregate: 0.99
+cross_subset_stability: 0.99
+nearest_skill_id: value-assessment-source-note
+overall_quality: 0.927
+delta_vs_nearest: 0.927
+delta_vs_bundle: 0.0762
+net_positive_value: 0.1162
+artifact_quality: 1.0
+artifact_grade: excellent
+production_quality: 0.9745
+quality_grade: excellent
+release_ready: true

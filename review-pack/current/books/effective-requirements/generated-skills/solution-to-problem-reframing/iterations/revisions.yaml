@@ -3,7 +3,7 @@ bundle_version: 0.2.0
 current_revision: 6
 history:
 - revision: 1
-  date: '2026-04-26'
+  date: '2026-04-27'
   summary: Initial requirements-agentic extraction added because solution-level requests
     require judgment before deterministic daily-requirements workflows can safely
     run.
@@ -14,7 +14,7 @@ history:
   - Added a separate llm_agentic candidate only for judgment-rich arbitration.
   - Bound the candidate to graph/source double anchors and smoke evaluation cases.
 - revision: 2
-  date: '2026-04-26'
+  date: '2026-04-27'
   summary: Refinement scheduler round 1 tightened boundary signals and improved evaluation
     support.
   graph_hash: sha256:7fa2442a974c4df8e4e0cd6ae0cd3ba9d7631ed01579521f0e19837c0487bcd7
@@ -23,7 +23,7 @@ history:
   - Refinement scheduler round 1 tightened boundary signals and improved evaluation
     support.
 - revision: 3
-  date: '2026-04-26'
+  date: '2026-04-27'
   summary: Refinement scheduler round 2 tightened boundary signals and improved evaluation
     support.
   graph_hash: sha256:7fa2442a974c4df8e4e0cd6ae0cd3ba9d7631ed01579521f0e19837c0487bcd7
@@ -32,7 +32,7 @@ history:
   - Refinement scheduler round 2 tightened boundary signals and improved evaluation
     support.
 - revision: 4
-  date: '2026-04-26'
+  date: '2026-04-27'
   summary: Refinement scheduler round 3 tightened boundary signals and improved evaluation
     support.
   graph_hash: sha256:7fa2442a974c4df8e4e0cd6ae0cd3ba9d7631ed01579521f0e19837c0487bcd7
@@ -41,7 +41,7 @@ history:
   - Refinement scheduler round 3 tightened boundary signals and improved evaluation
     support.
 - revision: 5
-  date: '2026-04-26'
+  date: '2026-04-27'
   summary: Refinement scheduler round 4 tightened boundary signals and improved evaluation
     support.
   graph_hash: sha256:7fa2442a974c4df8e4e0cd6ae0cd3ba9d7631ed01579521f0e19837c0487bcd7
@@ -50,7 +50,7 @@ history:
   - Refinement scheduler round 4 tightened boundary signals and improved evaluation
     support.
 - revision: 6
-  date: '2026-04-26'
+  date: '2026-04-27'
   summary: Refinement scheduler round 5 tightened boundary signals and improved evaluation
     support.
   graph_hash: sha256:7fa2442a974c4df8e4e0cd6ae0cd3ba9d7631ed01579521f0e19837c0487bcd7

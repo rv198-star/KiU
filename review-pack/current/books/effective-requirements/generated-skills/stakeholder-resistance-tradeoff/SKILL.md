@@ -48,6 +48,10 @@ judgment_schema:
       evidence_to_check: list[string]
       next_action: string
       confidence: enum[low|medium|high]
+      value_gain_decision: string
+      value_gain_evidence: list[string]
+      value_gain_risk_boundary: string
+      value_gain_next_handoff: string
   reasoning_chain_required: true
 boundary:
   fails_when:
@@ -68,6 +72,11 @@ Mechanism chain: source anchor -> mechanism observed -> transferable judgment ->
 - transferable judgment: Use `Stakeholder Resistance Tradeoff` only when the current decision matches the source mechanism and boundary checks pass.
 - user trigger: `stakeholder_attention_and_resistance_conflict`
 - anti-misuse boundary: `stakeholder_list_is_only_being_filled`
+
+### Downstream Use Check
+This skill must make `Stakeholder Resistance Tradeoff` decision-relevant by naming the main tension, the current action it changes, and the boundary that prevents treating every disagreement as the same problem.
+
+Minimum Pressure Pass (alternative pressure): Test one competing problem frame before applying the skill; if a different tension better explains the situation, return that reframing or defer instead of forcing the original frame. Continue only if this changes the decision, action, evidence, handoff, or review value; otherwise freeze the skill without adding process weight.
 
 ## Evidence Summary
 `Stakeholder Resistance Tradeoff` is grounded in "### 5 干系人分析"[^anchor:5-干系人分析-principle::0012].

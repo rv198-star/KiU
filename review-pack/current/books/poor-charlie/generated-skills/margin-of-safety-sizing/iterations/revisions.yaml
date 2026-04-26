@@ -1,9 +1,9 @@
 skill_id: margin-of-safety-sizing
 bundle_version: 0.2.0
-current_revision: 1
+current_revision: 3
 history:
 - revision: 1
-  date: '2026-04-26'
+  date: '2026-04-27'
   summary: 'Revision 5 是一次面向 `v0.5.1` 的手工补强，不是 refinement_scheduler 自动 loop。本轮把正文改成中文
     action-facing 说明，明确写出“价格合理吗 / 安全边际够不够 / 市场恐慌是不是机会 / 项目值不值得投”这类用户语言在本 skill 中如何落到
     sizing，而不是把它伪装成通用估值框架。
@@ -22,6 +22,32 @@ history:
     liquidity, irreversibility, and capital-at-risk constraints.
   - Clarified non-trigger boundaries for short-term trading, concept queries, pure
     scale analysis, franchise edge cases, and crypto-style speculative assets.
+- revision: 2
+  date: '2026-04-27'
+  summary: Refinement scheduler round 1 tightened boundary signals and improved evaluation
+    support. It now ties “市盈率 25 倍但品牌很强, 价格合理吗” and “市场恐慌是不是错杀好公司” to live sizing
+    decisions, while refusing 规模和竞争格局比较 and 短线交易指标 questions because they are not
+    value-and-sizing judgments.
+  graph_hash: sha256:d578eb971f656caa040d8f11dc4a7d473bdd30907420f054433f88fd82005151
+  effective_status: under_evaluation
+  evidence_changes:
+  - Refinement scheduler round 1 tightened boundary signals and improved evaluation
+    support. It now ties “市盈率 25 倍但品牌很强, 价格合理吗” and “市场恐慌是不是错杀好公司” to live sizing
+    decisions, while refusing 规模和竞争格局比较 and 短线交易指标 questions because they are not
+    value-and-sizing judgments.
+- revision: 3
+  date: '2026-04-27'
+  summary: Refinement scheduler round 2 tightened boundary signals and improved evaluation
+    support. It now ties “市盈率 25 倍但品牌很强, 价格合理吗” and “市场恐慌是不是错杀好公司” to live sizing
+    decisions, while refusing 规模和竞争格局比较 and 短线交易指标 questions because they are not
+    value-and-sizing judgments.
+  graph_hash: sha256:d578eb971f656caa040d8f11dc4a7d473bdd30907420f054433f88fd82005151
+  effective_status: under_evaluation
+  evidence_changes:
+  - Refinement scheduler round 2 tightened boundary signals and improved evaluation
+    support. It now ties “市盈率 25 倍但品牌很强, 价格合理吗” and “市场恐慌是不是错杀好公司” to live sizing
+    decisions, while refusing 规模和竞争格局比较 and 短线交易指标 questions because they are not
+    value-and-sizing judgments.
 open_gaps:
 - Add future cases that separate temporary volatility from permanent impairment across
   new corpora.

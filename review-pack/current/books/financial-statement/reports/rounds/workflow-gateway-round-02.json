@@ -16,10 +16,10 @@
     "delta_vs_nearest": 0.99,
     "delta_vs_bundle": 0.99,
     "net_positive_value": 0.99,
-    "artifact_quality": 0.8641,
+    "artifact_quality": 0.8421,
     "artifact_grade": "good",
-    "production_quality": 0.9082,
-    "quality_grade": "excellent",
+    "production_quality": 0.8939,
+    "quality_grade": "good",
     "release_ready": true
   },
   "decision": {
@@ -29,15 +29,15 @@
   },
   "quality_assessment": {
     "candidate_id": "workflow-gateway",
-    "artifact_quality": 0.8641,
+    "artifact_quality": 0.8421,
     "artifact_grade": "good",
-    "production_quality": 0.9082,
-    "quality_grade": "excellent",
+    "production_quality": 0.8939,
+    "quality_grade": "good",
     "release_ready": true,
     "loop_overall_quality": 0.99,
     "component_scores": {
       "contract_specificity": 1.0,
-      "rationale_depth": 1.0,
+      "rationale_depth": 0.9,
       "evidence_grounding": 0.85,
       "usage_readiness": 0.675,
       "eval_readiness": 0.604,
@@ -46,7 +46,7 @@
     "signals": {
       "trigger_patterns": 2,
       "intake_fields": 3,
-      "rationale_chars": 1216,
+      "rationale_chars": 1793,
       "rationale_anchor_refs": 2,
       "evidence_anchor_refs": 1,
       "graph_anchor_sets": 1,
@@ -62,8 +62,8 @@
     ],
     "notes": [],
     "thresholds": {
-      "artifact_quality": 0.74,
-      "production_quality": 0.78
+      "artifact_quality": 0.78,
+      "production_quality": 0.82
     }
   }
 }

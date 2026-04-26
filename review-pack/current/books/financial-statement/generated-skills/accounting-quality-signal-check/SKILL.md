@@ -46,6 +46,10 @@ judgment_schema:
       evidence_to_check: list[string]
       decline_reason: string
       confidence: enum[low|medium|high]
+      value_gain_decision: string
+      value_gain_evidence: list[string]
+      value_gain_risk_boundary: string
+      value_gain_next_handoff: string
   reasoning_chain_required: true
 boundary:
   fails_when:
@@ -66,6 +70,11 @@ Mechanism chain: source anchor -> mechanism observed -> transferable judgment ->
 - transferable judgment: Use `Accounting Quality Signal Check` only when the current decision matches the source mechanism and boundary checks pass.
 - user trigger: `accounting_quality_signal_check_decision_required`
 - anti-misuse boundary: `scenario_missing_decision_context`
+
+### Downstream Use Check
+This skill must make `Accounting Quality Signal Check` practically usable by naming the decision it changes, the source-backed evidence behind that change, and the boundary that prevents over-application.
+
+Minimum Pressure Pass (downstream pressure): Ask what the downstream user would still need to invent before acting; if that missing truth is material, output the missing handoff instead of treating the skill as complete. Continue only if this changes the decision, action, evidence, handoff, or review value; otherwise freeze the skill without adding process weight.
 
 ## Evidence Summary
 `Accounting Quality Signal Check` is primarily anchored to "## 18.1.2 关于会计信息质量的五个问题"[^anchor:accounting-quality-signal-check-principle::1171].

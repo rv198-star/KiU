@@ -1,0 +1,68 @@
+{
+  "schema_version": "kiu.pseudo-skill-audit/v0.1",
+  "chapter_title_rejected": [],
+  "summary_candidate_rejected": [],
+  "workflow_candidate_routed": [],
+  "agentic_skill_accepted": [
+    {
+      "candidate_id": "circle-of-competence",
+      "title": "circle-of-competence",
+      "candidate_kind": "general_agentic",
+      "disposition": "skill_candidate",
+      "reasons": [],
+      "source_file": null,
+      "source_location": null
+    },
+    {
+      "candidate_id": "value-assessment-source-note",
+      "title": "value-assessment-source-note",
+      "candidate_kind": "general_agentic",
+      "disposition": "skill_candidate",
+      "reasons": [],
+      "source_file": null,
+      "source_location": null
+    },
+    {
+      "candidate_id": "bias-self-audit",
+      "title": "bias-self-audit",
+      "candidate_kind": "general_agentic",
+      "disposition": "skill_candidate",
+      "reasons": [],
+      "source_file": null,
+      "source_location": null
+    },
+    {
+      "candidate_id": "margin-of-safety-sizing",
+      "title": "margin-of-safety-sizing",
+      "candidate_kind": "general_agentic",
+      "disposition": "skill_candidate",
+      "reasons": [],
+      "source_file": null,
+      "source_location": null
+    },
+    {
+      "candidate_id": "invert-the-problem",
+      "title": "invert-the-problem",
+      "candidate_kind": "general_agentic",
+      "disposition": "skill_candidate",
+      "reasons": [],
+      "source_file": null,
+      "source_location": null
+    },
+    {
+      "candidate_id": "opportunity-cost-of-the-next-best-idea",
+      "title": "opportunity-cost-of-the-next-best-idea",
+      "candidate_kind": "general_agentic",
+      "disposition": "skill_candidate",
+      "reasons": [],
+      "source_file": null,
+      "source_location": null
+    }
+  ],
+  "summary": {
+    "chapter_title_rejected_count": 0,
+    "summary_candidate_rejected_count": 0,
+    "workflow_candidate_routed_count": 0,
+    "agentic_skill_accepted_count": 6
+  }
+}

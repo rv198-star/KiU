@@ -46,7 +46,7 @@
     "signals": {
       "trigger_patterns": 2,
       "intake_fields": 3,
-      "rationale_chars": 1227,
+      "rationale_chars": 1804,
       "rationale_anchor_refs": 2,
       "evidence_anchor_refs": 1,
       "graph_anchor_sets": 1,

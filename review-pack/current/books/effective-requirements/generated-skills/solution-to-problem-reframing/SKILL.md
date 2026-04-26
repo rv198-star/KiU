@@ -48,6 +48,10 @@ judgment_schema:
       next_question: string
       decline_reason: string
       confidence: enum[low|medium|high]
+      value_gain_decision: string
+      value_gain_evidence: list[string]
+      value_gain_risk_boundary: string
+      value_gain_next_handoff: string
   reasoning_chain_required: true
 boundary:
   fails_when:
@@ -68,6 +72,11 @@ Mechanism chain: source anchor -> mechanism observed -> transferable judgment ->
 - transferable judgment: Use `Solution To Problem Reframing` only when the current decision matches the source mechanism and boundary checks pass.
 - user trigger: `solution_level_request_with_unclear_problem`
 - anti-misuse boundary: `workflow_execution_request_only`
+
+### Downstream Use Check
+This skill must make `Solution To Problem Reframing` usable by turning the reframed problem into a decision, owner, and next information request.
+
+Minimum Pressure Pass (downstream pressure): Ask what the downstream actor would still need to invent after the reframing; if ownership, success criteria, or first action is missing, return the missing handoff rather than a polished reframe. Continue only if this changes the decision, action, evidence, handoff, or review value; otherwise freeze the skill without adding process weight.
 
 ## Evidence Summary
 `Solution To Problem Reframing` is grounded in "### 2 日常需求分析"[^anchor:2-日常需求分析-principle::0008].

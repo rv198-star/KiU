@@ -1,7 +1,9 @@
 {
   "review_pack": "current",
   "project": "KiU / 学以致用",
-  "created_for": "v0.8 closeout artifact review",
+  "created_for": "v0.8.2 value-gain pressure-chain artifact review",
+  "generated_at": "2026-04-27",
+  "run_root": "/tmp/kiu-v082-value-gain-review-pack-20260427",
   "historical_policy": "Only the latest review pack is kept in this directory; older packs are available through Git history.",
   "evidence_boundary": "Internal artifact review pack; not external blind review, real-user validation, domain-expert validation, or legal redistribution review.",
   "books": [
@@ -11,7 +13,11 @@
       "source_files": 1,
       "published_skills": 3,
       "workflow_candidates": 5,
-      "source_tree_sha256": "3c57c5c3b25e44727af87f0d9978b9a40a32a4887caadb9498111fc0a89e023d"
+      "source_tree_sha256": "736345235d991c381b48403e6b1bf5862a938ca48b1626fc8bd8445a2737502f",
+      "run_id": "v082-value-gain-financial",
+      "pipeline_mode": "raw_book_no_seed_cold_start",
+      "release_gate_overall_ready": true,
+      "overall_score_100": 93.2
     },
     {
       "id": "effective-requirements",
@@ -19,7 +25,11 @@
       "source_files": 1,
       "published_skills": 3,
       "workflow_candidates": 12,
-      "source_tree_sha256": "11c8624dac1d6627671828500992f0af74151cecdea49ae8a84a3763eab7a547"
+      "source_tree_sha256": "8c6aa2099b3c51acbafd8a9325d424dbf0948635e012a5adfa268065137864a1",
+      "run_id": "v082-value-gain-effective",
+      "pipeline_mode": "raw_book_no_seed_cold_start",
+      "release_gate_overall_ready": true,
+      "overall_score_100": 95.0
     },
     {
       "id": "mao-anthology",
@@ -27,7 +37,11 @@
       "source_files": 230,
       "published_skills": 6,
       "workflow_candidates": 8,
-      "source_tree_sha256": "29a5851e7d9007d25c5607dca5e4b9d26ab0a7eba6830b76c5fbb92d9069e955"
+      "source_tree_sha256": "036483c08d88d4e1a13dbc3d8aa9be71839f6158baa47faeb553bc5cc8fefa44",
+      "run_id": "v082-value-gain-mao",
+      "pipeline_mode": "raw_book_no_seed_cold_start",
+      "release_gate_overall_ready": true,
+      "overall_score_100": 95.1
     },
     {
       "id": "poor-charlie",
@@ -35,7 +49,11 @@
       "source_files": 5,
       "published_skills": 6,
       "workflow_candidates": 0,
-      "source_tree_sha256": "f019e54336f599e26e419e956313d382306a8e04d404247e02383316a5a77741"
+      "source_tree_sha256": "d02c08eb57eef711a9fb6fc452e2decf5bed3531c34420257a9a6dd25985c6f0",
+      "run_id": "v082-value-gain-poor-charlie",
+      "pipeline_mode": "source_bundle_regeneration",
+      "release_gate_overall_ready": true,
+      "overall_score_100": 97.9
     },
     {
       "id": "shiji",
@@ -43,7 +61,11 @@
       "source_files": 130,
       "published_skills": 3,
       "workflow_candidates": 0,
-      "source_tree_sha256": "48a836cb9694c6ff5bd12505f9ff75576ed6ffaf79cd6d2965a8cd94c3586712"
+      "source_tree_sha256": "7f9398533d71741ed4167a128ca9a777f48ab74379476df59627404e762e6e55",
+      "run_id": "v082-value-gain-shiji",
+      "pipeline_mode": "raw_book_no_seed_cold_start",
+      "release_gate_overall_ready": true,
+      "overall_score_100": 95.5
     }
   ]
 }

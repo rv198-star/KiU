@@ -50,6 +50,10 @@ judgment_schema:
       order_cost: list[string]
       safe_next_action: string
       confidence: enum[low|medium|high]
+      value_gain_decision: string
+      value_gain_evidence: list[string]
+      value_gain_risk_boundary: string
+      value_gain_next_handoff: string
   reasoning_chain_required: true
 boundary:
   fails_when:
@@ -75,6 +79,11 @@ Mechanism chain: source anchor -> mechanism observed -> transferable judgment ->
 - transferable judgment: Use `Role Boundary Before Action` only when the current decision matches the source mechanism and boundary checks pass.
 - user trigger: `user_deciding_whether_to_act_under_a_role_or_mandate`
 - anti-misuse boundary: `pure_role_definition_query`
+
+### Downstream Use Check
+This skill must make `Role Boundary Before Action` safe to transfer by naming the source mechanism, the current mechanism, and the boundary that would make the analogy invalid.
+
+Minimum Pressure Pass (evidence pressure): Check whether the shared mechanism is evidenced or merely story-similar; if only names, roles, or outcomes match, return do_not_apply or demand more context. Continue only if this changes the decision, action, evidence, handoff, or review value; otherwise freeze the skill without adding process weight.
 
 ## Evidence Summary
 `Role Boundary Before Action` is grounded in role-boundary evidence beginning with "昔在颛顼，命南正重以司天，北正黎以司地。唐虞之际，绍重黎之後，使复典之，至于夏商，故重黎氏世序天地。其在周，程伯休甫其後也。当周宣王时，失其守而为司马氏。司马氏世典周史。惠襄之间，司马氏去周適(shì)晋。晋中军随会奔秦，而司马氏入少梁。 自司马氏去周適晋，分散，或在卫，或在赵，或在秦。其在卫者，相中山。在赵者，以传剑论显，蒯聩其後也。在秦者名错，与张仪争论，於是惠王使错将伐蜀，遂拔，因而守之。错孙靳，事武安君白起。而少梁更名曰夏阳。靳"[^anchor:role-boundary-before-action-narrative-pattern::role-boundary-before-action].

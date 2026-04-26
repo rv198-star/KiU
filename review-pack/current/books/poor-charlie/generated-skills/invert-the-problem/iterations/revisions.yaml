@@ -1,9 +1,9 @@
 skill_id: invert-the-problem
 bundle_version: 0.2.0
-current_revision: 1
+current_revision: 3
 history:
 - revision: 1
-  date: '2026-04-26'
+  date: '2026-04-27'
   summary: 'Revision 6 是一次面向 `v0.6.0` same-source boundary cleanup 的手工补强，不是 refinement_scheduler
     自动 loop。本轮明确把 concept / definition / history query 排除在 inversion 触发外，避免把“解释逆向思维概念”误判成“帮助真实决策做
     failure-first planning”。
@@ -26,6 +26,44 @@ history:
     rules, and first preventive actions.
   - Clarified non-trigger boundaries for concept queries, pure brainstorming, and
     lower-stakes edge cases without broadening the skill boundary.
+- revision: 2
+  date: '2026-04-27'
+  summary: 'Refinement scheduler round 1 tightened boundary signals and improved evaluation
+    support. It keeps “产品上市计划怎么失败”, “进入东南亚市场最坏会怎样”, and “团队只看到了机会没看到威胁, 能不能系统性地找找方案的茬”
+    on the failure-first path, so the output names 潜在威胁、失败模式、找茬清单 and a first preventive
+    action rather than继续扩创意广度. It explicitly treats 纯创意发散 as out of scope: 逆向思维天然偏向保守和防御,
+    不适合创意场景, 需要创意发散时不适用. For跳槽这类职业决策, it activates only when the user wants to系统性评估跳槽风险和失败模式;
+    if the user is merely比较两个选项优劣, it should route away from inversion. For健身计划这类个人日常目标,
+    it stays at a 轻量 pre-mortem / partial_review posture instead of a重大决策级别的重型风险框架.'
+  graph_hash: sha256:d578eb971f656caa040d8f11dc4a7d473bdd30907420f054433f88fd82005151
+  effective_status: under_evaluation
+  evidence_changes:
+  - 'Refinement scheduler round 1 tightened boundary signals and improved evaluation
+    support. It keeps “产品上市计划怎么失败”, “进入东南亚市场最坏会怎样”, and “团队只看到了机会没看到威胁, 能不能系统性地找找方案的茬”
+    on the failure-first path, so the output names 潜在威胁、失败模式、找茬清单 and a first preventive
+    action rather than继续扩创意广度. It explicitly treats 纯创意发散 as out of scope: 逆向思维天然偏向保守和防御,
+    不适合创意场景, 需要创意发散时不适用. For跳槽这类职业决策, it activates only when the user wants to系统性评估跳槽风险和失败模式;
+    if the user is merely比较两个选项优劣, it should route away from inversion. For健身计划这类个人日常目标,
+    it stays at a 轻量 pre-mortem / partial_review posture instead of a重大决策级别的重型风险框架.'
+- revision: 3
+  date: '2026-04-27'
+  summary: 'Refinement scheduler round 2 tightened boundary signals and improved evaluation
+    support. It keeps “产品上市计划怎么失败”, “进入东南亚市场最坏会怎样”, and “团队只看到了机会没看到威胁, 能不能系统性地找找方案的茬”
+    on the failure-first path, so the output names 潜在威胁、失败模式、找茬清单 and a first preventive
+    action rather than继续扩创意广度. It explicitly treats 纯创意发散 as out of scope: 逆向思维天然偏向保守和防御,
+    不适合创意场景, 需要创意发散时不适用. For跳槽这类职业决策, it activates only when the user wants to系统性评估跳槽风险和失败模式;
+    if the user is merely比较两个选项优劣, it should route away from inversion. For健身计划这类个人日常目标,
+    it stays at a 轻量 pre-mortem / partial_review posture instead of a重大决策级别的重型风险框架.'
+  graph_hash: sha256:d578eb971f656caa040d8f11dc4a7d473bdd30907420f054433f88fd82005151
+  effective_status: under_evaluation
+  evidence_changes:
+  - 'Refinement scheduler round 2 tightened boundary signals and improved evaluation
+    support. It keeps “产品上市计划怎么失败”, “进入东南亚市场最坏会怎样”, and “团队只看到了机会没看到威胁, 能不能系统性地找找方案的茬”
+    on the failure-first path, so the output names 潜在威胁、失败模式、找茬清单 and a first preventive
+    action rather than继续扩创意广度. It explicitly treats 纯创意发散 as out of scope: 逆向思维天然偏向保守和防御,
+    不适合创意场景, 需要创意发散时不适用. For跳槽这类职业决策, it activates only when the user wants to系统性评估跳槽风险和失败模式;
+    if the user is merely比较两个选项优劣, it should route away from inversion. For健身计划这类个人日常目标,
+    it stays at a 轻量 pre-mortem / partial_review posture instead of a重大决策级别的重型风险框架.'
 open_gaps:
 - Continue monitoring concept-query and low-stakes planning boundary stability in
   same-source benchmarks.

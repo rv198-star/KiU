@@ -1,6 +1,6 @@
 candidate_id: historical-case-consequence-judgment
 source_bundle_id: shiji-source-v0.6
-source_graph_hash: sha256:4b2ba22745c150e0d943c8a150e57d4b64d1f473ec6f86047eb2b4399888ec5c
+source_graph_hash: sha256:cf07117c09477ee919c3ae7ffa11c10fb37926d67101ab888dd347ae82fd5830
 seed:
   primary_node_id: narrative-pattern::historical-case-consequence-judgment
   supporting_node_ids:
@@ -75,7 +75,7 @@ routing_evidence:
   verification_workflow_ready: true
   verification_overall_score: 1.0
   workflow_promotion_blocked_by_verification: false
-source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
 source_location: &id001
   line_start: 5
   line_end: 19
@@ -122,7 +122,7 @@ verification:
 graph_to_skill_distillation:
   schema_version: kiu.graph-to-skill-distillation/v0.1
   candidate_id: historical-case-consequence-judgment
-  source_graph_hash: sha256:4b2ba22745c150e0d943c8a150e57d4b64d1f473ec6f86047eb2b4399888ec5c
+  source_graph_hash: sha256:cf07117c09477ee919c3ae7ffa11c10fb37926d67101ab888dd347ae82fd5830
   source_graph_version: kiu.graph/v0.2
   rules:
   - INFERRED graph edges may expand trigger language but must not override boundary
@@ -188,69 +188,69 @@ ria_tv_provenance:
   - narrative-pattern-evidence::0007
   - narrative-pattern-evidence::0008
   source_locations:
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location: *id001
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location:
       line_start: 5
       line_end: 19
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location:
       line_start: 21
       line_end: 33
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location:
       line_start: 35
       line_end: 39
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location:
       line_start: 41
       line_end: 81
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location:
       line_start: 83
       line_end: 119
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location:
       line_start: 121
       line_end: 153
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location:
       line_start: 155
       line_end: 215
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location:
       line_start: 217
       line_end: 277
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location:
       line_start: 5
       line_end: 19
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location:
       line_start: 21
       line_end: 33
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location:
       line_start: 35
       line_end: 39
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location:
       line_start: 41
       line_end: 81
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location:
       line_start: 83
       line_end: 119
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location:
       line_start: 121
       line_end: 153
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location:
       line_start: 155
       line_end: 215
-  - source_file: sources/shiji/0__卷一百三十__太史公自序第七十.md
+  - source_file: sources/shiji/resource/0__卷一百三十__太史公自序第七十.md
     source_location:
       line_start: 217
       line_end: 277

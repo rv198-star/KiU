@@ -24,8 +24,8 @@
       "candidate_id": "workflow-gateway",
       "terminal_state": "ready_for_review",
       "overall_quality": 0.99,
-      "production_quality": 0.9082,
-      "quality_grade": "excellent",
+      "production_quality": 0.8939,
+      "quality_grade": "good",
       "net_positive_value": 0.99
     }
   ]

@@ -1,7 +1,7 @@
 workflow_id: 四-中国革命是世界革命的一部分
 title: 四 中国革命是世界革命的一部分
 source_bundle_id: mao-source-v0.6
-source_graph_hash: sha256:58d9dbaa74d6ef14137efb10a473d151d9c2e1945e51522751719e1827067313
+source_graph_hash: sha256:8e7d2fad23054696d54be36139b84b727ca24bf9639f15b988f973d7d50abd19
 recommended_execution_mode: workflow_script
 disposition: workflow_script_candidate
 workflow_certainty: high

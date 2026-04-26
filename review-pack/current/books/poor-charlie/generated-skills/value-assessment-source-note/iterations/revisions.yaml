@@ -1,9 +1,9 @@
 skill_id: value-assessment-source-note
 bundle_version: 0.2.0
-current_revision: 1
+current_revision: 6
 history:
 - revision: 1
-  date: '2026-04-26'
+  date: '2026-04-27'
   summary: 'Initial v0.5.1 parent-skill topology repair. This candidate was added
     so KiU can answer value-anchor questions before handing real position-size questions
     to `margin-of-safety-sizing`, instead of forcing the sizing specialist to impersonate
@@ -16,6 +16,111 @@ history:
   - Added explicit parent/specialist split for the margin family.
   - Reused existing canonical valuation-support and refusal traces in the generated
     usage layer.
+- revision: 2
+  date: '2026-04-27'
+  summary: Refinement scheduler round 1 tightened boundary signals and improved evaluation
+    support. It now treats “品牌很强但价格不便宜, 值不值这个价”, “市场恐慌是不是错杀好公司”, and “这个天使轮估值到底有没有道理”
+    as value-anchor judgments, and it also keeps “这种公司和其他公司到底差在哪” in scope when the
+    real issue is 护城河、定价权与尚未利用的提价能力 rather than mere scale comparison. 加盟店、私有生意、天使轮等边界案例默认先标成
+    `partial_applicability` 并先做能力圈检验, while没有稳定内在价值锚点的投机场景会明确 `refuse`. 纯规模和竞争格局比较应转给
+    `scale-advantage-analysis`, and短线交易不适用 because this framework assumes long-term
+    holding rather than day-trading indicators. When the user also asks how大仓位, it
+    explicitly hands the case off to sizing instead of letting valuation silently代替仓位纪律.
+  graph_hash: sha256:d578eb971f656caa040d8f11dc4a7d473bdd30907420f054433f88fd82005151
+  effective_status: under_evaluation
+  evidence_changes:
+  - Refinement scheduler round 1 tightened boundary signals and improved evaluation
+    support. It now treats “品牌很强但价格不便宜, 值不值这个价”, “市场恐慌是不是错杀好公司”, and “这个天使轮估值到底有没有道理”
+    as value-anchor judgments, and it also keeps “这种公司和其他公司到底差在哪” in scope when the
+    real issue is 护城河、定价权与尚未利用的提价能力 rather than mere scale comparison. 加盟店、私有生意、天使轮等边界案例默认先标成
+    `partial_applicability` 并先做能力圈检验, while没有稳定内在价值锚点的投机场景会明确 `refuse`. 纯规模和竞争格局比较应转给
+    `scale-advantage-analysis`, and短线交易不适用 because this framework assumes long-term
+    holding rather than day-trading indicators. When the user also asks how大仓位, it
+    explicitly hands the case off to sizing instead of letting valuation silently代替仓位纪律.
+- revision: 3
+  date: '2026-04-27'
+  summary: Refinement scheduler round 2 tightened boundary signals and improved evaluation
+    support. It now treats “品牌很强但价格不便宜, 值不值这个价”, “市场恐慌是不是错杀好公司”, and “这个天使轮估值到底有没有道理”
+    as value-anchor judgments, and it also keeps “这种公司和其他公司到底差在哪” in scope when the
+    real issue is 护城河、定价权与尚未利用的提价能力 rather than mere scale comparison. 加盟店、私有生意、天使轮等边界案例默认先标成
+    `partial_applicability` 并先做能力圈检验, while没有稳定内在价值锚点的投机场景会明确 `refuse`. 纯规模和竞争格局比较应转给
+    `scale-advantage-analysis`, and短线交易不适用 because this framework assumes long-term
+    holding rather than day-trading indicators. When the user also asks how大仓位, it
+    explicitly hands the case off to sizing instead of letting valuation silently代替仓位纪律.
+  graph_hash: sha256:d578eb971f656caa040d8f11dc4a7d473bdd30907420f054433f88fd82005151
+  effective_status: under_evaluation
+  evidence_changes:
+  - Refinement scheduler round 2 tightened boundary signals and improved evaluation
+    support. It now treats “品牌很强但价格不便宜, 值不值这个价”, “市场恐慌是不是错杀好公司”, and “这个天使轮估值到底有没有道理”
+    as value-anchor judgments, and it also keeps “这种公司和其他公司到底差在哪” in scope when the
+    real issue is 护城河、定价权与尚未利用的提价能力 rather than mere scale comparison. 加盟店、私有生意、天使轮等边界案例默认先标成
+    `partial_applicability` 并先做能力圈检验, while没有稳定内在价值锚点的投机场景会明确 `refuse`. 纯规模和竞争格局比较应转给
+    `scale-advantage-analysis`, and短线交易不适用 because this framework assumes long-term
+    holding rather than day-trading indicators. When the user also asks how大仓位, it
+    explicitly hands the case off to sizing instead of letting valuation silently代替仓位纪律.
+- revision: 4
+  date: '2026-04-27'
+  summary: Refinement scheduler round 3 tightened boundary signals and improved evaluation
+    support. It now treats “品牌很强但价格不便宜, 值不值这个价”, “市场恐慌是不是错杀好公司”, and “这个天使轮估值到底有没有道理”
+    as value-anchor judgments, and it also keeps “这种公司和其他公司到底差在哪” in scope when the
+    real issue is 护城河、定价权与尚未利用的提价能力 rather than mere scale comparison. 加盟店、私有生意、天使轮等边界案例默认先标成
+    `partial_applicability` 并先做能力圈检验, while没有稳定内在价值锚点的投机场景会明确 `refuse`. 纯规模和竞争格局比较应转给
+    `scale-advantage-analysis`, and短线交易不适用 because this framework assumes long-term
+    holding rather than day-trading indicators. When the user also asks how大仓位, it
+    explicitly hands the case off to sizing instead of letting valuation silently代替仓位纪律.
+  graph_hash: sha256:d578eb971f656caa040d8f11dc4a7d473bdd30907420f054433f88fd82005151
+  effective_status: under_evaluation
+  evidence_changes:
+  - Refinement scheduler round 3 tightened boundary signals and improved evaluation
+    support. It now treats “品牌很强但价格不便宜, 值不值这个价”, “市场恐慌是不是错杀好公司”, and “这个天使轮估值到底有没有道理”
+    as value-anchor judgments, and it also keeps “这种公司和其他公司到底差在哪” in scope when the
+    real issue is 护城河、定价权与尚未利用的提价能力 rather than mere scale comparison. 加盟店、私有生意、天使轮等边界案例默认先标成
+    `partial_applicability` 并先做能力圈检验, while没有稳定内在价值锚点的投机场景会明确 `refuse`. 纯规模和竞争格局比较应转给
+    `scale-advantage-analysis`, and短线交易不适用 because this framework assumes long-term
+    holding rather than day-trading indicators. When the user also asks how大仓位, it
+    explicitly hands the case off to sizing instead of letting valuation silently代替仓位纪律.
+- revision: 5
+  date: '2026-04-27'
+  summary: Refinement scheduler round 4 tightened boundary signals and improved evaluation
+    support. It now treats “品牌很强但价格不便宜, 值不值这个价”, “市场恐慌是不是错杀好公司”, and “这个天使轮估值到底有没有道理”
+    as value-anchor judgments, and it also keeps “这种公司和其他公司到底差在哪” in scope when the
+    real issue is 护城河、定价权与尚未利用的提价能力 rather than mere scale comparison. 加盟店、私有生意、天使轮等边界案例默认先标成
+    `partial_applicability` 并先做能力圈检验, while没有稳定内在价值锚点的投机场景会明确 `refuse`. 纯规模和竞争格局比较应转给
+    `scale-advantage-analysis`, and短线交易不适用 because this framework assumes long-term
+    holding rather than day-trading indicators. When the user also asks how大仓位, it
+    explicitly hands the case off to sizing instead of letting valuation silently代替仓位纪律.
+  graph_hash: sha256:d578eb971f656caa040d8f11dc4a7d473bdd30907420f054433f88fd82005151
+  effective_status: under_evaluation
+  evidence_changes:
+  - Refinement scheduler round 4 tightened boundary signals and improved evaluation
+    support. It now treats “品牌很强但价格不便宜, 值不值这个价”, “市场恐慌是不是错杀好公司”, and “这个天使轮估值到底有没有道理”
+    as value-anchor judgments, and it also keeps “这种公司和其他公司到底差在哪” in scope when the
+    real issue is 护城河、定价权与尚未利用的提价能力 rather than mere scale comparison. 加盟店、私有生意、天使轮等边界案例默认先标成
+    `partial_applicability` 并先做能力圈检验, while没有稳定内在价值锚点的投机场景会明确 `refuse`. 纯规模和竞争格局比较应转给
+    `scale-advantage-analysis`, and短线交易不适用 because this framework assumes long-term
+    holding rather than day-trading indicators. When the user also asks how大仓位, it
+    explicitly hands the case off to sizing instead of letting valuation silently代替仓位纪律.
+- revision: 6
+  date: '2026-04-27'
+  summary: Refinement scheduler round 5 tightened boundary signals and improved evaluation
+    support. It now treats “品牌很强但价格不便宜, 值不值这个价”, “市场恐慌是不是错杀好公司”, and “这个天使轮估值到底有没有道理”
+    as value-anchor judgments, and it also keeps “这种公司和其他公司到底差在哪” in scope when the
+    real issue is 护城河、定价权与尚未利用的提价能力 rather than mere scale comparison. 加盟店、私有生意、天使轮等边界案例默认先标成
+    `partial_applicability` 并先做能力圈检验, while没有稳定内在价值锚点的投机场景会明确 `refuse`. 纯规模和竞争格局比较应转给
+    `scale-advantage-analysis`, and短线交易不适用 because this framework assumes long-term
+    holding rather than day-trading indicators. When the user also asks how大仓位, it
+    explicitly hands the case off to sizing instead of letting valuation silently代替仓位纪律.
+  graph_hash: sha256:d578eb971f656caa040d8f11dc4a7d473bdd30907420f054433f88fd82005151
+  effective_status: under_evaluation
+  evidence_changes:
+  - Refinement scheduler round 5 tightened boundary signals and improved evaluation
+    support. It now treats “品牌很强但价格不便宜, 值不值这个价”, “市场恐慌是不是错杀好公司”, and “这个天使轮估值到底有没有道理”
+    as value-anchor judgments, and it also keeps “这种公司和其他公司到底差在哪” in scope when the
+    real issue is 护城河、定价权与尚未利用的提价能力 rather than mere scale comparison. 加盟店、私有生意、天使轮等边界案例默认先标成
+    `partial_applicability` 并先做能力圈检验, while没有稳定内在价值锚点的投机场景会明确 `refuse`. 纯规模和竞争格局比较应转给
+    `scale-advantage-analysis`, and短线交易不适用 because this framework assumes long-term
+    holding rather than day-trading indicators. When the user also asks how大仓位, it
+    explicitly hands the case off to sizing instead of letting valuation silently代替仓位纪律.
 open_gaps:
 - Add real evaluation cases dedicated to value-anchor judgments.
 - Verify that value-assessment keeps delegating to sizing instead of swallowing capital-allocation

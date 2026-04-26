@@ -1,9 +1,9 @@
 skill_id: circle-of-competence
 bundle_version: 0.2.0
-current_revision: 1
+current_revision: 3
 history:
 - revision: 1
-  date: '2026-04-26'
+  date: '2026-04-27'
   summary: 'Revision 5 是一次面向 `v0.5.1` 的手工补强，不是 refinement_scheduler 自动 loop。核心改动不是再加结构，而是把此前偏英文、偏审计口吻的正文改成中文、action-facing
     的使用说明，明确补上了四类触发语（“我可以学 / 应该差不多 / 大家都说 / 说不清楚”）、三分法输出（圈内 / 边界 / 圈外），以及纯概念查询、圈内熟手、可迁移能力边界等非触发或灰区裁定。
 
@@ -20,6 +20,32 @@ history:
     rulings for concept queries, in-circle experts, and transferable-skill scenarios.
   - Kept the existing evidence anchors intact while making next-step outputs more
     action-facing for benchmarked usage.
+- revision: 2
+  date: '2026-04-27'
+  summary: Refinement scheduler round 1 tightened boundary signals and improved evaluation
+    support. It now treats “朋友拉我投餐饮连锁, 我应该差不多能搞明白” as a trigger, but keeps “已有 10
+    年后端开发经验的新项目架构设计” and “Python vs Go 哪个更适合微服务” outside scope because one is already
+    inside a proven circle and the other is a 技术选型的客观分析问题.
+  graph_hash: sha256:d578eb971f656caa040d8f11dc4a7d473bdd30907420f054433f88fd82005151
+  effective_status: under_evaluation
+  evidence_changes:
+  - Refinement scheduler round 1 tightened boundary signals and improved evaluation
+    support. It now treats “朋友拉我投餐饮连锁, 我应该差不多能搞明白” as a trigger, but keeps “已有 10
+    年后端开发经验的新项目架构设计” and “Python vs Go 哪个更适合微服务” outside scope because one is already
+    inside a proven circle and the other is a 技术选型的客观分析问题.
+- revision: 3
+  date: '2026-04-27'
+  summary: Refinement scheduler round 2 tightened boundary signals and improved evaluation
+    support. It now treats “朋友拉我投餐饮连锁, 我应该差不多能搞明白” as a trigger, but keeps “已有 10
+    年后端开发经验的新项目架构设计” and “Python vs Go 哪个更适合微服务” outside scope because one is already
+    inside a proven circle and the other is a 技术选型的客观分析问题.
+  graph_hash: sha256:d578eb971f656caa040d8f11dc4a7d473bdd30907420f054433f88fd82005151
+  effective_status: under_evaluation
+  evidence_changes:
+  - Refinement scheduler round 2 tightened boundary signals and improved evaluation
+    support. It now treats “朋友拉我投餐饮连锁, 我应该差不多能搞明白” as a trigger, but keeps “已有 10
+    年后端开发经验的新项目架构设计” and “Python vs Go 哪个更适合微服务” outside scope because one is already
+    inside a proven circle and the other is a 技术选型的客观分析问题.
 open_gaps:
 - Continue tightening non-trigger boundary phrasing and edge-case handling across
   the full investing bundle.

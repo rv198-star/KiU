@@ -1,24 +1,24 @@
 {
-  "run_root": "/tmp/kiu-v075-user-facing-optimization/effective/generated/effective-requirements-source-v0.6/v075-effective-user-facing",
-  "source_bundle_path": "/tmp/kiu-v075-user-facing-optimization/effective/sources/effective-requirements/bundle",
-  "usage_review_dir": "/tmp/kiu-v075-user-facing-optimization/effective/generated/effective-requirements-source-v0.6/v075-effective-user-facing/usage-review",
+  "run_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective",
+  "source_bundle_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/sources/effective-requirements/bundle",
+  "usage_review_dir": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective/usage-review",
   "pipeline_provenance": {
     "schema_version": "kiu.pipeline-provenance/v0.1",
     "pipeline_mode": "raw_book_no_seed_cold_start",
     "raw_book_no_seed_cold_start": true,
     "input_kind": "raw_markdown_book",
-    "source_input_path": "examples/有效需求分析（第2版）.md",
-    "source_bundle_root": "/tmp/kiu-v075-user-facing-optimization/effective/sources/effective-requirements/bundle",
-    "run_root": "/tmp/kiu-v075-user-facing-optimization/effective/generated/effective-requirements-source-v0.6/v075-effective-user-facing",
+    "source_input_path": "examples/source-materials/有效需求分析（第2版）.md",
+    "source_bundle_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/sources/effective-requirements/bundle",
+    "run_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective",
     "source_bundle_id": "effective-requirements-source-v0.6",
     "source_bundle_skill_count": 0,
     "uses_existing_source_skills": false,
     "uses_reference_pack_as_generation_input": false,
     "manual_generated_artifact_patch_allowed": false,
     "artifact_paths": {
-      "source_chunks": "/tmp/kiu-v075-user-facing-optimization/effective/intermediate/effective-requirements/v075-effective-user-facing/source-chunks.json",
-      "extraction_result": "/tmp/kiu-v075-user-facing-optimization/effective/intermediate/effective-requirements/v075-effective-user-facing/extraction-result.json",
-      "graph": "/tmp/kiu-v075-user-facing-optimization/effective/intermediate/effective-requirements/v075-effective-user-facing/graph.json"
+      "source_chunks": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/intermediate/effective-requirements/v082-value-gain-effective/source-chunks.json",
+      "extraction_result": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/intermediate/effective-requirements/v082-value-gain-effective/extraction-result.json",
+      "graph": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/intermediate/effective-requirements/v082-value-gain-effective/graph.json"
     },
     "extraction": {
       "deterministic_pass": "heuristic-extractors"
@@ -553,7 +553,7 @@
     },
     "world_alignment": {
       "schema_version": "kiu.world-alignment-review/v0.1",
-      "bundle_root": "/tmp/kiu-v075-user-facing-optimization/effective/generated/effective-requirements-source-v0.6/v075-effective-user-facing/bundle",
+      "bundle_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective/bundle",
       "world_alignment_present": false,
       "source_fidelity_preserved": true,
       "world_context_isolated": false,
@@ -610,7 +610,7 @@
       {
         "review_case_id": "solution-to-problem-reframing-usage-apply",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/effective/generated/effective-requirements-source-v0.6/v075-effective-user-facing/bundle/skills/solution-to-problem-reframing/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective/bundle/skills/solution-to-problem-reframing/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -620,7 +620,7 @@
       {
         "review_case_id": "solution-to-problem-reframing-usage-defer-boundary",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/effective/generated/effective-requirements-source-v0.6/v075-effective-user-facing/bundle/skills/solution-to-problem-reframing/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective/bundle/skills/solution-to-problem-reframing/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -630,7 +630,7 @@
       {
         "review_case_id": "solution-to-problem-reframing-usage-do-not-apply",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/effective/generated/effective-requirements-source-v0.6/v075-effective-user-facing/bundle/skills/solution-to-problem-reframing/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective/bundle/skills/solution-to-problem-reframing/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -640,7 +640,7 @@
       {
         "review_case_id": "stakeholder-resistance-tradeoff-usage-apply",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/effective/generated/effective-requirements-source-v0.6/v075-effective-user-facing/bundle/skills/stakeholder-resistance-tradeoff/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective/bundle/skills/stakeholder-resistance-tradeoff/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -650,7 +650,7 @@
       {
         "review_case_id": "stakeholder-resistance-tradeoff-usage-defer-boundary",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/effective/generated/effective-requirements-source-v0.6/v075-effective-user-facing/bundle/skills/stakeholder-resistance-tradeoff/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective/bundle/skills/stakeholder-resistance-tradeoff/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -660,7 +660,7 @@
       {
         "review_case_id": "stakeholder-resistance-tradeoff-usage-do-not-apply",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/effective/generated/effective-requirements-source-v0.6/v075-effective-user-facing/bundle/skills/stakeholder-resistance-tradeoff/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective/bundle/skills/stakeholder-resistance-tradeoff/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -670,7 +670,7 @@
       {
         "review_case_id": "workflow-gateway-ask-context",
         "score_100": 100.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/effective/generated/effective-requirements-source-v0.6/v075-effective-user-facing/bundle/skills/workflow-gateway/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective/bundle/skills/workflow-gateway/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -680,7 +680,7 @@
       {
         "review_case_id": "workflow-gateway-do-not-inline",
         "score_100": 100.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/effective/generated/effective-requirements-source-v0.6/v075-effective-user-facing/bundle/skills/workflow-gateway/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective/bundle/skills/workflow-gateway/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -690,7 +690,7 @@
       {
         "review_case_id": "workflow-gateway-refuse-agentic",
         "score_100": 100.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/effective/generated/effective-requirements-source-v0.6/v075-effective-user-facing/bundle/skills/workflow-gateway/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective/bundle/skills/workflow-gateway/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -700,7 +700,7 @@
       {
         "review_case_id": "workflow-gateway-route-by-hint",
         "score_100": 100.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/effective/generated/effective-requirements-source-v0.6/v075-effective-user-facing/bundle/skills/workflow-gateway/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective/bundle/skills/workflow-gateway/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -710,7 +710,7 @@
       {
         "review_case_id": "workflow-gateway-route-primary",
         "score_100": 100.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/effective/generated/effective-requirements-source-v0.6/v075-effective-user-facing/bundle/skills/workflow-gateway/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective/bundle/skills/workflow-gateway/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -720,7 +720,7 @@
       {
         "review_case_id": "workflow-gateway-sequence-two-workflows",
         "score_100": 100.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/effective/generated/effective-requirements-source-v0.6/v075-effective-user-facing/bundle/skills/workflow-gateway/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective/bundle/skills/workflow-gateway/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},

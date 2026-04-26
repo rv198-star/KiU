@@ -6,7 +6,7 @@ skill_id: margin-of-safety-sizing
 title: Margin of Safety Sizing
 status: under_evaluation
 bundle_version: 0.2.0
-skill_revision: 1
+skill_revision: 3
 ```
 
 ## Contract
@@ -37,6 +37,10 @@ judgment_schema:
       constraints: list[string]
       rationale: string
       applicability_mode: enum[full_sizing, partial_applicability, refuse]
+      value_gain_decision: string
+      value_gain_evidence: list[string]
+      value_gain_risk_boundary: string
+      value_gain_next_handoff: string
   reasoning_chain_required: true
 boundary:
   fails_when:
@@ -51,6 +55,11 @@ boundary:
 这条 skill 负责把“值不值得”翻译成“最多能下多大”，而不是停留在抽象的估值讨论里。凡是用户出现“这个价格合理吗”“安全边际够不够”“品牌很强但不便宜”“市场恐慌是不是机会”“这家公司提价客户也不会跑”“这个项目值不值得投”这类信号，都应该把问题继续往 sizing 层推进：即使护城河、定价权、管理层、能力圈这些前置判断都看起来不错，仓位大小仍然要由 downside range、流动性、可逆性、回本路径和爆仓/被动卖出的风险来决定。[^anchor:margin-source-note]
 
 因此这条 skill 的核心不是预测上涨空间，而是保护生存和可选项。要问的不是“最乐观能赚多少”，而是“如果我看错了、晚了、流动性抽干了、或者需要再融资，损失会放大到什么程度”。哪怕用户说“这种公司和其他公司到底差在哪”，答案也不能只停在“护城河很宽”上，而要继续追问：这种差异会不会转化为更稳的下行保护、更长的回本耐心、以及更可承受的仓位。芒格反复强调，真正稀缺的是“尚未利用的提价能力”，但即便如此，提价能力也只是前置质量信号，不是自动放大仓位的许可证。如果用户拿不出下行区间、流动性约束、资金缓冲、关联风险或不可逆损失的描述，就不能因为故事好、品牌强、趋势热而给大仓位；正确动作往往是缩小到 `tiny / small`，甚至直接 `refuse`。[^anchor:margin-eval] [^trace:canonical/salomon-exposure-cap.yaml]
+
+### Downstream Use Check
+This skill must turn caution into an executable risk boundary: identify the exposure being limited, connect the limit to source evidence, name the assumption that would break the recommendation, and give the next safer sizing or deferral action.
+
+Minimum Pressure Pass (failure pressure): Stress the worst credible miss, not the average case; if one adverse assumption would make the exposure unrecoverable, output a smaller sizing, a deferral, or a refusal to size. Continue only if this changes the decision, action, evidence, handoff, or review value; otherwise freeze the skill without adding process weight.
 
 ## Evidence Summary
 三条 canonical trace 定义了 sizing discipline。`sees-candies-discipline` 说明“伟大企业可以公道价买入”并不等于任何时候都该重仓；只有在业务韧性和 downside resilience 都足够明确时，质量才配得上 concentration，而且“尚未利用的提价能力”只能说明企业可能伟大，不能替你完成 sizing。[^trace:canonical/sees-candies-discipline.yaml] `salomon-exposure-cap` 说明暴露上限是生存工具，不是信念不足：哪怕 thesis 成立，只要杠杆、声誉风险或关联敞口会在压力下放大伤害，就应先压仓位。[^trace:canonical/salomon-exposure-cap.yaml] `irreversible-bet-precheck` 则对应“值不值得投 / 安全边际够不够”的边界情景：如果回撤后难以抽身、决策不可逆、回本周期过长、或失败一次就严重伤筋动骨，仓位必须先缩再说。[^trace:canonical/irreversible-bet-precheck.yaml]
@@ -108,9 +117,9 @@ Representative cases:
 当前 KiU Test 状态：trigger_test=`pass`，fire_test=`pass`，boundary_test=`pass`。
 
 已绑定最小评测集：
-- `real_decisions`: passed=20 / total=20, threshold=0.7, status=`pass`
-- `synthetic_adversarial`: passed=20 / total=20, threshold=0.85, status=`pass`
-- `out_of_distribution`: passed=10 / total=10, threshold=0.9, status=`pass`
+- `real_decisions`: passed=18 / total=20, threshold=0.7, status=`under_evaluation`
+- `synthetic_adversarial`: passed=18 / total=20, threshold=0.85, status=`under_evaluation`
+- `out_of_distribution`: passed=9 / total=10, threshold=0.9, status=`under_evaluation`
 
 关键失败模式：
 - Users often present confidence but omit liquidity, reversibility, and ruin inputs.
@@ -122,15 +131,12 @@ Representative cases:
 详见 `eval/summary.yaml` 与共享 `evaluation/`。
 
 ## Revision Summary
-Revision 5 是一次面向 `v0.5.1` 的手工补强，不是 refinement_scheduler 自动 loop。本轮把正文改成中文 action-facing 说明，明确写出“价格合理吗 / 安全边际够不够 / 市场恐慌是不是机会 / 项目值不值得投”这类用户语言在本 skill 中如何落到 sizing，而不是把它伪装成通用估值框架。
-
-这轮同时补上了 concept query、短线交易、纯规模比较、加盟投入、加密投机等边界裁定，并显式加入 `applicability_mode = full_sizing / partial_applicability / refuse`，目标是在不放松 workflow-vs-agentic 边界的前提下，缩小与 reference pack 在 same-scenario benchmark 上的使用落差。剩余缺口是继续加强真实案例下的 sizing 约束模板，并补出真实 loop 驱动的修订记录。详见 `iterations/revisions.yaml`。
+Refinement scheduler round 2 tightened boundary signals and improved evaluation support. It now ties “市盈率 25 倍但品牌很强, 价格合理吗” and “市场恐慌是不是错杀好公司” to live sizing decisions, while refusing 规模和竞争格局比较 and 短线交易指标 questions because they are not value-and-sizing judgments.
 
 本轮补入：
-- Added direct Chinese trigger phrases around price reasonableness, margin of safety, market panic, pricing power, and whether a project is worth funding.
-- Expanded the usage summary with a sizing-first output template anchored to downside, liquidity, irreversibility, and capital-at-risk constraints.
-- Clarified non-trigger boundaries for short-term trading, concept queries, pure scale analysis, franchise edge cases, and crypto-style speculative assets.
+- Refinement scheduler round 2 tightened boundary signals and improved evaluation support. It now ties “市盈率 25 倍但品牌很强, 价格合理吗” and “市场恐慌是不是错杀好公司” to live sizing decisions, while refusing 规模和竞争格局比较 and 短线交易指标 questions because they are not value-and-sizing judgments.
 
 当前待补缺口：
 - Add future cases that separate temporary volatility from permanent impairment across new corpora.
 - Run a real refinement_scheduler pass before describing this skill as loop-driven.
+

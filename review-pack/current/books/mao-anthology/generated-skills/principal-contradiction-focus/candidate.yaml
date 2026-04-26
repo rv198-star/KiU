@@ -1,6 +1,6 @@
 candidate_id: principal-contradiction-focus
 source_bundle_id: mao-source-v0.6
-source_graph_hash: sha256:58d9dbaa74d6ef14137efb10a473d151d9c2e1945e51522751719e1827067313
+source_graph_hash: sha256:8e7d2fad23054696d54be36139b84b727ca24bf9639f15b988f973d7d50abd19
 seed:
   primary_node_id: situation-strategy::principal-contradiction-focus
   supporting_node_ids:
@@ -70,7 +70,7 @@ routing_evidence:
   verification_workflow_ready: true
   verification_overall_score: 0.9167
   workflow_promotion_blocked_by_verification: false
-source_file: sources/mao/004-关于纠正党内的错误思想.md
+source_file: sources/mao/src/004-关于纠正党内的错误思想.md
 source_location: &id001
   line_start: 63
   line_end: 65
@@ -117,7 +117,7 @@ verification:
 graph_to_skill_distillation:
   schema_version: kiu.graph-to-skill-distillation/v0.1
   candidate_id: principal-contradiction-focus
-  source_graph_hash: sha256:58d9dbaa74d6ef14137efb10a473d151d9c2e1945e51522751719e1827067313
+  source_graph_hash: sha256:8e7d2fad23054696d54be36139b84b727ca24bf9639f15b988f973d7d50abd19
   source_graph_version: kiu.graph/v0.2
   rules:
   - INFERRED graph edges may expand trigger language but must not override boundary
@@ -174,53 +174,53 @@ ria_tv_provenance:
   - situation-strategy-evidence::principal-contradiction-focus::0005
   - situation-strategy-evidence::principal-contradiction-focus::0006
   source_locations:
-  - source_file: sources/mao/004-关于纠正党内的错误思想.md
+  - source_file: sources/mao/src/004-关于纠正党内的错误思想.md
     source_location: *id001
-  - source_file: sources/mao/004-关于纠正党内的错误思想.md
+  - source_file: sources/mao/src/004-关于纠正党内的错误思想.md
     source_location:
       line_start: 63
       line_end: 65
-  - source_file: sources/mao/005-星星之火，可以燎原.md
+  - source_file: sources/mao/src/005-星星之火，可以燎原.md
     source_location:
       line_start: 6
       line_end: 12
-  - source_file: sources/mao/006-反对本本主义.md
+  - source_file: sources/mao/src/006-反对本本主义.md
     source_location:
       line_start: 24
       line_end: 26
-  - source_file: sources/mao/006-反对本本主义.md
+  - source_file: sources/mao/src/006-反对本本主义.md
     source_location:
       line_start: 55
       line_end: 59
-  - source_file: sources/mao/012-中国革命战争的战略问题.md
+  - source_file: sources/mao/src/012-中国革命战争的战略问题.md
     source_location:
       line_start: 170
       line_end: 203
-  - source_file: sources/mao/012-中国革命战争的战略问题.md
+  - source_file: sources/mao/src/012-中国革命战争的战略问题.md
     source_location:
       line_start: 298
       line_end: 352
-  - source_file: sources/mao/004-关于纠正党内的错误思想.md
+  - source_file: sources/mao/src/004-关于纠正党内的错误思想.md
     source_location:
       line_start: 63
       line_end: 65
-  - source_file: sources/mao/005-星星之火，可以燎原.md
+  - source_file: sources/mao/src/005-星星之火，可以燎原.md
     source_location:
       line_start: 6
       line_end: 12
-  - source_file: sources/mao/006-反对本本主义.md
+  - source_file: sources/mao/src/006-反对本本主义.md
     source_location:
       line_start: 24
       line_end: 26
-  - source_file: sources/mao/006-反对本本主义.md
+  - source_file: sources/mao/src/006-反对本本主义.md
     source_location:
       line_start: 55
       line_end: 59
-  - source_file: sources/mao/012-中国革命战争的战略问题.md
+  - source_file: sources/mao/src/012-中国革命战争的战略问题.md
     source_location:
       line_start: 170
       line_end: 203
-  - source_file: sources/mao/012-中国革命战争的战略问题.md
+  - source_file: sources/mao/src/012-中国革命战争的战略问题.md
     source_location:
       line_start: 298
       line_end: 352

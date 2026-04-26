@@ -3,18 +3,18 @@
   "pipeline_mode": "raw_book_no_seed_cold_start",
   "raw_book_no_seed_cold_start": true,
   "input_kind": "raw_markdown_book",
-  "source_input_path": "examples/MaoZeDongAnthology-master/src",
-  "source_bundle_root": "/tmp/kiu-v075-user-facing-optimization/mao/sources/mao/bundle",
-  "run_root": "/tmp/kiu-v075-user-facing-optimization/mao/generated/mao-source-v0.6/v075-mao-user-facing",
+  "source_input_path": "examples/source-materials/MaoZeDongAnthology-master",
+  "source_bundle_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/mao/sources/mao/bundle",
+  "run_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/mao/generated/mao-source-v0.6/v082-value-gain-mao",
   "source_bundle_id": "mao-source-v0.6",
   "source_bundle_skill_count": 0,
   "uses_existing_source_skills": false,
   "uses_reference_pack_as_generation_input": false,
   "manual_generated_artifact_patch_allowed": false,
   "artifact_paths": {
-    "source_chunks": "/tmp/kiu-v075-user-facing-optimization/mao/intermediate/mao/v075-mao-user-facing/source-chunks.json",
-    "extraction_result": "/tmp/kiu-v075-user-facing-optimization/mao/intermediate/mao/v075-mao-user-facing/extraction-result.json",
-    "graph": "/tmp/kiu-v075-user-facing-optimization/mao/intermediate/mao/v075-mao-user-facing/graph.json"
+    "source_chunks": "/tmp/kiu-v082-value-gain-review-pack-20260427/mao/intermediate/mao/v082-value-gain-mao/source-chunks.json",
+    "extraction_result": "/tmp/kiu-v082-value-gain-review-pack-20260427/mao/intermediate/mao/v082-value-gain-mao/extraction-result.json",
+    "graph": "/tmp/kiu-v082-value-gain-review-pack-20260427/mao/intermediate/mao/v082-value-gain-mao/graph.json"
   },
   "extraction": {
     "deterministic_pass": "heuristic-extractors"

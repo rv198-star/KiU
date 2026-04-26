@@ -1,0 +1,213 @@
+{
+  "schema_version": "kiu.verification-gate/v0.1",
+  "accepted_candidate_count": 6,
+  "rejected_candidate_count": 0,
+  "accepted": [
+    {
+      "candidate_id": "circle-of-competence",
+      "candidate_kind": "general_agentic",
+      "disposition": "skill_candidate",
+      "verification": {
+        "schema_version": "kiu.verification-gate/v0.1",
+        "candidate_id": "circle-of-competence",
+        "passed": true,
+        "workflow_ready": true,
+        "corroboration_score": 1.0,
+        "predictive_usefulness_score": 1.0,
+        "distinctiveness_score": 0.9167,
+        "overall_score": 0.9722,
+        "triple_verification": {
+          "schema_version": "kiu.triple-verification/v0.1",
+          "cross_evidence_ratio": 1.0,
+          "predictive_action_ratio": 1.0,
+          "uniqueness_ratio": 0.9167
+        },
+        "reasons": [],
+        "evidence": {
+          "extracted_evidence_support_count": 2,
+          "evidence_support_count": 2,
+          "context_cues": 1,
+          "workflow_cues": 1,
+          "tri_state_support_ratio": 0.0,
+          "matched_keywords": [],
+          "evidence_chunk_ids": [],
+          "supporting_node_count": 6,
+          "supporting_edge_count": 6,
+          "community_count": 1
+        }
+      }
+    },
+    {
+      "candidate_id": "value-assessment-source-note",
+      "candidate_kind": "general_agentic",
+      "disposition": "skill_candidate",
+      "verification": {
+        "schema_version": "kiu.verification-gate/v0.1",
+        "candidate_id": "value-assessment-source-note",
+        "passed": true,
+        "workflow_ready": true,
+        "corroboration_score": 1.0,
+        "predictive_usefulness_score": 1.0,
+        "distinctiveness_score": 1.0,
+        "overall_score": 1.0,
+        "triple_verification": {
+          "schema_version": "kiu.triple-verification/v0.1",
+          "cross_evidence_ratio": 1.0,
+          "predictive_action_ratio": 1.0,
+          "uniqueness_ratio": 1.0
+        },
+        "reasons": [],
+        "evidence": {
+          "extracted_evidence_support_count": 1,
+          "evidence_support_count": 1,
+          "context_cues": 1,
+          "workflow_cues": 1,
+          "tri_state_support_ratio": 0.0,
+          "matched_keywords": [],
+          "evidence_chunk_ids": [],
+          "supporting_node_count": 3,
+          "supporting_edge_count": 3,
+          "community_count": 1
+        }
+      }
+    },
+    {
+      "candidate_id": "bias-self-audit",
+      "candidate_kind": "general_agentic",
+      "disposition": "skill_candidate",
+      "verification": {
+        "schema_version": "kiu.verification-gate/v0.1",
+        "candidate_id": "bias-self-audit",
+        "passed": true,
+        "workflow_ready": true,
+        "corroboration_score": 1.0,
+        "predictive_usefulness_score": 1.0,
+        "distinctiveness_score": 0.9167,
+        "overall_score": 0.9722,
+        "triple_verification": {
+          "schema_version": "kiu.triple-verification/v0.1",
+          "cross_evidence_ratio": 1.0,
+          "predictive_action_ratio": 1.0,
+          "uniqueness_ratio": 0.9167
+        },
+        "reasons": [],
+        "evidence": {
+          "extracted_evidence_support_count": 2,
+          "evidence_support_count": 2,
+          "context_cues": 1,
+          "workflow_cues": 1,
+          "tri_state_support_ratio": 0.0,
+          "matched_keywords": [],
+          "evidence_chunk_ids": [],
+          "supporting_node_count": 2,
+          "supporting_edge_count": 2,
+          "community_count": 2
+        }
+      }
+    },
+    {
+      "candidate_id": "margin-of-safety-sizing",
+      "candidate_kind": "general_agentic",
+      "disposition": "skill_candidate",
+      "verification": {
+        "schema_version": "kiu.verification-gate/v0.1",
+        "candidate_id": "margin-of-safety-sizing",
+        "passed": true,
+        "workflow_ready": true,
+        "corroboration_score": 1.0,
+        "predictive_usefulness_score": 1.0,
+        "distinctiveness_score": 1.0,
+        "overall_score": 1.0,
+        "triple_verification": {
+          "schema_version": "kiu.triple-verification/v0.1",
+          "cross_evidence_ratio": 1.0,
+          "predictive_action_ratio": 1.0,
+          "uniqueness_ratio": 1.0
+        },
+        "reasons": [],
+        "evidence": {
+          "extracted_evidence_support_count": 2,
+          "evidence_support_count": 2,
+          "context_cues": 1,
+          "workflow_cues": 1,
+          "tri_state_support_ratio": 0.0,
+          "matched_keywords": [],
+          "evidence_chunk_ids": [],
+          "supporting_node_count": 3,
+          "supporting_edge_count": 3,
+          "community_count": 1
+        }
+      }
+    },
+    {
+      "candidate_id": "invert-the-problem",
+      "candidate_kind": "general_agentic",
+      "disposition": "skill_candidate",
+      "verification": {
+        "schema_version": "kiu.verification-gate/v0.1",
+        "candidate_id": "invert-the-problem",
+        "passed": true,
+        "workflow_ready": true,
+        "corroboration_score": 1.0,
+        "predictive_usefulness_score": 1.0,
+        "distinctiveness_score": 0.9167,
+        "overall_score": 0.9722,
+        "triple_verification": {
+          "schema_version": "kiu.triple-verification/v0.1",
+          "cross_evidence_ratio": 1.0,
+          "predictive_action_ratio": 1.0,
+          "uniqueness_ratio": 0.9167
+        },
+        "reasons": [],
+        "evidence": {
+          "extracted_evidence_support_count": 2,
+          "evidence_support_count": 2,
+          "context_cues": 1,
+          "workflow_cues": 1,
+          "tri_state_support_ratio": 0.0,
+          "matched_keywords": [],
+          "evidence_chunk_ids": [],
+          "supporting_node_count": 2,
+          "supporting_edge_count": 2,
+          "community_count": 1
+        }
+      }
+    },
+    {
+      "candidate_id": "opportunity-cost-of-the-next-best-idea",
+      "candidate_kind": "general_agentic",
+      "disposition": "skill_candidate",
+      "verification": {
+        "schema_version": "kiu.verification-gate/v0.1",
+        "candidate_id": "opportunity-cost-of-the-next-best-idea",
+        "passed": true,
+        "workflow_ready": true,
+        "corroboration_score": 1.0,
+        "predictive_usefulness_score": 1.0,
+        "distinctiveness_score": 1.0,
+        "overall_score": 1.0,
+        "triple_verification": {
+          "schema_version": "kiu.triple-verification/v0.1",
+          "cross_evidence_ratio": 1.0,
+          "predictive_action_ratio": 1.0,
+          "uniqueness_ratio": 1.0
+        },
+        "reasons": [],
+        "evidence": {
+          "extracted_evidence_support_count": 2,
+          "evidence_support_count": 2,
+          "context_cues": 1,
+          "workflow_cues": 1,
+          "tri_state_support_ratio": 0.0,
+          "matched_keywords": [],
+          "evidence_chunk_ids": [],
+          "supporting_node_count": 2,
+          "supporting_edge_count": 2,
+          "community_count": 1
+        }
+      }
+    }
+  ],
+  "rejected": [],
+  "average_overall_score": 0.9861
+}

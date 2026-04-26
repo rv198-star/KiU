@@ -51,6 +51,10 @@ judgment_schema:
       decision_warning: string
       next_action: string
       confidence: enum[low|medium|high]
+      value_gain_decision: string
+      value_gain_evidence: list[string]
+      value_gain_risk_boundary: string
+      value_gain_next_handoff: string
   reasoning_chain_required: true
 boundary:
   fails_when:
@@ -77,6 +81,11 @@ Mechanism chain: source anchor -> mechanism observed -> transferable judgment ->
 - transferable judgment: Use `Historical Case Consequence Judgment` only when the current decision matches the source mechanism and boundary checks pass.
 - user trigger: `user_applying_historical_case_to_current_judgment`
 - anti-misuse boundary: `history_summary_only`
+
+### Downstream Use Check
+This skill must make `Historical Case Consequence Judgment` safe to transfer by naming the source mechanism, the current mechanism, and the boundary that would make the analogy invalid.
+
+Minimum Pressure Pass (evidence pressure): Check whether the shared mechanism is evidenced or merely story-similar; if only names, roles, or outcomes match, return do_not_apply or demand more context. Continue only if this changes the decision, action, evidence, handoff, or review value; otherwise freeze the skill without adding process weight.
 
 ## Evidence Summary
 `Historical Case Consequence Judgment` is anchored to historical case evidence beginning with "昔在颛顼，命南正重以司天，北正黎以司地。唐虞之际，绍重黎之後，使复典之，至于夏商，故重黎氏世序天地。其在周，程伯休甫其後也。当周宣王时，失其守而为司马氏。司马氏世典周史。惠襄之间，司马氏去周適(shì)晋。晋中军随会奔秦，而司马氏入少梁。 自司马氏去周適晋，分散，或在卫，或在赵，或在秦。其在卫者，相中山。在赵者，以传剑论显，蒯聩其後也。在秦者名错，与张仪争论，於是惠王使错将伐蜀，遂拔，因而守之。错孙靳，事武安君白起。而少梁更名曰夏阳。靳"[^anchor:historical-case-consequence-judgment-narrative-pattern::historical-case-consequence-judgment].

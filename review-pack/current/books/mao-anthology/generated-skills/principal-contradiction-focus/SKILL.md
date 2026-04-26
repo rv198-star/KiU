@@ -51,6 +51,10 @@ judgment_schema:
       abuse_check: enum[clear|single_case_overreach|context_transfer_abuse|insufficient_context]
       focused_action_program: string
       confidence: enum[low|medium|high]
+      value_gain_decision: string
+      value_gain_evidence: list[string]
+      value_gain_risk_boundary: string
+      value_gain_next_handoff: string
   reasoning_chain_required: true
 boundary:
   fails_when:
@@ -79,6 +83,11 @@ Mechanism chain: source anchor -> mechanism observed -> transferable judgment ->
 - transferable judgment: Use `Principal Contradiction Focus` only when the current decision matches the source mechanism and boundary checks pass.
 - user trigger: `multiple_conflicts_compete_for_attention`
 - anti-misuse boundary: `pure_summary_request`
+
+### Downstream Use Check
+This skill must make `Principal Contradiction Focus` decision-relevant by naming the main tension, the current action it changes, and the boundary that prevents treating every disagreement as the same problem.
+
+Minimum Pressure Pass (alternative pressure): Test one competing problem frame before applying the skill; if a different tension better explains the situation, return that reframing or defer instead of forcing the original frame. Continue only if this changes the decision, action, evidence, handoff, or review value; otherwise freeze the skill without adding process weight.
 
 ## Evidence Summary
 `Principal Contradiction Focus` is grounded in borrowed-value evidence beginning with "主观主义，在某些党员中浓厚地存在，这对分析政治形势和指导工作，都非常不利。因为对于政治形势的主观主义的分析和对于工作的主观主义的指导，其必然的结果，不是机会主义，就是盲动主义。至于党内的主观主义的批评，不要证据的乱说，或互相猜忌，往往酿成党内的无原则纠纷，破坏党的组织。 关于党内批评问题，还有一点要说及的，就是有些同志的批评不注意大的方面，只注意小的方面。他们不明白批评的主要任务，是指出政治上的错误和组织上的错误。至于个人缺点，如果不是"[^anchor:principal-contradiction-focus-situation-strategy::principal-contradiction-focus].

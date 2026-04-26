@@ -1,0 +1,67 @@
+{
+  "candidate_id": "opportunity-cost-of-the-next-best-idea",
+  "mutation_plan": {
+    "boundary_strength_delta": 0.05,
+    "eval_gain_delta": 0.05,
+    "stability_delta": 0.05,
+    "append_trace_ref": "traces/canonical/capital-switching-benchmark.yaml",
+    "revision_note": "Refinement scheduler round 2 tightened boundary signals and improved evaluation support."
+  },
+  "scorecard": {
+    "nearest_skill_id": "opportunity-cost-of-the-next-best-idea",
+    "boundary_quality": 0.99,
+    "eval_aggregate": 0.9167,
+    "cross_subset_stability": 0.9,
+    "overall_quality": 0.9463,
+    "delta_vs_nearest": 0.0955,
+    "delta_vs_bundle": 0.0955,
+    "net_positive_value": 0.1355,
+    "artifact_quality": 0.9894,
+    "artifact_grade": "excellent",
+    "production_quality": 0.9743,
+    "quality_grade": "excellent",
+    "release_ready": true
+  },
+  "decision": {
+    "terminal_state": "ready_for_review",
+    "continue_loop": false,
+    "reason": "targets_met"
+  },
+  "quality_assessment": {
+    "candidate_id": "opportunity-cost-of-the-next-best-idea",
+    "artifact_quality": 0.9894,
+    "artifact_grade": "excellent",
+    "production_quality": 0.9743,
+    "quality_grade": "excellent",
+    "release_ready": true,
+    "loop_overall_quality": 0.9463,
+    "component_scores": {
+      "contract_specificity": 1.0,
+      "rationale_depth": 1.0,
+      "evidence_grounding": 1.0,
+      "usage_readiness": 1.0,
+      "eval_readiness": 0.934,
+      "revision_traceability": 1.0
+    },
+    "signals": {
+      "trigger_patterns": 2,
+      "intake_fields": 3,
+      "rationale_chars": 1189,
+      "rationale_anchor_refs": 3,
+      "evidence_anchor_refs": 5,
+      "graph_anchor_sets": 1,
+      "source_anchor_sets": 3,
+      "trace_refs": 3,
+      "usage_notes": 6,
+      "eval_cases_total": 50,
+      "passed_kiu_tests": 3,
+      "revision_history_entries": 3
+    },
+    "blockers": [],
+    "notes": [],
+    "thresholds": {
+      "artifact_quality": 0.78,
+      "production_quality": 0.82
+    }
+  }
+}

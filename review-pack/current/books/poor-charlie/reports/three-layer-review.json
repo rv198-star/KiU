@@ -1,0 +1,407 @@
+{
+  "run_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie",
+  "source_bundle_path": "bundles/poor-charlies-almanack-v0.1",
+  "usage_review_dir": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/usage-review",
+  "pipeline_provenance": {
+    "schema_version": "kiu.pipeline-provenance/v0.1",
+    "pipeline_mode": "source_bundle_regeneration",
+    "raw_book_no_seed_cold_start": false,
+    "input_kind": "source_bundle",
+    "source_bundle_root": "bundles/poor-charlies-almanack-v0.1",
+    "run_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie",
+    "source_bundle_id": "poor-charlies-almanack-v0.1",
+    "source_bundle_skill_count": 5,
+    "uses_existing_source_skills": true,
+    "uses_reference_pack_as_generation_input": false,
+    "manual_generated_artifact_patch_allowed": false,
+    "entrypoint": "build_candidates.py",
+    "claim_boundary": "This run regenerates candidates from an existing source bundle. It must not be described as raw-book no-seed cold start."
+  },
+  "cold_start": {
+    "raw_book_no_seed_cold_start": false,
+    "pipeline_mode": "source_bundle_regeneration",
+    "source_bundle_skill_count": 5,
+    "claim_boundary": "This run regenerates candidates from an existing source bundle. It must not be described as raw-book no-seed cold start."
+  },
+  "source_bundle": {
+    "score_100": 100.0,
+    "errors": 0,
+    "warnings": 0,
+    "skill_count": 5,
+    "graph": {
+      "node_count": 15,
+      "edge_count": 13,
+      "community_count": 5
+    },
+    "shared_assets": {
+      "trace_count": 16,
+      "evaluation_count": 53,
+      "evaluation_breakdown": {
+        "real_decisions": 20,
+        "synthetic_adversarial": 20,
+        "out_of_distribution": 10
+      }
+    },
+    "source_bundle_kind": "published_source_bundle",
+    "provenance": {
+      "nodes": {
+        "count": 15,
+        "source_file_ratio": 1.0,
+        "source_location_ratio": 1.0,
+        "extraction_kind_ratio": 1.0
+      },
+      "edges": {
+        "count": 13,
+        "source_file_ratio": 1.0,
+        "source_location_ratio": 1.0,
+        "extraction_kind_ratio": 1.0,
+        "confidence_ratio": 1.0
+      },
+      "extraction_kind_counts": {
+        "EXTRACTED": 21,
+        "INFERRED": 3,
+        "AMBIGUOUS": 4
+      }
+    },
+    "tri_state_effectiveness": {
+      "candidate_count": 6,
+      "candidates_using_tri_state": 6,
+      "candidate_coverage_ratio": 1.0,
+      "inferred_node_reference_ratio": 0.0,
+      "inferred_edge_reference_ratio": 1.0,
+      "ambiguous_node_reference_ratio": 1.0,
+      "ambiguous_edge_reference_ratio": 1.0,
+      "overall_ratio": 0.8
+    },
+    "graph_report_present": true,
+    "source_chunks_present": false,
+    "source_snapshot_present": true,
+    "maturity_factor": 1.0,
+    "notes": [
+      "validator_clean",
+      "shared_evidence_pool_present",
+      "graph_report_present",
+      "provenance_graph_complete"
+    ]
+  },
+  "generated_bundle": {
+    "score_100": 97.8,
+    "errors": 0,
+    "warnings": 0,
+    "skill_count": 6,
+    "workflow_candidate_count": 0,
+    "bundle_quality_grade": "excellent",
+    "minimum_production_quality": 0.9648,
+    "average_production_quality": 0.9728,
+    "verification_gate_present": true,
+    "pseudo_skill_audit": {
+      "chapter_title_rejected_count": 0,
+      "summary_candidate_rejected_count": 0,
+      "workflow_candidate_routed_count": 0,
+      "agentic_skill_accepted_count": 6
+    },
+    "pressure_test_summary": {
+      "skill_count": 6,
+      "probe_count": 30,
+      "pass_ratio": 1.0,
+      "false_positive_count": 0,
+      "failure_owner_counts": {}
+    },
+    "rationale_template_collision": {
+      "schema_version": "kiu.rationale-template-collision/v0.1",
+      "collision_count": 0,
+      "collisions": []
+    },
+    "workflow_verification_ready_ratio": 1.0,
+    "workflow_gateway_boundary_preserved": true,
+    "coverage_readiness": {
+      "schema_version": "kiu.coverage-readiness/v0.1",
+      "coverage_units": [],
+      "covered_units": [],
+      "uncovered_units": [],
+      "coverage_unit_count": 0,
+      "covered_unit_count": 0,
+      "uncovered_unit_count": 0,
+      "published_skill_count": 6,
+      "workflow_candidate_count": 0,
+      "gateway_route_count": 0,
+      "narrow_output_justification": "",
+      "readiness": {
+        "schema_version": "kiu.application-readiness/v0.1",
+        "model": "coverage_model",
+        "status": "pass",
+        "score_100": 100.0,
+        "warning_count": 0,
+        "failure_count": 0,
+        "findings": [],
+        "claim_boundary": "Internal readiness model evidence; not external validation or domain-expert review."
+      }
+    },
+    "world_alignment": {
+      "schema_version": "kiu.world-alignment-review/v0.1",
+      "bundle_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle",
+      "world_alignment_present": false,
+      "source_fidelity_preserved": true,
+      "world_context_isolated": false,
+      "original_source_only_mode_supported": false,
+      "source_pollution_errors": 0,
+      "source_pollution_findings": [],
+      "gate_count": 0,
+      "verdict_counts": {},
+      "scores": {
+        "source_fidelity_score": 100.0,
+        "world_context_isolation_score": 0.0,
+        "application_gate_quality_score": 0.0,
+        "world_alignment_explanation_score": 0.0,
+        "workflow_boundary_resilience_score": 100.0,
+        "world_context_depth_score": 0.0,
+        "source_fit_score": 0.0,
+        "dilution_risk_score": 100.0,
+        "hallucination_risk_score": 100.0
+      },
+      "accepted_pressure_count": 0,
+      "rejected_pressure_count": 0,
+      "no_forced_enhancement_count": 0,
+      "quality_findings": [
+        "world_context_missing"
+      ],
+      "no_web_risk_control": {
+        "passed": false
+      },
+      "world_alignment_score_100": 0.0
+    },
+    "notes": [
+      "production_quality_excellent",
+      "verification_gate_present",
+      "coverage_readiness_pass"
+    ]
+  },
+  "usage_outputs": {
+    "score_100": 95.8,
+    "sample_count": 18,
+    "notes": [
+      "usage_reviews_scored"
+    ],
+    "failure_tag_counts": {},
+    "top_failure_modes": [],
+    "severity_counts": {
+      "none": 18
+    },
+    "critical_failure_count": 0,
+    "usage_gate_ready": true,
+    "usage_gate_reasons": [],
+    "samples": [
+      {
+        "review_case_id": "bias-self-audit-usage-apply",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/bias-self-audit/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "bias-self-audit-usage-defer-boundary",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/bias-self-audit/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "bias-self-audit-usage-do-not-apply",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/bias-self-audit/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "circle-of-competence-usage-apply",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/circle-of-competence/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "circle-of-competence-usage-defer-boundary",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/circle-of-competence/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "circle-of-competence-usage-do-not-apply",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/circle-of-competence/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "invert-the-problem-usage-apply",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/invert-the-problem/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "invert-the-problem-usage-defer-boundary",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/invert-the-problem/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "invert-the-problem-usage-do-not-apply",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/invert-the-problem/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "margin-of-safety-sizing-usage-apply",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/margin-of-safety-sizing/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "margin-of-safety-sizing-usage-defer-boundary",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/margin-of-safety-sizing/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "margin-of-safety-sizing-usage-do-not-apply",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/margin-of-safety-sizing/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "opportunity-cost-of-the-next-best-idea-usage-apply",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/opportunity-cost-of-the-next-best-idea/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "opportunity-cost-of-the-next-best-idea-usage-defer-boundary",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/opportunity-cost-of-the-next-best-idea/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "opportunity-cost-of-the-next-best-idea-usage-do-not-apply",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/opportunity-cost-of-the-next-best-idea/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "value-assessment-source-note-usage-apply",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/value-assessment-source-note/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "value-assessment-source-note-usage-defer-boundary",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/value-assessment-source-note/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      },
+      {
+        "review_case_id": "value-assessment-source-note-usage-do-not-apply",
+        "score_100": 95.0,
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie/bundle/skills/value-assessment-source-note/SKILL.md",
+        "failure_analysis": {
+          "tags": [],
+          "tag_counts": {},
+          "severity": "none"
+        }
+      }
+    ]
+  },
+  "proxy_usage_outputs": {
+    "schema_version": "kiu.proxy-usage-summary/v0.1",
+    "case_count": 0,
+    "score_100": 0.0,
+    "case_type_counts": {},
+    "failure_tag_counts": {},
+    "gate_ready": false,
+    "gate_reasons": [
+      "no_proxy_usage_cases"
+    ],
+    "cases": []
+  },
+  "practical_effect_outputs": {
+    "schema_version": "kiu.practical-effect-review/v0.1",
+    "score_100": 95.8,
+    "evidence_level": "L3_usage_review",
+    "usage_score_100": 95.8,
+    "proxy_usage_score_100": 0.0,
+    "case_count": 18,
+    "gate_ready": true,
+    "gate_reasons": [],
+    "claim_boundary": "Usage evidence is used as the primary practical-effect signal for this run."
+  },
+  "release_gate": {
+    "source_bundle_ready": true,
+    "generated_bundle_ready": true,
+    "usage_gate_ready": true,
+    "overall_ready": true,
+    "reasons": []
+  },
+  "overall_score_100": 97.9
+}

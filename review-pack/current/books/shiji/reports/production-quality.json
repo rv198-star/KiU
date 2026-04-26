@@ -36,7 +36,7 @@
       "signals": {
         "trigger_patterns": 3,
         "intake_fields": 4,
-        "rationale_chars": 2433,
+        "rationale_chars": 2896,
         "rationale_anchor_refs": 4,
         "evidence_anchor_refs": 3,
         "graph_anchor_sets": 1,
@@ -73,7 +73,7 @@
       "signals": {
         "trigger_patterns": 3,
         "intake_fields": 4,
-        "rationale_chars": 2366,
+        "rationale_chars": 2833,
         "rationale_anchor_refs": 4,
         "evidence_anchor_refs": 3,
         "graph_anchor_sets": 1,
@@ -110,7 +110,7 @@
       "signals": {
         "trigger_patterns": 3,
         "intake_fields": 4,
-        "rationale_chars": 2159,
+        "rationale_chars": 2617,
         "rationale_anchor_refs": 4,
         "evidence_anchor_refs": 3,
         "graph_anchor_sets": 1,

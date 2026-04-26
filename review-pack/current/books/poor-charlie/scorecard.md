@@ -1,10 +1,17 @@
-# Scorecard: Poor Charlie
+# Scorecard: Poor Charlie's Almanack
 
-Evidence level: internal artifact review and internal user-perspective review. This is not external blind review, real-user validation, or domain-expert validation.
+Evidence level: internal deterministic v0.8.2 value-gain pressure-chain rerun + generated-run scoring. This is not external blind review, real-user validation, or domain-expert validation.
 
-## Summary
+## Run
 
-| Metric | Value |
+- Run root: `/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie`
+- Run id: `v082-value-gain-poor-charlie`
+- Pipeline mode: `source_bundle_regeneration`
+- Value-gain fields: `6/6` published skills include `value_gain_*`, `Downstream Use Check`, and `Minimum Pressure Pass`.
+
+## Three-Layer Scores
+
+| Layer | Score |
 | --- | ---: |
 | Source | 100.0 |
 | Generated | 97.8 |
@@ -12,31 +19,36 @@ Evidence level: internal artifact review and internal user-perspective review. T
 | Practical effect | 95.8 |
 | Overall | 97.9 |
 | Release gate | PASS |
-| C-class action value | 94 |
-| User-facing overall | 94 |
 
-## User-Facing Dimensions
+## Action Identity
 
-| Dimension | Score |
+| Check | Value |
 | --- | ---: |
-| source_trust | 94 |
-| action_helpfulness | 94 |
-| boundary_clarity | 94 |
-| coverage_fit | 93 |
-| context_application_safety | 90 |
-| evidence_confidence | internal_user_perspective |
+| Route distribution | `publish_skill=6` |
+| Container candidate leaks | 0 |
+| Publishable action-skill ratio | 1.0000 |
+| Minimum action-skill identity score | 0.8983 |
+
+## Production Quality
+
+| Check | Value |
+| --- | ---: |
+| Bundle grade | `excellent` |
+| Average production quality | 0.9728 |
+| Minimum production quality | 0.9648 |
+| Grade counts | `excellent=6` |
 
 ## Published Skills
 
-| Skill | User-facing score | Reading |
+| Skill | Production quality | Grade |
 | --- | ---: | --- |
-| `circle-of-competence` | 94 | Strong user-facing boundary skill. |
-| `value-assessment-source-note` | 91 | Supporting value-assessment skill. |
-| `bias-self-audit` | 94 | Feedback-calibration skill for decision distortion. |
-| `margin-of-safety-sizing` | 94 | Action-resolution and risk-control skill. |
-| `invert-the-problem` | 93 | Problem-definition and failure-path skill. |
-| `opportunity-cost-of-the-next-best-idea` | 93 | Tradeoff and decision-priority skill. |
+| `bias-self-audit` | n/a | `n/a` |
+| `circle-of-competence` | n/a | `n/a` |
+| `invert-the-problem` | n/a | `n/a` |
+| `margin-of-safety-sizing` | n/a | `n/a` |
+| `opportunity-cost-of-the-next-best-idea` | n/a | `n/a` |
+| `value-assessment-source-note` | n/a | `n/a` |
 
-## Caveat
+## Boundary
 
-This is the strongest mature mental-model set in the current review pack, but the evidence level remains internal review.
+This scorecard proves the current repository-visible artifact pack was regenerated with the v0.8.2 value-gain pressure-chain renderer. It does not prove external preference, real-user success, domain-expert approval, or complete domain coverage.

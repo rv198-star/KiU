@@ -1,9 +1,9 @@
 skill_id: bias-self-audit
 bundle_version: 0.2.0
-current_revision: 1
+current_revision: 3
 history:
 - revision: 1
-  date: '2026-04-26'
+  date: '2026-04-27'
   summary: 'Revision 5 是一次面向 `v0.5.1` 的手工补强，不是 refinement_scheduler 自动 loop。本轮把正文从英文审计口吻改成中文
     action-facing 表达，补进了和同源 benchmark 高度相关的触发语：“我觉得这肯定对”“不可能错”“反面意见我都不想听了”“大家都同意”“已经收集了很多支持数据”。
 
@@ -19,6 +19,32 @@ history:
     search, and mitigation actions.
   - Clarified non-trigger boundaries for early-stage data collection, urgent incidents,
     and indecision without a formed thesis.
+- revision: 2
+  date: '2026-04-27'
+  summary: Refinement scheduler round 1 tightened boundary signals and improved evaluation
+    support. It treats “大家都同意, 明天就拍板” and “只收集了支持观点的数据” as live bias-audit windows,
+    but refuses 达尔文历史/科学知识查询, 信息收集的早期阶段, and 紧急决策场景 like “服务器突然宕机了先判断数据库还是网络”, because系统性地搜索反面证据不现实,
+    不应激活这类方法论检验.
+  graph_hash: sha256:d578eb971f656caa040d8f11dc4a7d473bdd30907420f054433f88fd82005151
+  effective_status: under_evaluation
+  evidence_changes:
+  - Refinement scheduler round 1 tightened boundary signals and improved evaluation
+    support. It treats “大家都同意, 明天就拍板” and “只收集了支持观点的数据” as live bias-audit windows,
+    but refuses 达尔文历史/科学知识查询, 信息收集的早期阶段, and 紧急决策场景 like “服务器突然宕机了先判断数据库还是网络”, because系统性地搜索反面证据不现实,
+    不应激活这类方法论检验.
+- revision: 3
+  date: '2026-04-27'
+  summary: Refinement scheduler round 2 tightened boundary signals and improved evaluation
+    support. It treats “大家都同意, 明天就拍板” and “只收集了支持观点的数据” as live bias-audit windows,
+    but refuses 达尔文历史/科学知识查询, 信息收集的早期阶段, and 紧急决策场景 like “服务器突然宕机了先判断数据库还是网络”, because系统性地搜索反面证据不现实,
+    不应激活这类方法论检验.
+  graph_hash: sha256:d578eb971f656caa040d8f11dc4a7d473bdd30907420f054433f88fd82005151
+  effective_status: under_evaluation
+  evidence_changes:
+  - Refinement scheduler round 2 tightened boundary signals and improved evaluation
+    support. It treats “大家都同意, 明天就拍板” and “只收集了支持观点的数据” as live bias-audit windows,
+    but refuses 达尔文历史/科学知识查询, 信息收集的早期阶段, and 紧急决策场景 like “服务器突然宕机了先判断数据库还是网络”, because系统性地搜索反面证据不现实,
+    不应激活这类方法论检验.
 open_gaps:
 - Continue tightening low-stakes refusal calibration without weakening the current
   published contract.

@@ -9,7 +9,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/082-论联合政府.md",
+      "source_file": "sources/mao/src/082-论联合政府.md",
       "source_location": {
         "line_start": 22,
         "line_end": 22
@@ -23,7 +23,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 125,
         "line_end": 125
@@ -37,7 +37,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 59,
         "line_end": 59
@@ -51,7 +51,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/082-论联合政府.md",
+      "source_file": "sources/mao/src/082-论联合政府.md",
       "source_location": {
         "line_start": 104,
         "line_end": 104
@@ -65,7 +65,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/026-论持久战.md",
+      "source_file": "sources/mao/src/026-论持久战.md",
       "source_location": {
         "line_start": 6,
         "line_end": 6
@@ -79,7 +79,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 6,
         "line_end": 6
@@ -93,7 +93,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 64,
         "line_end": 64
@@ -107,7 +107,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 152,
         "line_end": 152
@@ -121,7 +121,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 174,
         "line_end": 174
@@ -135,7 +135,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/017-矛盾论.md",
+      "source_file": "sources/mao/src/017-矛盾论.md",
       "source_location": {
         "line_start": 135,
         "line_end": 135
@@ -149,7 +149,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 6,
         "line_end": 6
@@ -163,7 +163,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 67,
         "line_end": 67
@@ -177,7 +177,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 289,
         "line_end": 289
@@ -191,7 +191,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 179,
         "line_end": 179
@@ -205,7 +205,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/006-反对本本主义.md",
+      "source_file": "sources/mao/src/006-反对本本主义.md",
       "source_location": {
         "line_start": 60,
         "line_end": 60
@@ -219,7 +219,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 100,
         "line_end": 100
@@ -233,7 +233,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 147,
         "line_end": 147
@@ -247,7 +247,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 236,
         "line_end": 236
@@ -261,7 +261,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/029-战争和战略问题.md",
+      "source_file": "sources/mao/src/029-战争和战略问题.md",
       "source_location": {
         "line_start": 6,
         "line_end": 6
@@ -275,7 +275,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 58,
         "line_end": 58
@@ -289,7 +289,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 141,
         "line_end": 141
@@ -303,7 +303,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/002-中国的红色政权为什么能够存在？.md",
+      "source_file": "sources/mao/src/002-中国的红色政权为什么能够存在？.md",
       "source_location": {
         "line_start": 29,
         "line_end": 29
@@ -317,7 +317,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/029-战争和战略问题.md",
+      "source_file": "sources/mao/src/029-战争和战略问题.md",
       "source_location": {
         "line_start": 53,
         "line_end": 53
@@ -331,7 +331,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/017-矛盾论.md",
+      "source_file": "sources/mao/src/017-矛盾论.md",
       "source_location": {
         "line_start": 71,
         "line_end": 71
@@ -345,7 +345,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/114-关于目前党的政策中的几个重要问题.md",
+      "source_file": "sources/mao/src/114-关于目前党的政策中的几个重要问题.md",
       "source_location": {
         "line_start": 32,
         "line_end": 32
@@ -359,7 +359,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 66,
         "line_end": 66
@@ -373,7 +373,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 8,
         "line_end": 8
@@ -387,7 +387,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 66,
         "line_end": 66
@@ -401,7 +401,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 129,
         "line_end": 129
@@ -415,7 +415,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 258,
         "line_end": 258
@@ -429,7 +429,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 89,
         "line_end": 89
@@ -443,7 +443,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 83,
         "line_end": 83
@@ -457,7 +457,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 29,
         "line_end": 29
@@ -471,7 +471,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 30,
         "line_end": 30
@@ -485,7 +485,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 74,
         "line_end": 74
@@ -499,7 +499,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 73,
         "line_end": 73
@@ -513,7 +513,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 279,
         "line_end": 279
@@ -527,7 +527,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 106,
         "line_end": 106
@@ -541,7 +541,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 204,
         "line_end": 204
@@ -555,7 +555,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/114-关于目前党的政策中的几个重要问题.md",
+      "source_file": "sources/mao/src/114-关于目前党的政策中的几个重要问题.md",
       "source_location": {
         "line_start": 6,
         "line_end": 6
@@ -569,7 +569,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 120,
         "line_end": 120
@@ -583,7 +583,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/023-上海太原失陷以后抗日战争的形势和任务.md",
+      "source_file": "sources/mao/src/023-上海太原失陷以后抗日战争的形势和任务.md",
       "source_location": {
         "line_start": 6,
         "line_end": 6
@@ -597,7 +597,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 89,
         "line_end": 89
@@ -611,7 +611,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 108,
         "line_end": 108
@@ -625,7 +625,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/002-中国的红色政权为什么能够存在？.md",
+      "source_file": "sources/mao/src/002-中国的红色政权为什么能够存在？.md",
       "source_location": {
         "line_start": 13,
         "line_end": 13
@@ -639,7 +639,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/091-第十八集团军总司令给蒋介石的两个电报.md",
+      "source_file": "sources/mao/src/091-第十八集团军总司令给蒋介石的两个电报.md",
       "source_location": {
         "line_start": 10,
         "line_end": 10
@@ -653,7 +653,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/128-关于辽沈战役的作战方针.md",
+      "source_file": "sources/mao/src/128-关于辽沈战役的作战方针.md",
       "source_location": {
         "line_start": 10,
         "line_end": 10
@@ -667,7 +667,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/082-论联合政府.md",
+      "source_file": "sources/mao/src/082-论联合政府.md",
       "source_location": {
         "line_start": 11,
         "line_end": 11
@@ -681,7 +681,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/017-矛盾论.md",
+      "source_file": "sources/mao/src/017-矛盾论.md",
       "source_location": {
         "line_start": 94,
         "line_end": 94
@@ -695,7 +695,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/006-反对本本主义.md",
+      "source_file": "sources/mao/src/006-反对本本主义.md",
       "source_location": {
         "line_start": 32,
         "line_end": 32
@@ -709,7 +709,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/006-反对本本主义.md",
+      "source_file": "sources/mao/src/006-反对本本主义.md",
       "source_location": {
         "line_start": 52,
         "line_end": 52
@@ -723,7 +723,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/017-矛盾论.md",
+      "source_file": "sources/mao/src/017-矛盾论.md",
       "source_location": {
         "line_start": 124,
         "line_end": 124
@@ -737,7 +737,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 6,
         "line_end": 6
@@ -751,7 +751,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 8,
         "line_end": 8
@@ -765,7 +765,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 69,
         "line_end": 69
@@ -779,7 +779,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 100,
         "line_end": 100
@@ -793,7 +793,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 76,
         "line_end": 76
@@ -807,7 +807,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 16,
         "line_end": 16
@@ -821,7 +821,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 25,
         "line_end": 25
@@ -835,7 +835,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 117,
         "line_end": 117
@@ -849,7 +849,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 51,
         "line_end": 51
@@ -863,7 +863,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 157,
         "line_end": 157
@@ -877,7 +877,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 96,
         "line_end": 96
@@ -891,7 +891,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 168,
         "line_end": 168
@@ -905,7 +905,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 92,
         "line_end": 92
@@ -919,7 +919,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/017-矛盾论.md",
+      "source_file": "sources/mao/src/017-矛盾论.md",
       "source_location": {
         "line_start": 9,
         "line_end": 9
@@ -933,7 +933,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 6,
         "line_end": 6
@@ -947,7 +947,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/128-关于辽沈战役的作战方针.md",
+      "source_file": "sources/mao/src/128-关于辽沈战役的作战方针.md",
       "source_location": {
         "line_start": 6,
         "line_end": 6
@@ -961,7 +961,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/091-第十八集团军总司令给蒋介石的两个电报.md",
+      "source_file": "sources/mao/src/091-第十八集团军总司令给蒋介石的两个电报.md",
       "source_location": {
         "line_start": 6,
         "line_end": 6
@@ -975,7 +975,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/002-中国的红色政权为什么能够存在？.md",
+      "source_file": "sources/mao/src/002-中国的红色政权为什么能够存在？.md",
       "source_location": {
         "line_start": 6,
         "line_end": 6
@@ -989,7 +989,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/006-反对本本主义.md",
+      "source_file": "sources/mao/src/006-反对本本主义.md",
       "source_location": {
         "line_start": 6,
         "line_end": 6
@@ -1025,7 +1025,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/029-战争和战略问题.md",
+      "source_file": "sources/mao/src/029-战争和战略问题.md",
       "source_location": {
         "line_start": 29,
         "line_end": 29
@@ -1039,7 +1039,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 121,
         "line_end": 121
@@ -1053,7 +1053,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/006-反对本本主义.md",
+      "source_file": "sources/mao/src/006-反对本本主义.md",
       "source_location": {
         "line_start": 21,
         "line_end": 21
@@ -1067,7 +1067,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/029-战争和战略问题.md",
+      "source_file": "sources/mao/src/029-战争和战略问题.md",
       "source_location": {
         "line_start": 17,
         "line_end": 17
@@ -1081,7 +1081,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/114-关于目前党的政策中的几个重要问题.md",
+      "source_file": "sources/mao/src/114-关于目前党的政策中的几个重要问题.md",
       "source_location": {
         "line_start": 11,
         "line_end": 11
@@ -1095,7 +1095,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/006-反对本本主义.md",
+      "source_file": "sources/mao/src/006-反对本本主义.md",
       "source_location": {
         "line_start": 14,
         "line_end": 14
@@ -1109,7 +1109,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/008-怎样分析农村阶级.md",
+      "source_file": "sources/mao/src/008-怎样分析农村阶级.md",
       "source_location": {
         "line_start": 26,
         "line_end": 26
@@ -1123,7 +1123,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/029-战争和战略问题.md",
+      "source_file": "sources/mao/src/029-战争和战略问题.md",
       "source_location": {
         "line_start": 45,
         "line_end": 45
@@ -1137,7 +1137,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/002-中国的红色政权为什么能够存在？.md",
+      "source_file": "sources/mao/src/002-中国的红色政权为什么能够存在？.md",
       "source_location": {
         "line_start": 25,
         "line_end": 25
@@ -1151,7 +1151,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 79,
         "line_end": 79
@@ -1176,7 +1176,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/029-战争和战略问题.md",
+      "source_file": "sources/mao/src/029-战争和战略问题.md",
       "source_location": {
         "line_start": 35,
         "line_end": 35
@@ -1190,7 +1190,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/018-反对日本进攻的方针、办法和前途.md",
+      "source_file": "sources/mao/src/018-反对日本进攻的方针、办法和前途.md",
       "source_location": {
         "line_start": 68,
         "line_end": 68
@@ -1204,7 +1204,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/008-怎样分析农村阶级.md",
+      "source_file": "sources/mao/src/008-怎样分析农村阶级.md",
       "source_location": {
         "line_start": 22,
         "line_end": 22
@@ -1240,7 +1240,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 57,
         "line_end": 57
@@ -1254,7 +1254,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 15,
         "line_end": 15
@@ -1268,7 +1268,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 96,
         "line_end": 96
@@ -1282,7 +1282,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/075-学习和时局.md",
+      "source_file": "sources/mao/src/075-学习和时局.md",
       "source_location": {
         "line_start": 68,
         "line_end": 68
@@ -1296,7 +1296,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/017-矛盾论.md",
+      "source_file": "sources/mao/src/017-矛盾论.md",
       "source_location": {
         "line_start": 12,
         "line_end": 17
@@ -1310,7 +1310,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/018-反对日本进攻的方针、办法和前途.md",
+      "source_file": "sources/mao/src/018-反对日本进攻的方针、办法和前途.md",
       "source_location": {
         "line_start": 6,
         "line_end": 6
@@ -1324,7 +1324,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/082-论联合政府.md",
+      "source_file": "sources/mao/src/082-论联合政府.md",
       "source_location": {
         "line_start": 6,
         "line_end": 6
@@ -1338,7 +1338,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 9,
         "line_end": 9
@@ -1352,7 +1352,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/029-战争和战略问题.md",
+      "source_file": "sources/mao/src/029-战争和战略问题.md",
       "source_location": {
         "line_start": 9,
         "line_end": 16
@@ -1366,7 +1366,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/114-关于目前党的政策中的几个重要问题.md",
+      "source_file": "sources/mao/src/114-关于目前党的政策中的几个重要问题.md",
       "source_location": {
         "line_start": 9,
         "line_end": 10
@@ -1380,7 +1380,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/091-第十八集团军总司令给蒋介石的两个电报.md",
+      "source_file": "sources/mao/src/091-第十八集团军总司令给蒋介石的两个电报.md",
       "source_location": {
         "line_start": 9,
         "line_end": 9
@@ -1394,7 +1394,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/002-中国的红色政权为什么能够存在？.md",
+      "source_file": "sources/mao/src/002-中国的红色政权为什么能够存在？.md",
       "source_location": {
         "line_start": 9,
         "line_end": 12
@@ -1408,7 +1408,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/008-怎样分析农村阶级.md",
+      "source_file": "sources/mao/src/008-怎样分析农村阶级.md",
       "source_location": {
         "line_start": 6,
         "line_end": 6
@@ -1422,7 +1422,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 103,
         "line_end": 103
@@ -1436,7 +1436,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 137,
         "line_end": 137
@@ -1450,7 +1450,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 156,
         "line_end": 156
@@ -1464,7 +1464,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 173,
         "line_end": 178
@@ -1478,7 +1478,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/006-反对本本主义.md",
+      "source_file": "sources/mao/src/006-反对本本主义.md",
       "source_location": {
         "line_start": 63,
         "line_end": 76
@@ -1492,7 +1492,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 92,
         "line_end": 99
@@ -1506,7 +1506,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/018-反对日本进攻的方针、办法和前途.md",
+      "source_file": "sources/mao/src/018-反对日本进攻的方针、办法和前途.md",
       "source_location": {
         "line_start": 62,
         "line_end": 62
@@ -1520,7 +1520,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/008-怎样分析农村阶级.md",
+      "source_file": "sources/mao/src/008-怎样分析农村阶级.md",
       "source_location": {
         "line_start": 18,
         "line_end": 18
@@ -1534,7 +1534,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 17,
         "line_end": 27
@@ -1548,7 +1548,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/114-关于目前党的政策中的几个重要问题.md",
+      "source_file": "sources/mao/src/114-关于目前党的政策中的几个重要问题.md",
       "source_location": {
         "line_start": 26,
         "line_end": 26
@@ -1562,7 +1562,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 124,
         "line_end": 132
@@ -1576,7 +1576,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/002-中国的红色政权为什么能够存在？.md",
+      "source_file": "sources/mao/src/002-中国的红色政权为什么能够存在？.md",
       "source_location": {
         "line_start": 20,
         "line_end": 20
@@ -1590,7 +1590,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/017-矛盾论.md",
+      "source_file": "sources/mao/src/017-矛盾论.md",
       "source_location": {
         "line_start": 46,
         "line_end": 70
@@ -1604,7 +1604,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 111,
         "line_end": 119
@@ -1618,7 +1618,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/075-学习和时局.md",
+      "source_file": "sources/mao/src/075-学习和时局.md",
       "source_location": {
         "line_start": 72,
         "line_end": 76
@@ -1632,7 +1632,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/018-反对日本进攻的方针、办法和前途.md",
+      "source_file": "sources/mao/src/018-反对日本进攻的方针、办法和前途.md",
       "source_location": {
         "line_start": 39,
         "line_end": 61
@@ -1646,7 +1646,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/002-中国的红色政权为什么能够存在？.md",
+      "source_file": "sources/mao/src/002-中国的红色政权为什么能够存在？.md",
       "source_location": {
         "line_start": 16,
         "line_end": 16
@@ -1660,7 +1660,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/082-论联合政府.md",
+      "source_file": "sources/mao/src/082-论联合政府.md",
       "source_location": {
         "line_start": 13,
         "line_end": 21
@@ -1674,7 +1674,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/008-怎样分析农村阶级.md",
+      "source_file": "sources/mao/src/008-怎样分析农村阶级.md",
       "source_location": {
         "line_start": 14,
         "line_end": 14
@@ -1688,7 +1688,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 10,
         "line_end": 10
@@ -1702,7 +1702,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/017-矛盾论.md",
+      "source_file": "sources/mao/src/017-矛盾论.md",
       "source_location": {
         "line_start": 21,
         "line_end": 42
@@ -1716,7 +1716,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 109,
         "line_end": 109
@@ -1730,7 +1730,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/029-战争和战略问题.md",
+      "source_file": "sources/mao/src/029-战争和战略问题.md",
       "source_location": {
         "line_start": 48,
         "line_end": 52
@@ -1744,7 +1744,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 144,
         "line_end": 151
@@ -1758,7 +1758,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/017-矛盾论.md",
+      "source_file": "sources/mao/src/017-矛盾论.md",
       "source_location": {
         "line_start": 97,
         "line_end": 123
@@ -1772,7 +1772,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/002-中国的红色政权为什么能够存在？.md",
+      "source_file": "sources/mao/src/002-中国的红色政权为什么能够存在？.md",
       "source_location": {
         "line_start": 28,
         "line_end": 28
@@ -1786,7 +1786,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 103,
         "line_end": 107
@@ -1800,7 +1800,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/002-中国的红色政权为什么能够存在？.md",
+      "source_file": "sources/mao/src/002-中国的红色政权为什么能够存在？.md",
       "source_location": {
         "line_start": 34,
         "line_end": 49
@@ -1814,7 +1814,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 82,
         "line_end": 88
@@ -1828,7 +1828,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/075-学习和时局.md",
+      "source_file": "sources/mao/src/075-学习和时局.md",
       "source_location": {
         "line_start": 103,
         "line_end": 120
@@ -1842,7 +1842,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/017-矛盾论.md",
+      "source_file": "sources/mao/src/017-矛盾论.md",
       "source_location": {
         "line_start": 74,
         "line_end": 93
@@ -1856,7 +1856,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 133,
         "line_end": 133
@@ -1870,7 +1870,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/002-中国的红色政权为什么能够存在？.md",
+      "source_file": "sources/mao/src/002-中国的红色政权为什么能够存在？.md",
       "source_location": {
         "line_start": 21,
         "line_end": 21
@@ -1884,7 +1884,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/008-怎样分析农村阶级.md",
+      "source_file": "sources/mao/src/008-怎样分析农村阶级.md",
       "source_location": {
         "line_start": 25,
         "line_end": 25
@@ -1898,7 +1898,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 9,
         "line_end": 14
@@ -1912,7 +1912,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 11,
         "line_end": 15
@@ -1926,7 +1926,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 69,
         "line_end": 72
@@ -1940,7 +1940,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 11,
         "line_end": 24
@@ -1954,7 +1954,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 108,
         "line_end": 116
@@ -1968,7 +1968,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 69,
         "line_end": 73
@@ -1982,7 +1982,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 132,
         "line_end": 146
@@ -1996,7 +1996,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 72,
         "line_end": 75
@@ -2010,7 +2010,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 261,
         "line_end": 278
@@ -2024,7 +2024,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 20,
         "line_end": 20
@@ -2038,7 +2038,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 92,
         "line_end": 95
@@ -2052,7 +2052,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 86,
         "line_end": 91
@@ -2066,7 +2066,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 32,
         "line_end": 38
@@ -2080,7 +2080,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 33,
         "line_end": 63
@@ -2094,7 +2094,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 103,
         "line_end": 105
@@ -2108,7 +2108,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 138,
         "line_end": 144
@@ -2122,7 +2122,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 298,
         "line_end": 352
@@ -2136,7 +2136,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 60,
         "line_end": 66
@@ -2150,7 +2150,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 79,
         "line_end": 99
@@ -2164,7 +2164,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 77,
         "line_end": 88
@@ -2178,7 +2178,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 150,
         "line_end": 159
@@ -2192,7 +2192,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 76,
         "line_end": 82
@@ -2206,7 +2206,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 54,
         "line_end": 58
@@ -2220,7 +2220,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 160,
         "line_end": 167
@@ -2234,7 +2234,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 223,
         "line_end": 235
@@ -2248,7 +2248,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 128,
         "line_end": 134
@@ -2262,7 +2262,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 282,
         "line_end": 288
@@ -2276,7 +2276,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 62,
         "line_end": 65
@@ -2290,7 +2290,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 171,
         "line_end": 173
@@ -2304,7 +2304,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 239,
         "line_end": 257
@@ -2318,7 +2318,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 28,
         "line_end": 50
@@ -2332,7 +2332,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 109,
         "line_end": 124
@@ -2346,7 +2346,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 207,
         "line_end": 219
@@ -2360,7 +2360,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/025-抗日游击战争的战略问题.md",
+      "source_file": "sources/mao/src/025-抗日游击战争的战略问题.md",
       "source_location": {
         "line_start": 95,
         "line_end": 95
@@ -2374,7 +2374,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/012-中国革命战争的战略问题.md",
+      "source_file": "sources/mao/src/012-中国革命战争的战略问题.md",
       "source_location": {
         "line_start": 42,
         "line_end": 56
@@ -2388,7 +2388,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/023-上海太原失陷以后抗日战争的形势和任务.md",
+      "source_file": "sources/mao/src/023-上海太原失陷以后抗日战争的形势和任务.md",
       "source_location": {
         "line_start": 40,
         "line_end": 40
@@ -2402,7 +2402,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/目录.md",
+      "source_file": "sources/mao/src/目录.md",
       "source_location": {
         "line_start": 174,
         "line_end": 243
@@ -2416,7 +2416,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/目录.md",
+      "source_file": "sources/mao/src/目录.md",
       "source_location": {
         "line_start": 102,
         "line_end": 171
@@ -2430,7 +2430,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 147,
         "line_end": 147
@@ -2444,7 +2444,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 123,
         "line_end": 136
@@ -2458,7 +2458,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/006-反对本本主义.md",
+      "source_file": "sources/mao/src/006-反对本本主义.md",
       "source_location": {
         "line_start": 9,
         "line_end": 13
@@ -2472,7 +2472,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 150,
         "line_end": 155
@@ -2486,7 +2486,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/075-学习和时局.md",
+      "source_file": "sources/mao/src/075-学习和时局.md",
       "source_location": {
         "line_start": 80,
         "line_end": 99
@@ -2500,7 +2500,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/029-战争和战略问题.md",
+      "source_file": "sources/mao/src/029-战争和战略问题.md",
       "source_location": {
         "line_start": 32,
         "line_end": 34
@@ -2514,7 +2514,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/006-反对本本主义.md",
+      "source_file": "sources/mao/src/006-反对本本主义.md",
       "source_location": {
         "line_start": 24,
         "line_end": 26
@@ -2528,7 +2528,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/029-战争和战略问题.md",
+      "source_file": "sources/mao/src/029-战争和战略问题.md",
       "source_location": {
         "line_start": 20,
         "line_end": 28
@@ -2542,7 +2542,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/091-第十八集团军总司令给蒋介石的两个电报.md",
+      "source_file": "sources/mao/src/091-第十八集团军总司令给蒋介石的两个电报.md",
       "source_location": {
         "line_start": 13,
         "line_end": 23
@@ -2556,7 +2556,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/006-反对本本主义.md",
+      "source_file": "sources/mao/src/006-反对本本主义.md",
       "source_location": {
         "line_start": 17,
         "line_end": 20
@@ -2570,7 +2570,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/043-新民主主义论.md",
+      "source_file": "sources/mao/src/043-新民主主义论.md",
       "source_location": {
         "line_start": 61,
         "line_end": 78
@@ -2584,7 +2584,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/017-矛盾论.md",
+      "source_file": "sources/mao/src/017-矛盾论.md",
       "source_location": {
         "line_start": 127,
         "line_end": 134
@@ -2598,7 +2598,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/029-战争和战略问题.md",
+      "source_file": "sources/mao/src/029-战争和战略问题.md",
       "source_location": {
         "line_start": 58,
         "line_end": 85
@@ -2612,7 +2612,7 @@
       "reasons": [
         "chapter_title_requires_explicit_hygiene_override"
       ],
-      "source_file": "sources/mao/040-中国革命和中国共产党.md",
+      "source_file": "sources/mao/src/040-中国革命和中国共产党.md",
       "source_location": {
         "line_start": 19,
         "line_end": 29

@@ -1,24 +1,24 @@
 {
-  "run_root": "/tmp/kiu-v075-user-facing-optimization/shiji/generated/shiji-source-v0.6/v075-shiji-user-facing",
-  "source_bundle_path": "/tmp/kiu-v075-user-facing-optimization/shiji/sources/shiji/bundle",
-  "usage_review_dir": "/tmp/kiu-v075-user-facing-optimization/shiji/generated/shiji-source-v0.6/v075-shiji-user-facing/usage-review",
+  "run_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/generated/shiji-source-v0.6/v082-value-gain-shiji",
+  "source_bundle_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/sources/shiji/bundle",
+  "usage_review_dir": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/generated/shiji-source-v0.6/v082-value-gain-shiji/usage-review",
   "pipeline_provenance": {
     "schema_version": "kiu.pipeline-provenance/v0.1",
     "pipeline_mode": "raw_book_no_seed_cold_start",
     "raw_book_no_seed_cold_start": true,
     "input_kind": "raw_markdown_book",
-    "source_input_path": "examples/shiji_md/resource",
-    "source_bundle_root": "/tmp/kiu-v075-user-facing-optimization/shiji/sources/shiji/bundle",
-    "run_root": "/tmp/kiu-v075-user-facing-optimization/shiji/generated/shiji-source-v0.6/v075-shiji-user-facing",
+    "source_input_path": "examples/source-materials/shiji_md",
+    "source_bundle_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/sources/shiji/bundle",
+    "run_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/generated/shiji-source-v0.6/v082-value-gain-shiji",
     "source_bundle_id": "shiji-source-v0.6",
     "source_bundle_skill_count": 0,
     "uses_existing_source_skills": false,
     "uses_reference_pack_as_generation_input": false,
     "manual_generated_artifact_patch_allowed": false,
     "artifact_paths": {
-      "source_chunks": "/tmp/kiu-v075-user-facing-optimization/shiji/intermediate/shiji/v075-shiji-user-facing/source-chunks.json",
-      "extraction_result": "/tmp/kiu-v075-user-facing-optimization/shiji/intermediate/shiji/v075-shiji-user-facing/extraction-result.json",
-      "graph": "/tmp/kiu-v075-user-facing-optimization/shiji/intermediate/shiji/v075-shiji-user-facing/graph.json"
+      "source_chunks": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/intermediate/shiji/v082-value-gain-shiji/source-chunks.json",
+      "extraction_result": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/intermediate/shiji/v082-value-gain-shiji/extraction-result.json",
+      "graph": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/intermediate/shiji/v082-value-gain-shiji/graph.json"
     },
     "extraction": {
       "deterministic_pass": "heuristic-extractors"
@@ -1849,7 +1849,7 @@
     },
     "world_alignment": {
       "schema_version": "kiu.world-alignment-review/v0.1",
-      "bundle_root": "/tmp/kiu-v075-user-facing-optimization/shiji/generated/shiji-source-v0.6/v075-shiji-user-facing/bundle",
+      "bundle_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/generated/shiji-source-v0.6/v082-value-gain-shiji/bundle",
       "world_alignment_present": false,
       "source_fidelity_preserved": true,
       "world_context_isolated": false,
@@ -1904,7 +1904,7 @@
       {
         "review_case_id": "historical-analogy-transfer-gate-usage-apply",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/shiji/generated/shiji-source-v0.6/v075-shiji-user-facing/bundle/skills/historical-analogy-transfer-gate/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/generated/shiji-source-v0.6/v082-value-gain-shiji/bundle/skills/historical-analogy-transfer-gate/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -1914,7 +1914,7 @@
       {
         "review_case_id": "historical-analogy-transfer-gate-usage-defer-boundary",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/shiji/generated/shiji-source-v0.6/v075-shiji-user-facing/bundle/skills/historical-analogy-transfer-gate/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/generated/shiji-source-v0.6/v082-value-gain-shiji/bundle/skills/historical-analogy-transfer-gate/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -1924,7 +1924,7 @@
       {
         "review_case_id": "historical-analogy-transfer-gate-usage-do-not-apply",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/shiji/generated/shiji-source-v0.6/v075-shiji-user-facing/bundle/skills/historical-analogy-transfer-gate/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/generated/shiji-source-v0.6/v082-value-gain-shiji/bundle/skills/historical-analogy-transfer-gate/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -1934,7 +1934,7 @@
       {
         "review_case_id": "historical-case-consequence-judgment-usage-apply",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/shiji/generated/shiji-source-v0.6/v075-shiji-user-facing/bundle/skills/historical-case-consequence-judgment/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/generated/shiji-source-v0.6/v082-value-gain-shiji/bundle/skills/historical-case-consequence-judgment/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -1944,7 +1944,7 @@
       {
         "review_case_id": "historical-case-consequence-judgment-usage-defer-boundary",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/shiji/generated/shiji-source-v0.6/v075-shiji-user-facing/bundle/skills/historical-case-consequence-judgment/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/generated/shiji-source-v0.6/v082-value-gain-shiji/bundle/skills/historical-case-consequence-judgment/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -1954,7 +1954,7 @@
       {
         "review_case_id": "historical-case-consequence-judgment-usage-do-not-apply",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/shiji/generated/shiji-source-v0.6/v075-shiji-user-facing/bundle/skills/historical-case-consequence-judgment/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/generated/shiji-source-v0.6/v082-value-gain-shiji/bundle/skills/historical-case-consequence-judgment/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -1964,7 +1964,7 @@
       {
         "review_case_id": "role-boundary-before-action-usage-apply",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/shiji/generated/shiji-source-v0.6/v075-shiji-user-facing/bundle/skills/role-boundary-before-action/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/generated/shiji-source-v0.6/v082-value-gain-shiji/bundle/skills/role-boundary-before-action/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -1974,7 +1974,7 @@
       {
         "review_case_id": "role-boundary-before-action-usage-defer-boundary",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/shiji/generated/shiji-source-v0.6/v075-shiji-user-facing/bundle/skills/role-boundary-before-action/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/generated/shiji-source-v0.6/v082-value-gain-shiji/bundle/skills/role-boundary-before-action/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -1984,7 +1984,7 @@
       {
         "review_case_id": "role-boundary-before-action-usage-do-not-apply",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/shiji/generated/shiji-source-v0.6/v075-shiji-user-facing/bundle/skills/role-boundary-before-action/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/shiji/generated/shiji-source-v0.6/v082-value-gain-shiji/bundle/skills/role-boundary-before-action/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},

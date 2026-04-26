@@ -50,6 +50,10 @@ judgment_schema:
       order_cost: list[string]
       safe_next_action: string
       confidence: enum[low|medium|high]
+      value_gain_decision: string
+      value_gain_evidence: list[string]
+      value_gain_risk_boundary: string
+      value_gain_next_handoff: string
   reasoning_chain_required: true
 boundary:
   fails_when:
@@ -75,6 +79,11 @@ Mechanism chain: source anchor -> mechanism observed -> transferable judgment ->
 - transferable judgment: Use `Role Boundary Before Action` only when the current decision matches the source mechanism and boundary checks pass.
 - user trigger: `user_deciding_whether_to_act_under_a_role_or_mandate`
 - anti-misuse boundary: `pure_role_definition_query`
+
+### Downstream Use Check
+This skill must make `Role Boundary Before Action` safe to transfer by naming the source mechanism, the current mechanism, and the boundary that would make the analogy invalid.
+
+Minimum Pressure Pass (evidence pressure): Check whether the shared mechanism is evidenced or merely story-similar; if only names, roles, or outcomes match, return do_not_apply or demand more context. Continue only if this changes the decision, action, evidence, handoff, or review value; otherwise freeze the skill without adding process weight.
 
 ## Evidence Summary
 `Role Boundary Before Action` is grounded in role-boundary evidence beginning with "谁是我们的敌人？谁是我们的朋友？这个问题是革命的首要问题。中国过去一切革命斗争成效甚少，其基本原因就是因为不能团结真正的朋友，以攻击真正的敌人。革命党是群众的向导，在革命中未有革命党领错了路而革命不失败的。我们的革命要有不领错路和一定成功的把握，不可不注意团结我们的真正的朋友，以攻击我们的真正的敌人。我们要分辨真正的敌友，不可不将中国社会各阶级的经济地位及其对于革命的态度，作一个大概的分析。 中国社会各阶级的情况是怎样的呢？ 地主阶级和"[^anchor:role-boundary-before-action-narrative-pattern::role-boundary-before-action].

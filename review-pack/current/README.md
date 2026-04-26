@@ -10,15 +10,19 @@ External reviewers can inspect the current source materials, generated skills, w
 
 This pack is for artifact review. It does not claim external blind preference, real-user validation, domain-expert validation, or legal redistribution review.
 
+## Version Boundary
+
+This visible pack was regenerated from the v0.8.2 value-gain pressure-chain renderer. Every published `generated-skills/*/SKILL.md` includes the value-gain fields, `Downstream Use Check`, and `Minimum Pressure Pass`.
+
 ## Contents
 
-| Book | Sources | Published skills | Workflow candidates | Primary score file |
-| --- | ---: | ---: | ---: | --- |
-| Financial Statement | 1 | 3 | 5 | [scorecard](books/financial-statement/scorecard.md) |
-| Effective Requirements | 1 | 3 | 12 | [scorecard](books/effective-requirements/scorecard.md) |
-| Mao Anthology | 230 | 6 | 8 | [scorecard](books/mao-anthology/scorecard.md) |
-| Poor Charlie | 5 | 6 | 0 | [scorecard](books/poor-charlie/scorecard.md) |
-| Shiji | 130 | 3 | 0 | [scorecard](books/shiji/scorecard.md) |
+| Book | Sources | Published skills | Workflow candidates | Overall | Gate | Primary score file |
+| --- | ---: | ---: | ---: | ---: | --- | --- |
+| Financial Statement Analysis | 1 | 3 | 5 | 93.2 | PASS | [scorecard](books/financial-statement/scorecard.md) |
+| Effective Requirements Analysis | 1 | 3 | 12 | 95.0 | PASS | [scorecard](books/effective-requirements/scorecard.md) |
+| Mao Anthology | 230 | 6 | 8 | 95.1 | PASS | [scorecard](books/mao-anthology/scorecard.md) |
+| Poor Charlie's Almanack | 5 | 6 | 0 | 97.9 | PASS | [scorecard](books/poor-charlie/scorecard.md) |
+| Shiji | 130 | 3 | 0 | 95.5 | PASS | [scorecard](books/shiji/scorecard.md) |
 
 Each book directory uses the same layout when material exists:
 

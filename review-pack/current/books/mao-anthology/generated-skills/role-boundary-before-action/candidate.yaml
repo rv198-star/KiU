@@ -1,6 +1,6 @@
 candidate_id: role-boundary-before-action
 source_bundle_id: mao-source-v0.6
-source_graph_hash: sha256:58d9dbaa74d6ef14137efb10a473d151d9c2e1945e51522751719e1827067313
+source_graph_hash: sha256:8e7d2fad23054696d54be36139b84b727ca24bf9639f15b988f973d7d50abd19
 seed:
   primary_node_id: narrative-pattern::role-boundary-before-action
   supporting_node_ids:
@@ -75,7 +75,7 @@ routing_evidence:
   verification_workflow_ready: true
   verification_overall_score: 0.9444
   workflow_promotion_blocked_by_verification: false
-source_file: sources/mao/000-中国社会各阶级的分析.md
+source_file: sources/mao/src/000-中国社会各阶级的分析.md
 source_location: &id001
   line_start: 6
   line_end: 14
@@ -123,7 +123,7 @@ verification:
 graph_to_skill_distillation:
   schema_version: kiu.graph-to-skill-distillation/v0.1
   candidate_id: role-boundary-before-action
-  source_graph_hash: sha256:58d9dbaa74d6ef14137efb10a473d151d9c2e1945e51522751719e1827067313
+  source_graph_hash: sha256:8e7d2fad23054696d54be36139b84b727ca24bf9639f15b988f973d7d50abd19
   source_graph_version: kiu.graph/v0.2
   rules:
   - INFERRED graph edges may expand trigger language but must not override boundary
@@ -184,69 +184,69 @@ ria_tv_provenance:
   - role-boundary-pattern-evidence::0007
   - role-boundary-pattern-evidence::0008
   source_locations:
-  - source_file: sources/mao/000-中国社会各阶级的分析.md
+  - source_file: sources/mao/src/000-中国社会各阶级的分析.md
     source_location: *id001
-  - source_file: sources/mao/000-中国社会各阶级的分析.md
+  - source_file: sources/mao/src/000-中国社会各阶级的分析.md
     source_location:
       line_start: 6
       line_end: 14
-  - source_file: sources/mao/000-中国社会各阶级的分析.md
+  - source_file: sources/mao/src/000-中国社会各阶级的分析.md
     source_location:
       line_start: 17
       line_end: 35
-  - source_file: sources/mao/001-湖南农民运动考察报告.md
+  - source_file: sources/mao/src/001-湖南农民运动考察报告.md
     source_location:
       line_start: 13
       line_end: 13
-  - source_file: sources/mao/001-湖南农民运动考察报告.md
+  - source_file: sources/mao/src/001-湖南农民运动考察报告.md
     source_location:
       line_start: 17
       line_end: 22
-  - source_file: sources/mao/001-湖南农民运动考察报告.md
+  - source_file: sources/mao/src/001-湖南农民运动考察报告.md
     source_location:
       line_start: 30
       line_end: 30
-  - source_file: sources/mao/001-湖南农民运动考察报告.md
+  - source_file: sources/mao/src/001-湖南农民运动考察报告.md
     source_location:
       line_start: 38
       line_end: 41
-  - source_file: sources/mao/001-湖南农民运动考察报告.md
+  - source_file: sources/mao/src/001-湖南农民运动考察报告.md
     source_location:
       line_start: 49
       line_end: 49
-  - source_file: sources/mao/001-湖南农民运动考察报告.md
+  - source_file: sources/mao/src/001-湖南农民运动考察报告.md
     source_location:
       line_start: 53
       line_end: 62
-  - source_file: sources/mao/000-中国社会各阶级的分析.md
+  - source_file: sources/mao/src/000-中国社会各阶级的分析.md
     source_location:
       line_start: 6
       line_end: 14
-  - source_file: sources/mao/000-中国社会各阶级的分析.md
+  - source_file: sources/mao/src/000-中国社会各阶级的分析.md
     source_location:
       line_start: 17
       line_end: 35
-  - source_file: sources/mao/001-湖南农民运动考察报告.md
+  - source_file: sources/mao/src/001-湖南农民运动考察报告.md
     source_location:
       line_start: 13
       line_end: 13
-  - source_file: sources/mao/001-湖南农民运动考察报告.md
+  - source_file: sources/mao/src/001-湖南农民运动考察报告.md
     source_location:
       line_start: 17
       line_end: 22
-  - source_file: sources/mao/001-湖南农民运动考察报告.md
+  - source_file: sources/mao/src/001-湖南农民运动考察报告.md
     source_location:
       line_start: 30
       line_end: 30
-  - source_file: sources/mao/001-湖南农民运动考察报告.md
+  - source_file: sources/mao/src/001-湖南农民运动考察报告.md
     source_location:
       line_start: 38
       line_end: 41
-  - source_file: sources/mao/001-湖南农民运动考察报告.md
+  - source_file: sources/mao/src/001-湖南农民运动考察报告.md
     source_location:
       line_start: 49
       line_end: 49
-  - source_file: sources/mao/001-湖南农民运动考察报告.md
+  - source_file: sources/mao/src/001-湖南农民运动考察报告.md
     source_location:
       line_start: 53
       line_end: 62

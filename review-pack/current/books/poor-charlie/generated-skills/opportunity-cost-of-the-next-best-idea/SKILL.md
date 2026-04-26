@@ -6,7 +6,7 @@ skill_id: opportunity-cost-of-the-next-best-idea
 title: Opportunity Cost of the Next Best Idea
 status: under_evaluation
 bundle_version: 0.2.0
-skill_revision: 1
+skill_revision: 3
 ```
 
 ## Contract
@@ -36,6 +36,10 @@ judgment_schema:
       benchmark_winner: enum[new_idea, next_best_existing_option, insufficient_information]
       benchmark_reason: string
       followup_information: list[string]
+      value_gain_decision: string
+      value_gain_evidence: list[string]
+      value_gain_risk_boundary: string
+      value_gain_next_handoff: string
   reasoning_chain_required: true
 boundary:
   fails_when:
@@ -48,6 +52,11 @@ boundary:
 
 ## Rationale
 This skill prevents capital allocation from being judged in isolation. Every new idea must be compared against a live next-best use of capital after tax, friction, compounding runway, attention cost, and switching risk are included; otherwise the user is not making a ranking decision at all, only reacting to novelty. If the benchmark is missing, stale, or obviously weaker than the true next-best alternative, the correct output is to pause and rebuild the comparison set rather than letting the new story win by default.[^anchor:opportunity-source-note] The no-benchmark adversarial case shows how isolated attractiveness can masquerade as edge, while the Costco benchmark trace shows that disciplined switching requires a live comparator that the user is genuinely willing to keep if the newcomer does not clear the hurdle.[^anchor:opportunity-eval] [^trace:canonical/costco-next-best-idea.yaml]
+
+### Downstream Use Check
+This skill must make the trade-off visible: state the chosen option, the next-best alternative, the evidence that makes the comparison decision-relevant, and the handoff question that would change the ranking.
+
+Minimum Pressure Pass (alternative pressure): Force one cheaper, safer, or higher-optionality alternative into view; if the alternative wins under the user's stated constraint, return the trade-off rather than defending the first option. Continue only if this changes the decision, action, evidence, handoff, or review value; otherwise freeze the skill without adding process weight.
 
 ## Evidence Summary
 Three canonical traces define the benchmark discipline. `costco-next-best-idea` shows the primary pattern: compare the new idea against the best live deployable alternative, not against idle cash.[^trace:canonical/costco-next-best-idea.yaml] `capital-switching-benchmark` shows how taxes, friction, and switching costs must be included before capital is redeployed.[^trace:canonical/capital-switching-benchmark.yaml] `dexter-shoe-consideration` shows the negative lesson: a deal can look cheap in isolation and still lose once real internal alternatives are kept alive as comparators.[^trace:canonical/dexter-shoe-consideration.yaml] The source note and shared adversarial evaluation connect these traces back to one claim: opportunity cost is only real when the benchmark is live, explicit, and decision-relevant.[^anchor:opportunity-source-note] [^anchor:opportunity-eval]
@@ -101,9 +110,9 @@ Representative cases:
 当前 KiU Test 状态：trigger_test=`pass`，fire_test=`pass`，boundary_test=`pass`。
 
 已绑定最小评测集：
-- `real_decisions`: passed=20 / total=20, threshold=0.7, status=`pass`
-- `synthetic_adversarial`: passed=20 / total=20, threshold=0.85, status=`pass`
-- `out_of_distribution`: passed=10 / total=10, threshold=0.9, status=`pass`
+- `real_decisions`: passed=18 / total=20, threshold=0.7, status=`under_evaluation`
+- `synthetic_adversarial`: passed=18 / total=20, threshold=0.85, status=`under_evaluation`
+- `out_of_distribution`: passed=9 / total=10, threshold=0.9, status=`under_evaluation`
 
 关键失败模式：
 - Users often compare a new idea to cash instead of a real next-best opportunity.
@@ -115,13 +124,12 @@ Representative cases:
 详见 `eval/summary.yaml` 与共享 `evaluation/`。
 
 ## Revision Summary
-Revision 4 is a manual v0.4 content upgrade, not a refinement_scheduler run. The rationale now makes live ranking and switching friction explicit, the evidence summary names three canonical traces directly, and the relations now connect benchmark comparison to inversion and bias review instead of leaving it isolated. The remaining gaps are to propagate the same rewrite depth across the rest of the published bundle and to run a real loop before claiming autonomous refinement. See `iterations/revisions.yaml`.
+Refinement scheduler round 2 tightened boundary signals and improved evaluation support.
 
 本轮补入：
-- Rewrote rationale around live ranking, switching friction, and benchmark reconstruction.
-- Rewrote evidence summary to name three canonical benchmark traces directly.
-- Expanded eval failure modes and bumped release metadata to revision 4.
+- Refinement scheduler round 2 tightened boundary signals and improved evaluation support.
 
 当前待补缺口：
 - Add richer real redeployment cases with explicit tax and friction data in future bundle versions.
 - Run a real refinement_scheduler pass before describing this skill as loop-driven.
+

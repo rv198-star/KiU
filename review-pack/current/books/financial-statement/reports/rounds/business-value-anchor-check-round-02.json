@@ -46,7 +46,7 @@
     "signals": {
       "trigger_patterns": 2,
       "intake_fields": 5,
-      "rationale_chars": 1567,
+      "rationale_chars": 2083,
       "rationale_anchor_refs": 4,
       "evidence_anchor_refs": 3,
       "graph_anchor_sets": 1,
@@ -60,8 +60,8 @@
     "blockers": [],
     "notes": [],
     "thresholds": {
-      "artifact_quality": 0.74,
-      "production_quality": 0.78
+      "artifact_quality": 0.78,
+      "production_quality": 0.82
     }
   }
 }

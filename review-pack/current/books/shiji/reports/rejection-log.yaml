@@ -1150,7 +1150,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/3__卷三__殷本纪第三.md
+  source_file: sources/shiji/resource/3__卷三__殷本纪第三.md
   source_location:
     line_start: 5
     line_end: 23
@@ -1224,7 +1224,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/50__卷五十__楚元王世家第二十.md
+  source_file: sources/shiji/resource/50__卷五十__楚元王世家第二十.md
   source_location:
     line_start: 5
     line_end: 23
@@ -1262,7 +1262,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/125__卷一百二十五__佞幸列传第六十五.md
+  source_file: sources/shiji/resource/125__卷一百二十五__佞幸列传第六十五.md
   source_location:
     line_start: 5
     line_end: 21
@@ -2416,7 +2416,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/31__卷三十一__吴太伯世家第一.md
+  source_file: sources/shiji/resource/31__卷三十一__吴太伯世家第一.md
   source_location:
     line_start: 71
     line_end: 79
@@ -2634,7 +2634,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/49__卷四十九__外戚世家第十九.md
+  source_file: sources/shiji/resource/49__卷四十九__外戚世家第十九.md
   source_location:
     line_start: 5
     line_end: 23
@@ -2672,7 +2672,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/48__卷四十八__陈涉世家第十八.md
+  source_file: sources/shiji/resource/48__卷四十八__陈涉世家第十八.md
   source_location:
     line_start: 17
     line_end: 37
@@ -2710,7 +2710,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/46__卷四十六__田敬仲完世家第十六.md
+  source_file: sources/shiji/resource/46__卷四十六__田敬仲完世家第十六.md
   source_location:
     line_start: 57
     line_end: 69
@@ -2748,7 +2748,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/44__卷四十四__魏世家第十四.md
+  source_file: sources/shiji/resource/44__卷四十四__魏世家第十四.md
   source_location:
     line_start: 93
     line_end: 103
@@ -2786,7 +2786,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/119__卷一百一十九__循吏列传第五十九.md
+  source_file: sources/shiji/resource/119__卷一百一十九__循吏列传第五十九.md
   source_location:
     line_start: 5
     line_end: 27
@@ -2824,7 +2824,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/116__卷一百一十六__西南夷列传第五十六.md
+  source_file: sources/shiji/resource/116__卷一百一十六__西南夷列传第五十六.md
   source_location:
     line_start: 5
     line_end: 15
@@ -2862,7 +2862,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/114__卷一百一十四·东越列传第五十四.md
+  source_file: sources/shiji/resource/114__卷一百一十四·东越列传第五十四.md
   source_location:
     line_start: 5
     line_end: 17
@@ -2900,7 +2900,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/104__卷一百四__田叔列传第四十四.md
+  source_file: sources/shiji/resource/104__卷一百四__田叔列传第四十四.md
   source_location:
     line_start: 5
     line_end: 17
@@ -2938,7 +2938,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/71__卷七十一__樗里子甘茂列传第十一.md
+  source_file: sources/shiji/resource/71__卷七十一__樗里子甘茂列传第十一.md
   source_location:
     line_start: 25
     line_end: 29
@@ -2976,7 +2976,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/90__卷九十__魏豹彭越列传第三十.md
+  source_file: sources/shiji/resource/90__卷九十__魏豹彭越列传第三十.md
   source_location:
     line_start: 21
     line_end: 27
@@ -3122,7 +3122,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/80__卷八十__乐毅列传第二十.md
+  source_file: sources/shiji/resource/80__卷八十__乐毅列传第二十.md
   source_location:
     line_start: 5
     line_end: 17
@@ -3160,7 +3160,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/89__卷八十九__张耳陈馀列传第二十九.md
+  source_file: sources/shiji/resource/89__卷八十九__张耳陈馀列传第二十九.md
   source_location:
     line_start: 27
     line_end: 33
@@ -3198,7 +3198,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/82__卷八十二__田单列传第二十二.md
+  source_file: sources/shiji/resource/82__卷八十二__田单列传第二十二.md
   source_location:
     line_start: 21
     line_end: 21
@@ -3236,7 +3236,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/88__卷八十八__蒙恬列传第二十八.md
+  source_file: sources/shiji/resource/88__卷八十八__蒙恬列传第二十八.md
   source_location:
     line_start: 21
     line_end: 25
@@ -3274,7 +3274,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/68__卷六十八__商君列传第八.md
+  source_file: sources/shiji/resource/68__卷六十八__商君列传第八.md
   source_location:
     line_start: 5
     line_end: 9
@@ -3312,7 +3312,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/32__卷三十二__齐太公世家第二.md
+  source_file: sources/shiji/resource/32__卷三十二__齐太公世家第二.md
   source_location:
     line_start: 113
     line_end: 123
@@ -3350,7 +3350,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/29__卷二十九__河渠书第七.md
+  source_file: sources/shiji/resource/29__卷二十九__河渠书第七.md
   source_location:
     line_start: 5
     line_end: 19
@@ -3388,7 +3388,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/25__卷二十五__律书第三.md
+  source_file: sources/shiji/resource/25__卷二十五__律书第三.md
   source_location:
     line_start: 41
     line_end: 47
@@ -3426,7 +3426,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/52__卷五十二__齐悼惠王世家第二十二.md
+  source_file: sources/shiji/resource/52__卷五十二__齐悼惠王世家第二十二.md
   source_location:
     line_start: 25
     line_end: 43
@@ -3464,7 +3464,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/58__卷五十八__梁孝王世家第二十八.md
+  source_file: sources/shiji/resource/58__卷五十八__梁孝王世家第二十八.md
   source_location:
     line_start: 23
     line_end: 43
@@ -3502,7 +3502,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/13__卷十三__三代世表第一(略).md
+  source_file: sources/shiji/resource/13__卷十三__三代世表第一(略).md
   source_location:
     line_start: 5
     line_end: 17
@@ -3540,7 +3540,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/15__卷十五__六国年表第三(略).md
+  source_file: sources/shiji/resource/15__卷十五__六国年表第三(略).md
   source_location:
     line_start: 5
     line_end: 13
@@ -3578,7 +3578,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/14__卷十四__十二诸侯年表第二(略).md
+  source_file: sources/shiji/resource/14__卷十四__十二诸侯年表第二(略).md
   source_location:
     line_start: 5
     line_end: 9
@@ -3616,7 +3616,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/74__卷七十四__孟子荀卿列传第十四.md
+  source_file: sources/shiji/resource/74__卷七十四__孟子荀卿列传第十四.md
   source_location:
     line_start: 5
     line_end: 15
@@ -3654,7 +3654,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/96__卷九十六__张丞相列传第三十六.md
+  source_file: sources/shiji/resource/96__卷九十六__张丞相列传第三十六.md
   source_location:
     line_start: 5
     line_end: 15
@@ -3692,7 +3692,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/94__卷九十四__田儋列传第三十四.md
+  source_file: sources/shiji/resource/94__卷九十四__田儋列传第三十四.md
   source_location:
     line_start: 23
     line_end: 31
@@ -3730,7 +3730,7 @@ rejected:
       supporting_node_count: 2
       supporting_edge_count: 2
       community_count: 1
-  source_file: sources/shiji/84__卷八十四__屈原贾生列传第二十四.md
+  source_file: sources/shiji/resource/84__卷八十四__屈原贾生列传第二十四.md
   source_location:
     line_start: 43
     line_end: 59

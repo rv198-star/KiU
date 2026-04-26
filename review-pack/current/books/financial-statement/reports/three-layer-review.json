@@ -1,24 +1,24 @@
 {
-  "run_root": "/tmp/kiu-v075-user-facing-optimization/financial/generated/financial-statement-source-v0.6/v075-financial-user-facing",
-  "source_bundle_path": "/tmp/kiu-v075-user-facing-optimization/financial/sources/financial-statement/bundle",
-  "usage_review_dir": "/tmp/kiu-v075-user-facing-optimization/financial/generated/financial-statement-source-v0.6/v075-financial-user-facing/usage-review",
+  "run_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/generated/financial-statement-source-v0.6/v082-value-gain-financial",
+  "source_bundle_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/sources/financial-statement/bundle",
+  "usage_review_dir": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/generated/financial-statement-source-v0.6/v082-value-gain-financial/usage-review",
   "pipeline_provenance": {
     "schema_version": "kiu.pipeline-provenance/v0.1",
     "pipeline_mode": "raw_book_no_seed_cold_start",
     "raw_book_no_seed_cold_start": true,
     "input_kind": "raw_markdown_book",
-    "source_input_path": "examples/财务报表分析_Markdown版.md",
-    "source_bundle_root": "/tmp/kiu-v075-user-facing-optimization/financial/sources/financial-statement/bundle",
-    "run_root": "/tmp/kiu-v075-user-facing-optimization/financial/generated/financial-statement-source-v0.6/v075-financial-user-facing",
+    "source_input_path": "examples/source-materials/财务报表分析_Markdown版.md",
+    "source_bundle_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/sources/financial-statement/bundle",
+    "run_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/generated/financial-statement-source-v0.6/v082-value-gain-financial",
     "source_bundle_id": "financial-statement-source-v0.6",
     "source_bundle_skill_count": 0,
     "uses_existing_source_skills": false,
     "uses_reference_pack_as_generation_input": false,
     "manual_generated_artifact_patch_allowed": false,
     "artifact_paths": {
-      "source_chunks": "/tmp/kiu-v075-user-facing-optimization/financial/intermediate/financial-statement/v075-financial-user-facing/source-chunks.json",
-      "extraction_result": "/tmp/kiu-v075-user-facing-optimization/financial/intermediate/financial-statement/v075-financial-user-facing/extraction-result.json",
-      "graph": "/tmp/kiu-v075-user-facing-optimization/financial/intermediate/financial-statement/v075-financial-user-facing/graph.json"
+      "source_chunks": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/intermediate/financial-statement/v082-value-gain-financial/source-chunks.json",
+      "extraction_result": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/intermediate/financial-statement/v082-value-gain-financial/extraction-result.json",
+      "graph": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/intermediate/financial-statement/v082-value-gain-financial/graph.json"
     },
     "extraction": {
       "deterministic_pass": "heuristic-extractors"
@@ -107,14 +107,14 @@
     ]
   },
   "generated_bundle": {
-    "score_100": 94.3,
+    "score_100": 93.4,
     "errors": 0,
     "warnings": 0,
     "skill_count": 3,
     "workflow_candidate_count": 5,
-    "bundle_quality_grade": "excellent",
-    "minimum_production_quality": 0.9082,
-    "average_production_quality": 0.9327,
+    "bundle_quality_grade": "good",
+    "minimum_production_quality": 0.8939,
+    "average_production_quality": 0.9279,
     "verification_gate_present": true,
     "pseudo_skill_audit": {
       "chapter_title_rejected_count": 275,
@@ -10485,7 +10485,7 @@
     },
     "world_alignment": {
       "schema_version": "kiu.world-alignment-review/v0.1",
-      "bundle_root": "/tmp/kiu-v075-user-facing-optimization/financial/generated/financial-statement-source-v0.6/v075-financial-user-facing/bundle",
+      "bundle_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/generated/financial-statement-source-v0.6/v082-value-gain-financial/bundle",
       "world_alignment_present": false,
       "source_fidelity_preserved": true,
       "world_context_isolated": false,
@@ -10517,7 +10517,6 @@
       "world_alignment_score_100": 0.0
     },
     "notes": [
-      "production_quality_excellent",
       "workflow_boundary_preserved",
       "workflow_gateway_boundary_preserved",
       "verification_gate_present",
@@ -10542,7 +10541,7 @@
       {
         "review_case_id": "accounting-quality-signal-check-usage-apply",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/financial/generated/financial-statement-source-v0.6/v075-financial-user-facing/bundle/skills/accounting-quality-signal-check/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/generated/financial-statement-source-v0.6/v082-value-gain-financial/bundle/skills/accounting-quality-signal-check/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -10552,7 +10551,7 @@
       {
         "review_case_id": "accounting-quality-signal-check-usage-defer-boundary",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/financial/generated/financial-statement-source-v0.6/v075-financial-user-facing/bundle/skills/accounting-quality-signal-check/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/generated/financial-statement-source-v0.6/v082-value-gain-financial/bundle/skills/accounting-quality-signal-check/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -10562,7 +10561,7 @@
       {
         "review_case_id": "accounting-quality-signal-check-usage-do-not-apply",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/financial/generated/financial-statement-source-v0.6/v075-financial-user-facing/bundle/skills/accounting-quality-signal-check/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/generated/financial-statement-source-v0.6/v082-value-gain-financial/bundle/skills/accounting-quality-signal-check/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -10572,7 +10571,7 @@
       {
         "review_case_id": "business-value-anchor-check-usage-apply",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/financial/generated/financial-statement-source-v0.6/v075-financial-user-facing/bundle/skills/business-value-anchor-check/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/generated/financial-statement-source-v0.6/v082-value-gain-financial/bundle/skills/business-value-anchor-check/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -10582,7 +10581,7 @@
       {
         "review_case_id": "business-value-anchor-check-usage-defer-boundary",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/financial/generated/financial-statement-source-v0.6/v075-financial-user-facing/bundle/skills/business-value-anchor-check/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/generated/financial-statement-source-v0.6/v082-value-gain-financial/bundle/skills/business-value-anchor-check/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -10592,7 +10591,7 @@
       {
         "review_case_id": "business-value-anchor-check-usage-do-not-apply",
         "score_100": 95.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/financial/generated/financial-statement-source-v0.6/v075-financial-user-facing/bundle/skills/business-value-anchor-check/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/generated/financial-statement-source-v0.6/v082-value-gain-financial/bundle/skills/business-value-anchor-check/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -10602,7 +10601,7 @@
       {
         "review_case_id": "workflow-gateway-ask-context",
         "score_100": 100.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/financial/generated/financial-statement-source-v0.6/v075-financial-user-facing/bundle/skills/workflow-gateway/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/generated/financial-statement-source-v0.6/v082-value-gain-financial/bundle/skills/workflow-gateway/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -10612,7 +10611,7 @@
       {
         "review_case_id": "workflow-gateway-do-not-inline",
         "score_100": 100.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/financial/generated/financial-statement-source-v0.6/v075-financial-user-facing/bundle/skills/workflow-gateway/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/generated/financial-statement-source-v0.6/v082-value-gain-financial/bundle/skills/workflow-gateway/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -10622,7 +10621,7 @@
       {
         "review_case_id": "workflow-gateway-refuse-agentic",
         "score_100": 100.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/financial/generated/financial-statement-source-v0.6/v075-financial-user-facing/bundle/skills/workflow-gateway/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/generated/financial-statement-source-v0.6/v082-value-gain-financial/bundle/skills/workflow-gateway/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -10632,7 +10631,7 @@
       {
         "review_case_id": "workflow-gateway-route-by-hint",
         "score_100": 100.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/financial/generated/financial-statement-source-v0.6/v075-financial-user-facing/bundle/skills/workflow-gateway/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/generated/financial-statement-source-v0.6/v082-value-gain-financial/bundle/skills/workflow-gateway/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -10642,7 +10641,7 @@
       {
         "review_case_id": "workflow-gateway-route-primary",
         "score_100": 100.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/financial/generated/financial-statement-source-v0.6/v075-financial-user-facing/bundle/skills/workflow-gateway/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/generated/financial-statement-source-v0.6/v082-value-gain-financial/bundle/skills/workflow-gateway/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -10652,7 +10651,7 @@
       {
         "review_case_id": "workflow-gateway-sequence-two-workflows",
         "score_100": 100.0,
-        "skill_path": "/tmp/kiu-v075-user-facing-optimization/financial/generated/financial-statement-source-v0.6/v075-financial-user-facing/bundle/skills/workflow-gateway/SKILL.md",
+        "skill_path": "/tmp/kiu-v082-value-gain-review-pack-20260427/financial/generated/financial-statement-source-v0.6/v082-value-gain-financial/bundle/skills/workflow-gateway/SKILL.md",
         "failure_analysis": {
           "tags": [],
           "tag_counts": {},
@@ -10691,5 +10690,5 @@
     "overall_ready": true,
     "reasons": []
   },
-  "overall_score_100": 93.5
+  "overall_score_100": 93.2
 }

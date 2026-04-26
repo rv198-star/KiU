@@ -6,7 +6,7 @@ skill_id: circle-of-competence
 title: Circle of Competence
 status: under_evaluation
 bundle_version: 0.2.0
-skill_revision: 1
+skill_revision: 3
 ```
 
 ## Contract
@@ -36,6 +36,10 @@ judgment_schema:
       verdict: enum[in_circle, edge_of_circle, outside_circle]
       missing_knowledge: list[string]
       recommended_action: enum[proceed, study_more, decline]
+      value_gain_decision: string
+      value_gain_evidence: list[string]
+      value_gain_risk_boundary: string
+      value_gain_next_handoff: string
   reasoning_chain_required: true
 boundary:
   fails_when:
@@ -50,6 +54,11 @@ boundary:
 这条 skill 不是一句“保持谦虚”的空话，而是在做重大投资或职业承诺前，先判断你有没有资格独立下判断。凡是用户出现“我可以学”“应该差不多”“大家都说这是好机会”“我好像懂了但说不清楚”这类信号，都要立刻做否定测试：能不能用自己的话讲清核心运作逻辑、主要收入来源、关键成本、行业结构、管理层激励、会怎么失败、什么证据会推翻当前想法。如果说不清，只能借别人的判断、只会讲产品体验、或者只是觉得趋势很好，就不能算在圈内。[^anchor:circle-source-note]
 
 输出必须是可执行判断，而不是抽象提醒。先给出 `in_circle / edge_of_circle / outside_circle` 三分法，再列出 `missing_knowledge`，最后给出 `recommended_action`：圈内才允许推进，边界地带要先补关键知识或找第二意见，圈外则应拒绝独立决策、找专家、或把投入压到可承受的试错级别。真实决策案例和对抗案例共同说明了一件事：学历、产品熟悉度、日常使用、甚至已经持有标的，都可能制造“我懂了”的幻觉，但并不等于你真正理解了这门生意。[^anchor:circle-eval] [^trace:canonical/dotcom-refusal.yaml]
+
+### Downstream Use Check
+This skill must make `circle-of-competence` practically usable by naming the decision it changes, the source-backed evidence behind that change, and the boundary that prevents over-application.
+
+Minimum Pressure Pass (downstream pressure): Ask what the downstream user would still need to invent before acting; if that missing truth is material, output the missing handoff instead of treating the skill as complete. Continue only if this changes the decision, action, evidence, handoff, or review value; otherwise freeze the skill without adding process weight.
 
 ## Evidence Summary
 三条 canonical trace 把“能力圈”从概念变成动作。`dotcom-refusal` 展示的是最干净的拒绝模式：当用户讲不清商业逻辑、现金流来源、行业结构时，正确动作不是硬凑乐观理由，而是直接 `decline`。[^trace:canonical/dotcom-refusal.yaml] `google-omission` 说明更难的一层：哪怕事后结果很好，如果当时并没有真正理解护城河和长期经济性，错过也不代表当时应该硬上；这条证据用来压制“因为后来涨了，所以我当时其实懂”的 hindsight 幻觉。[^trace:canonical/google-omission.yaml] `crypto-rejection` 则对应“大家都说能赚钱、我也想试试”的 FOMO 场景：当连价值引擎和分析对象都说不清时，圈外判断就应触发强拒绝。[^trace:canonical/crypto-rejection.yaml]
@@ -113,9 +122,9 @@ Representative cases:
 当前 KiU Test 状态：trigger_test=`pass`，fire_test=`pass`，boundary_test=`pass`。
 
 已绑定最小评测集：
-- `real_decisions`: passed=20 / total=20, threshold=0.7, status=`pass`
-- `synthetic_adversarial`: passed=20 / total=20, threshold=0.85, status=`pass`
-- `out_of_distribution`: passed=10 / total=10, threshold=0.9, status=`pass`
+- `real_decisions`: passed=18 / total=20, threshold=0.7, status=`under_evaluation`
+- `synthetic_adversarial`: passed=18 / total=20, threshold=0.85, status=`under_evaluation`
+- `out_of_distribution`: passed=9 / total=10, threshold=0.9, status=`under_evaluation`
 
 关键失败模式：
 - Surface familiarity can look like depth unless the contract asks for missing knowledge explicitly.
@@ -127,15 +136,12 @@ Representative cases:
 详见 `eval/summary.yaml` 与共享 `evaluation/`。
 
 ## Revision Summary
-Revision 5 是一次面向 `v0.5.1` 的手工补强，不是 refinement_scheduler 自动 loop。核心改动不是再加结构，而是把此前偏英文、偏审计口吻的正文改成中文、action-facing 的使用说明，明确补上了四类触发语（“我可以学 / 应该差不多 / 大家都说 / 说不清楚”）、三分法输出（圈内 / 边界 / 圈外），以及纯概念查询、圈内熟手、可迁移能力边界等非触发或灰区裁定。
-
-这轮修订的目标是缩小和 `cangjie-skill` 在 same-scenario benchmark 上的 lexical / usage gap，但不通过放松边界来换分数。为避免误触发，本轮还额外写明：像“比较 Python 和 Go 哪个更适合做微服务”这类客观技术选型或信息比较问题，不属于能力圈资格判断，默认应转去做一般分析，不应强拉进本 skill。剩余缺口仍然是：继续提升跨案例的边界清晰度，并跑出真实 loop 驱动的修订记录。详见 `iterations/revisions.yaml`。
+Refinement scheduler round 2 tightened boundary signals and improved evaluation support. It now treats “朋友拉我投餐饮连锁, 我应该差不多能搞明白” as a trigger, but keeps “已有 10 年后端开发经验的新项目架构设计” and “Python vs Go 哪个更适合微服务” outside scope because one is already inside a proven circle and the other is a 技术选型的客观分析问题.
 
 本轮补入：
-- Added Chinese trigger phrases such as "我可以学", "应该差不多", "大家都说", and "说不清楚" to the published rationale and usage guidance.
-- Expanded boundary and evaluation summaries with explicit non-trigger and edge-case rulings for concept queries, in-circle experts, and transferable-skill scenarios.
-- Kept the existing evidence anchors intact while making next-step outputs more action-facing for benchmarked usage.
+- Refinement scheduler round 2 tightened boundary signals and improved evaluation support. It now treats “朋友拉我投餐饮连锁, 我应该差不多能搞明白” as a trigger, but keeps “已有 10 年后端开发经验的新项目架构设计” and “Python vs Go 哪个更适合微服务” outside scope because one is already inside a proven circle and the other is a 技术选型的客观分析问题.
 
 当前待补缺口：
 - Continue tightening non-trigger boundary phrasing and edge-case handling across the full investing bundle.
 - Run a real refinement_scheduler pass before describing this skill as loop-driven.
+

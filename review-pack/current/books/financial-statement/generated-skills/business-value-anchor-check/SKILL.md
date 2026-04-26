@@ -46,6 +46,10 @@ judgment_schema:
       evidence_to_check: list[string]
       decline_reason: string
       confidence: enum[low|medium|high]
+      value_gain_decision: string
+      value_gain_evidence: list[string]
+      value_gain_risk_boundary: string
+      value_gain_next_handoff: string
   reasoning_chain_required: true
 boundary:
   fails_when:
@@ -66,6 +70,11 @@ Mechanism chain: source anchor -> mechanism observed -> transferable judgment ->
 - transferable judgment: Use `Business Value Anchor Check` only when the current decision matches the source mechanism and boundary checks pass.
 - user trigger: `business_value_anchor_check_decision_required`
 - anti-misuse boundary: `scenario_missing_decision_context`
+
+### Downstream Use Check
+This skill must separate value signal from value conclusion: state the claim under test, the source-backed evidence supporting it, the competing explanation or missing proof, and the next verification step before action.
+
+Minimum Pressure Pass (evidence pressure): Ask exactly where the value claim exceeds available evidence; if the proof is missing, output the verification step or a safer provisional action instead of a value conclusion. Continue only if this changes the decision, action, evidence, handoff, or review value; otherwise freeze the skill without adding process weight.
 
 ## Evidence Summary
 `Business Value Anchor Check` is primarily anchored to "## E16.13. 根据经营性收益增长预测进行估值：耐克公司（中等）"[^anchor:business-value-anchor-check-principle::1098].

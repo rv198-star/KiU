@@ -38,6 +38,10 @@ judgment_schema:
       routing_reason: string
       missing_context: list[string]
       next_action: string
+      value_gain_decision: string
+      value_gain_evidence: list[string]
+      value_gain_risk_boundary: string
+      value_gain_next_handoff: string
   reasoning_chain_required: true
 boundary:
   fails_when:
@@ -60,6 +64,11 @@ Mechanism chain: source anchor -> mechanism observed -> transferable judgment ->
 - anti-misuse boundary: `scenario_missing_decision_context`
 
 User-facing role: this is a thin workflow router, not a thick judgment skill. It should select, sequence, or defer workflow candidates while keeping deterministic steps in `workflow_candidates/`.
+
+### Downstream Use Check
+This skill must convert routing into a usable handoff: name the selected workflow, explain why it fits the current user goal, list missing context, and state when the request should escalate to a thicker judgment skill instead of staying a workflow route.
+
+Minimum Pressure Pass (downstream pressure): After routing, ask what the user still has to invent to actually run the selected workflow; if that missing handoff is material, return ask_clarifying_question or escalate instead of pretending the route is complete. Continue only if this changes the decision, action, evidence, handoff, or review value; otherwise freeze the skill without adding process weight.
 
 ## Evidence Summary
 该 gateway 在当前生成轮次存在 workflow_script_candidate 时生成，即使同一 bundle 也包含少量真正判断密集型 skill。这说明材料仍有一部分主要交付物是确定性流程，同时也说明需要一个最小可用入口，把用户请求路由到 workflow_candidates 中的具体 `workflow.yaml` / `CHECKLIST.md`。当前候选 workflow 包括 `10-业务流程识别`, `11-业务流程分析与优化`, `12-业务场景识别`, `13-业务场景分析`, `14-管理需求分析`, `17-领域建模`, `19-质量需求分析`, `2-日常需求分析`。[^anchor:workflow-gateway-primary]

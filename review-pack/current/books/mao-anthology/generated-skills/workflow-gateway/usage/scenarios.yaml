@@ -20,13 +20,13 @@ should_trigger:
     with concrete decision context, explicit source evidence, and the existing do_not_fire_when
     boundary still active.
   next_action_shape: 'Use the inferred relation to choose apply / defer / do_not_apply
-    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/082-论联合政府.md:135-143`
+    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/src/082-论联合政府.md:135-143`
     before expanding the trigger.'
   anchor_refs:
   - derives_case_signal::principle::0322->case::mao-0443
   distillation_role: trigger_expansion
   extraction_kind: INFERRED
-  source_location: sources/mao/082-论联合政府.md:135-143
+  source_location: sources/mao/src/082-论联合政府.md:135-143
   graph_navigation: &id001
     graph_report: GRAPH_REPORT.md
     communities:
@@ -81,13 +81,13 @@ should_trigger:
     with concrete decision context, explicit source evidence, and the existing do_not_fire_when
     boundary still active.
   next_action_shape: 'Use the inferred relation to choose apply / defer / do_not_apply
-    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/082-论联合政府.md:182-207`
+    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/src/082-论联合政府.md:182-207`
     before expanding the trigger.'
   anchor_refs:
   - derives_case_signal::principle::0322->case::mao-0449
   distillation_role: trigger_expansion
   extraction_kind: INFERRED
-  source_location: sources/mao/082-论联合政府.md:182-207
+  source_location: sources/mao/src/082-论联合政府.md:182-207
   graph_navigation: *id001
 - scenario_id: graph-inferred-link-derives_case_signal::principle::0322->case::mao-0453
   summary: 'Graph-to-skill distillation: `INFERRED` edge `derives_case_signal::principle::0322->case::mao-0453`
@@ -100,13 +100,13 @@ should_trigger:
     with concrete decision context, explicit source evidence, and the existing do_not_fire_when
     boundary still active.
   next_action_shape: 'Use the inferred relation to choose apply / defer / do_not_apply
-    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/082-论联合政府.md:233-243`
+    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/src/082-论联合政府.md:233-243`
     before expanding the trigger.'
   anchor_refs:
   - derives_case_signal::principle::0322->case::mao-0453
   distillation_role: trigger_expansion
   extraction_kind: INFERRED
-  source_location: sources/mao/082-论联合政府.md:233-243
+  source_location: sources/mao/src/082-论联合政府.md:233-243
   graph_navigation: *id001
 - scenario_id: graph-inferred-link-derives_counter_example_signal::principle::0322->counter-example::mao-0443
   summary: 'Graph-to-skill distillation: `INFERRED` edge `derives_counter_example_signal::principle::0322->counter-example::mao-0443`
@@ -119,13 +119,13 @@ should_trigger:
     with concrete decision context, explicit source evidence, and the existing do_not_fire_when
     boundary still active.
   next_action_shape: 'Use the inferred relation to choose apply / defer / do_not_apply
-    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/082-论联合政府.md:135-143`
+    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/src/082-论联合政府.md:135-143`
     before expanding the trigger.'
   anchor_refs:
   - derives_counter_example_signal::principle::0322->counter-example::mao-0443
   distillation_role: trigger_expansion
   extraction_kind: INFERRED
-  source_location: sources/mao/082-论联合政府.md:135-143
+  source_location: sources/mao/src/082-论联合政府.md:135-143
   graph_navigation: *id001
 - scenario_id: graph-inferred-link-derives_counter_example_signal::principle::0322->counter-example::mao-0444
   summary: 'Graph-to-skill distillation: `INFERRED` edge `derives_counter_example_signal::principle::0322->counter-example::mao-0444`
@@ -138,13 +138,13 @@ should_trigger:
     with concrete decision context, explicit source evidence, and the existing do_not_fire_when
     boundary still active.
   next_action_shape: 'Use the inferred relation to choose apply / defer / do_not_apply
-    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/082-论联合政府.md:145-146`
+    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/src/082-论联合政府.md:145-146`
     before expanding the trigger.'
   anchor_refs:
   - derives_counter_example_signal::principle::0322->counter-example::mao-0444
   distillation_role: trigger_expansion
   extraction_kind: INFERRED
-  source_location: sources/mao/082-论联合政府.md:145-146
+  source_location: sources/mao/src/082-论联合政府.md:145-146
   graph_navigation: *id001
 - scenario_id: graph-inferred-link-derives_counter_example_signal::principle::0322->counter-example::mao-0445
   summary: 'Graph-to-skill distillation: `INFERRED` edge `derives_counter_example_signal::principle::0322->counter-example::mao-0445`
@@ -158,13 +158,13 @@ should_trigger:
     with concrete decision context, explicit source evidence, and the existing do_not_fire_when
     boundary still active.
   next_action_shape: 'Use the inferred relation to choose apply / defer / do_not_apply
-    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/082-论联合政府.md:148-160`
+    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/src/082-论联合政府.md:148-160`
     before expanding the trigger.'
   anchor_refs:
   - derives_counter_example_signal::principle::0322->counter-example::mao-0445
   distillation_role: trigger_expansion
   extraction_kind: INFERRED
-  source_location: sources/mao/082-论联合政府.md:148-160
+  source_location: sources/mao/src/082-论联合政府.md:148-160
   graph_navigation: *id001
 - scenario_id: graph-inferred-link-derives_counter_example_signal::principle::0322->counter-example::mao-0446
   summary: 'Graph-to-skill distillation: `INFERRED` edge `derives_counter_example_signal::principle::0322->counter-example::mao-0446`
@@ -177,13 +177,13 @@ should_trigger:
     with concrete decision context, explicit source evidence, and the existing do_not_fire_when
     boundary still active.
   next_action_shape: 'Use the inferred relation to choose apply / defer / do_not_apply
-    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/082-论联合政府.md:162-166`
+    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/src/082-论联合政府.md:162-166`
     before expanding the trigger.'
   anchor_refs:
   - derives_counter_example_signal::principle::0322->counter-example::mao-0446
   distillation_role: trigger_expansion
   extraction_kind: INFERRED
-  source_location: sources/mao/082-论联合政府.md:162-166
+  source_location: sources/mao/src/082-论联合政府.md:162-166
   graph_navigation: *id001
 - scenario_id: graph-inferred-link-derives_counter_example_signal::principle::0322->counter-example::mao-0447
   summary: 'Graph-to-skill distillation: `INFERRED` edge `derives_counter_example_signal::principle::0322->counter-example::mao-0447`
@@ -197,13 +197,13 @@ should_trigger:
     with concrete decision context, explicit source evidence, and the existing do_not_fire_when
     boundary still active.
   next_action_shape: 'Use the inferred relation to choose apply / defer / do_not_apply
-    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/082-论联合政府.md:168-171`
+    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/src/082-论联合政府.md:168-171`
     before expanding the trigger.'
   anchor_refs:
   - derives_counter_example_signal::principle::0322->counter-example::mao-0447
   distillation_role: trigger_expansion
   extraction_kind: INFERRED
-  source_location: sources/mao/082-论联合政府.md:168-171
+  source_location: sources/mao/src/082-论联合政府.md:168-171
   graph_navigation: *id001
 - scenario_id: graph-inferred-link-derives_counter_example_signal::principle::0322->counter-example::mao-0448
   summary: 'Graph-to-skill distillation: `INFERRED` edge `derives_counter_example_signal::principle::0322->counter-example::mao-0448`
@@ -216,13 +216,13 @@ should_trigger:
     with concrete decision context, explicit source evidence, and the existing do_not_fire_when
     boundary still active.
   next_action_shape: 'Use the inferred relation to choose apply / defer / do_not_apply
-    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/082-论联合政府.md:173-180`
+    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/src/082-论联合政府.md:173-180`
     before expanding the trigger.'
   anchor_refs:
   - derives_counter_example_signal::principle::0322->counter-example::mao-0448
   distillation_role: trigger_expansion
   extraction_kind: INFERRED
-  source_location: sources/mao/082-论联合政府.md:173-180
+  source_location: sources/mao/src/082-论联合政府.md:173-180
   graph_navigation: *id001
 - scenario_id: graph-inferred-link-derives_counter_example_signal::principle::0322->counter-example::mao-0449
   summary: 'Graph-to-skill distillation: `INFERRED` edge `derives_counter_example_signal::principle::0322->counter-example::mao-0449`
@@ -235,13 +235,13 @@ should_trigger:
     with concrete decision context, explicit source evidence, and the existing do_not_fire_when
     boundary still active.
   next_action_shape: 'Use the inferred relation to choose apply / defer / do_not_apply
-    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/082-论联合政府.md:182-207`
+    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/src/082-论联合政府.md:182-207`
     before expanding the trigger.'
   anchor_refs:
   - derives_counter_example_signal::principle::0322->counter-example::mao-0449
   distillation_role: trigger_expansion
   extraction_kind: INFERRED
-  source_location: sources/mao/082-论联合政府.md:182-207
+  source_location: sources/mao/src/082-论联合政府.md:182-207
   graph_navigation: *id001
 - scenario_id: graph-inferred-link-derives_counter_example_signal::principle::0322->counter-example::mao-0450
   summary: 'Graph-to-skill distillation: `INFERRED` edge `derives_counter_example_signal::principle::0322->counter-example::mao-0450`
@@ -254,13 +254,13 @@ should_trigger:
     with concrete decision context, explicit source evidence, and the existing do_not_fire_when
     boundary still active.
   next_action_shape: 'Use the inferred relation to choose apply / defer / do_not_apply
-    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/082-论联合政府.md:209-216`
+    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/src/082-论联合政府.md:209-216`
     before expanding the trigger.'
   anchor_refs:
   - derives_counter_example_signal::principle::0322->counter-example::mao-0450
   distillation_role: trigger_expansion
   extraction_kind: INFERRED
-  source_location: sources/mao/082-论联合政府.md:209-216
+  source_location: sources/mao/src/082-论联合政府.md:209-216
   graph_navigation: *id001
 - scenario_id: graph-inferred-link-derives_counter_example_signal::principle::0322->counter-example::mao-0451
   summary: 'Graph-to-skill distillation: `INFERRED` edge `derives_counter_example_signal::principle::0322->counter-example::mao-0451`
@@ -273,13 +273,13 @@ should_trigger:
     with concrete decision context, explicit source evidence, and the existing do_not_fire_when
     boundary still active.
   next_action_shape: 'Use the inferred relation to choose apply / defer / do_not_apply
-    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/082-论联合政府.md:218-225`
+    with explicit evidence_to_check. Evidence check: verify source_location `sources/mao/src/082-论联合政府.md:218-225`
     before expanding the trigger.'
   anchor_refs:
   - derives_counter_example_signal::principle::0322->counter-example::mao-0451
   distillation_role: trigger_expansion
   extraction_kind: INFERRED
-  source_location: sources/mao/082-论联合政府.md:218-225
+  source_location: sources/mao/src/082-论联合政府.md:218-225
   graph_navigation: *id001
 should_not_trigger:
 - scenario_id: exact-workflow-already-known
@@ -309,14 +309,14 @@ edge_case:
   boundary_reason: Because this graph signal is AMBIGUOUS, the skill should use partial_review
     or defer unless live decision context, source evidence, and disconfirming evidence
     are explicit.
-  next_action_shape: Check source_location `sources/mao/082-论联合政府.md:135-143`, name
-    the boundary uncertainty, and either narrow the output or decline with a concrete
-    decline_reason.
+  next_action_shape: Check source_location `sources/mao/src/082-论联合政府.md:135-143`,
+    name the boundary uncertainty, and either narrow the output or decline with a
+    concrete decline_reason.
   anchor_refs:
   - counter-example::mao-0443
   distillation_role: boundary_probe
   extraction_kind: AMBIGUOUS
-  source_location: sources/mao/082-论联合政府.md:135-143
+  source_location: sources/mao/src/082-论联合政府.md:135-143
   graph_navigation: *id001
 - scenario_id: graph-ambiguous-boundary-counter-example::mao-0444
   summary: 'Graph-to-skill distillation: `AMBIGUOUS` signal `counter-example::mao-0444`
@@ -327,14 +327,14 @@ edge_case:
   boundary_reason: Because this graph signal is AMBIGUOUS, the skill should use partial_review
     or defer unless live decision context, source evidence, and disconfirming evidence
     are explicit.
-  next_action_shape: Check source_location `sources/mao/082-论联合政府.md:145-146`, name
-    the boundary uncertainty, and either narrow the output or decline with a concrete
-    decline_reason.
+  next_action_shape: Check source_location `sources/mao/src/082-论联合政府.md:145-146`,
+    name the boundary uncertainty, and either narrow the output or decline with a
+    concrete decline_reason.
   anchor_refs:
   - counter-example::mao-0444
   distillation_role: boundary_probe
   extraction_kind: AMBIGUOUS
-  source_location: sources/mao/082-论联合政府.md:145-146
+  source_location: sources/mao/src/082-论联合政府.md:145-146
   graph_navigation: *id001
 - scenario_id: graph-ambiguous-boundary-counter-example::mao-0445
   summary: 'Graph-to-skill distillation: `AMBIGUOUS` signal `counter-example::mao-0445`
@@ -345,14 +345,14 @@ edge_case:
   boundary_reason: Because this graph signal is AMBIGUOUS, the skill should use partial_review
     or defer unless live decision context, source evidence, and disconfirming evidence
     are explicit.
-  next_action_shape: Check source_location `sources/mao/082-论联合政府.md:148-160`, name
-    the boundary uncertainty, and either narrow the output or decline with a concrete
-    decline_reason.
+  next_action_shape: Check source_location `sources/mao/src/082-论联合政府.md:148-160`,
+    name the boundary uncertainty, and either narrow the output or decline with a
+    concrete decline_reason.
   anchor_refs:
   - counter-example::mao-0445
   distillation_role: boundary_probe
   extraction_kind: AMBIGUOUS
-  source_location: sources/mao/082-论联合政府.md:148-160
+  source_location: sources/mao/src/082-论联合政府.md:148-160
   graph_navigation: *id001
 - scenario_id: graph-ambiguous-boundary-counter-example::mao-0446
   summary: 'Graph-to-skill distillation: `AMBIGUOUS` signal `counter-example::mao-0446`
@@ -363,14 +363,14 @@ edge_case:
   boundary_reason: Because this graph signal is AMBIGUOUS, the skill should use partial_review
     or defer unless live decision context, source evidence, and disconfirming evidence
     are explicit.
-  next_action_shape: Check source_location `sources/mao/082-论联合政府.md:162-166`, name
-    the boundary uncertainty, and either narrow the output or decline with a concrete
-    decline_reason.
+  next_action_shape: Check source_location `sources/mao/src/082-论联合政府.md:162-166`,
+    name the boundary uncertainty, and either narrow the output or decline with a
+    concrete decline_reason.
   anchor_refs:
   - counter-example::mao-0446
   distillation_role: boundary_probe
   extraction_kind: AMBIGUOUS
-  source_location: sources/mao/082-论联合政府.md:162-166
+  source_location: sources/mao/src/082-论联合政府.md:162-166
   graph_navigation: *id001
 - scenario_id: graph-ambiguous-boundary-counter-example::mao-0447
   summary: 'Graph-to-skill distillation: `AMBIGUOUS` signal `counter-example::mao-0447`
@@ -381,14 +381,14 @@ edge_case:
   boundary_reason: Because this graph signal is AMBIGUOUS, the skill should use partial_review
     or defer unless live decision context, source evidence, and disconfirming evidence
     are explicit.
-  next_action_shape: Check source_location `sources/mao/082-论联合政府.md:168-171`, name
-    the boundary uncertainty, and either narrow the output or decline with a concrete
-    decline_reason.
+  next_action_shape: Check source_location `sources/mao/src/082-论联合政府.md:168-171`,
+    name the boundary uncertainty, and either narrow the output or decline with a
+    concrete decline_reason.
   anchor_refs:
   - counter-example::mao-0447
   distillation_role: boundary_probe
   extraction_kind: AMBIGUOUS
-  source_location: sources/mao/082-论联合政府.md:168-171
+  source_location: sources/mao/src/082-论联合政府.md:168-171
   graph_navigation: *id001
 - scenario_id: graph-ambiguous-boundary-counter-example::mao-0448
   summary: 'Graph-to-skill distillation: `AMBIGUOUS` signal `counter-example::mao-0448`
@@ -399,14 +399,14 @@ edge_case:
   boundary_reason: Because this graph signal is AMBIGUOUS, the skill should use partial_review
     or defer unless live decision context, source evidence, and disconfirming evidence
     are explicit.
-  next_action_shape: Check source_location `sources/mao/082-论联合政府.md:173-180`, name
-    the boundary uncertainty, and either narrow the output or decline with a concrete
-    decline_reason.
+  next_action_shape: Check source_location `sources/mao/src/082-论联合政府.md:173-180`,
+    name the boundary uncertainty, and either narrow the output or decline with a
+    concrete decline_reason.
   anchor_refs:
   - counter-example::mao-0448
   distillation_role: boundary_probe
   extraction_kind: AMBIGUOUS
-  source_location: sources/mao/082-论联合政府.md:173-180
+  source_location: sources/mao/src/082-论联合政府.md:173-180
   graph_navigation: *id001
 - scenario_id: graph-ambiguous-boundary-counter-example::mao-0449
   summary: 'Graph-to-skill distillation: `AMBIGUOUS` signal `counter-example::mao-0449`
@@ -417,14 +417,14 @@ edge_case:
   boundary_reason: Because this graph signal is AMBIGUOUS, the skill should use partial_review
     or defer unless live decision context, source evidence, and disconfirming evidence
     are explicit.
-  next_action_shape: Check source_location `sources/mao/082-论联合政府.md:182-207`, name
-    the boundary uncertainty, and either narrow the output or decline with a concrete
-    decline_reason.
+  next_action_shape: Check source_location `sources/mao/src/082-论联合政府.md:182-207`,
+    name the boundary uncertainty, and either narrow the output or decline with a
+    concrete decline_reason.
   anchor_refs:
   - counter-example::mao-0449
   distillation_role: boundary_probe
   extraction_kind: AMBIGUOUS
-  source_location: sources/mao/082-论联合政府.md:182-207
+  source_location: sources/mao/src/082-论联合政府.md:182-207
   graph_navigation: *id001
 refusal:
 - scenario_id: agentic-judgment-request

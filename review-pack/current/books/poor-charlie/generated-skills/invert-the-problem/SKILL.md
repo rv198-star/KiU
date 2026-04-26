@@ -6,7 +6,7 @@ skill_id: invert-the-problem
 title: Invert the Problem
 status: under_evaluation
 bundle_version: 0.2.0
-skill_revision: 1
+skill_revision: 3
 ```
 
 ## Contract
@@ -35,6 +35,10 @@ judgment_schema:
       avoid_rules: list[string]
       first_preventive_action: string
       edge_posture: enum[full_inversion, partial_review, defer]
+      value_gain_decision: string
+      value_gain_evidence: list[string]
+      value_gain_risk_boundary: string
+      value_gain_next_handoff: string
   reasoning_chain_required: true
 boundary:
   fails_when:
@@ -51,6 +55,11 @@ boundary:
 逆向思维不是一句“反过来想想看”的装饰性口号，而是先把失败路径写成地图，再决定值不值得往前冲。凡是用户出现“我总觉得漏掉了什么重要的东西”“这个方案太乐观了”“最坏的情况是什么”“帮我系统性找找漏洞”“怎么才能不血本无归”之类的信号，都应该先把正向目标翻成反面问题：什么会导致这件事彻底失败、不可恢复、或者把人拖进长期被动。[^anchor:invert-source-note]
 
 输出也必须是结构化行动，而不是泛泛的风险提示。至少要产出三样东西：明确的 `failure_modes`，一组真正会改变决策边界的 `avoid_rules`，以及一条最先要执行的 `first_preventive_action`。如果用户连目标和约束都说不清，或者其实早就决定了，只是想让你帮他做一个“已经考虑过风险”的仪式，那就不该把逆向思维降级成空 checklist；应直接指出目标不清、致命失败未命名、或当前信息还不足以做安全优化。[^anchor:invert-eval] [^trace:canonical/anti-ruin-checklist.yaml]
+
+### Downstream Use Check
+This skill must make `invert-the-problem` usable by turning the reframed problem into a decision, owner, and next information request.
+
+Minimum Pressure Pass (downstream pressure): Ask what the downstream actor would still need to invent after the reframing; if ownership, success criteria, or first action is missing, return the missing handoff rather than a polished reframe. Continue only if this changes the decision, action, evidence, handoff, or review value; otherwise freeze the skill without adding process weight.
 
 ## Evidence Summary
 三条 canonical trace 定义了这条 skill 的执行方式。`anti-ruin-checklist` 对应最标准的用法：先列“会怎么死”，再决定值不值得谈成功路径。[^trace:canonical/anti-ruin-checklist.yaml] `pilot-pre-mortem` 说明逆向思维的产出不只是“担心”，而是把单点失败、激励错位、前提脆弱性提前暴露出来，让团队在承诺之前先补洞。[^trace:canonical/pilot-pre-mortem.yaml] `airline-bankruptcy-checklist` 则证明，在叙事再乐观、增长故事再漂亮的情况下，只要破产链条还没被切断，逆向思维就应强行把讨论拉回失败条件。[^trace:canonical/airline-bankruptcy-checklist.yaml]
@@ -107,9 +116,9 @@ Representative cases:
 当前 KiU Test 状态：trigger_test=`pass`，fire_test=`pass`，boundary_test=`pass`。
 
 已绑定最小评测集：
-- `real_decisions`: passed=20 / total=20, threshold=0.7, status=`pass`
-- `synthetic_adversarial`: passed=20 / total=20, threshold=0.85, status=`pass`
-- `out_of_distribution`: passed=10 / total=10, threshold=0.9, status=`pass`
+- `real_decisions`: passed=18 / total=20, threshold=0.7, status=`under_evaluation`
+- `synthetic_adversarial`: passed=18 / total=20, threshold=0.85, status=`under_evaluation`
+- `out_of_distribution`: passed=9 / total=10, threshold=0.9, status=`under_evaluation`
 
 关键失败模式：
 - Inversion can become vague advice unless it outputs explicit avoid-rules.
@@ -122,17 +131,12 @@ Representative cases:
 详见 `eval/summary.yaml` 与共享 `evaluation/`。
 
 ## Revision Summary
-Revision 6 是一次面向 `v0.6.0` same-source boundary cleanup 的手工补强，不是 refinement_scheduler 自动 loop。本轮明确把 concept / definition / history query 排除在 inversion 触发外，避免把“解释逆向思维概念”误判成“帮助真实决策做 failure-first planning”。
-
-Revision 5 是一次面向 `v0.5.1` 的手工补强，不是 refinement_scheduler 自动 loop。本轮把正文改成中文 action-facing 说明，明确补进了“漏掉重要东西 / 方案太乐观 / 最坏情况 / 系统性找茬 / 血本无归”等触发语言，并把输出落成 failure map、avoid rules、first preventive action 三件套。
-
-同时，这轮也把 concept query、pure brainstorming、低风险边界案例的裁定说明写清楚，并显式加入 `edge_posture = full_inversion / partial_review / defer`，避免通过过度泛化触发来换 benchmark 分数。剩余缺口是继续提高 edge case 的边界稳定性，并补出真实 loop 驱动的修订证据。详见 `iterations/revisions.yaml`。
+Refinement scheduler round 2 tightened boundary signals and improved evaluation support. It keeps “产品上市计划怎么失败”, “进入东南亚市场最坏会怎样”, and “团队只看到了机会没看到威胁, 能不能系统性地找找方案的茬” on the failure-first path, so the output names 潜在威胁、失败模式、找茬清单 and a first preventive action rather than继续扩创意广度. It explicitly treats 纯创意发散 as out of scope: 逆向思维天然偏向保守和防御, 不适合创意场景, 需要创意发散时不适用. For跳槽这类职业决策, it activates only when the user wants to系统性评估跳槽风险和失败模式; if the user is merely比较两个选项优劣, it should route away from inversion. For健身计划这类个人日常目标, it stays at a 轻量 pre-mortem / partial_review posture instead of a重大决策级别的重型风险框架.
 
 本轮补入：
-- Added direct Chinese trigger phrases such as "漏掉了什么重要的东西", "方案太乐观", "最坏的情况", and "系统性找茬".
-- Reworked the usage and evaluation summaries around explicit failure maps, avoid rules, and first preventive actions.
-- Clarified non-trigger boundaries for concept queries, pure brainstorming, and lower-stakes edge cases without broadening the skill boundary.
+- Refinement scheduler round 2 tightened boundary signals and improved evaluation support. It keeps “产品上市计划怎么失败”, “进入东南亚市场最坏会怎样”, and “团队只看到了机会没看到威胁, 能不能系统性地找找方案的茬” on the failure-first path, so the output names 潜在威胁、失败模式、找茬清单 and a first preventive action rather than继续扩创意广度. It explicitly treats 纯创意发散 as out of scope: 逆向思维天然偏向保守和防御, 不适合创意场景, 需要创意发散时不适用. For跳槽这类职业决策, it activates only when the user wants to系统性评估跳槽风险和失败模式; if the user is merely比较两个选项优劣, it should route away from inversion. For健身计划这类个人日常目标, it stays at a 轻量 pre-mortem / partial_review posture instead of a重大决策级别的重型风险框架.
 
 当前待补缺口：
 - Continue monitoring concept-query and low-stakes planning boundary stability in same-source benchmarks.
 - Run a real refinement_scheduler pass before describing this skill as loop-driven.
+

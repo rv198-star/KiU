@@ -1,9 +1,9 @@
 skill_id: opportunity-cost-of-the-next-best-idea
 bundle_version: 0.2.0
-current_revision: 1
+current_revision: 3
 history:
 - revision: 1
-  date: '2026-04-26'
+  date: '2026-04-27'
   summary: Revision 4 is a manual v0.4 content upgrade, not a refinement_scheduler
     run. The rationale now makes live ranking and switching friction explicit, the
     evidence summary names three canonical traces directly, and the relations now
@@ -17,6 +17,24 @@ history:
   - Rewrote rationale around live ranking, switching friction, and benchmark reconstruction.
   - Rewrote evidence summary to name three canonical benchmark traces directly.
   - Expanded eval failure modes and bumped release metadata to revision 4.
+- revision: 2
+  date: '2026-04-27'
+  summary: Refinement scheduler round 1 tightened boundary signals and improved evaluation
+    support.
+  graph_hash: sha256:d578eb971f656caa040d8f11dc4a7d473bdd30907420f054433f88fd82005151
+  effective_status: under_evaluation
+  evidence_changes:
+  - Refinement scheduler round 1 tightened boundary signals and improved evaluation
+    support.
+- revision: 3
+  date: '2026-04-27'
+  summary: Refinement scheduler round 2 tightened boundary signals and improved evaluation
+    support.
+  graph_hash: sha256:d578eb971f656caa040d8f11dc4a7d473bdd30907420f054433f88fd82005151
+  effective_status: under_evaluation
+  evidence_changes:
+  - Refinement scheduler round 2 tightened boundary signals and improved evaluation
+    support.
 open_gaps:
 - Add richer real redeployment cases with explicit tax and friction data in future
   bundle versions.

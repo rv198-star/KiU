@@ -6,7 +6,7 @@ skill_id: bias-self-audit
 title: Bias Self Audit
 status: under_evaluation
 bundle_version: 0.2.0
-skill_revision: 1
+skill_revision: 3
 ```
 
 ## Contract
@@ -37,6 +37,10 @@ judgment_schema:
       severity: enum[low, medium, high]
       mitigation_actions: list[string]
       audit_mode: enum[full_audit, partial_review, defer]
+      value_gain_decision: string
+      value_gain_evidence: list[string]
+      value_gain_risk_boundary: string
+      value_gain_next_handoff: string
   reasoning_chain_required: true
 boundary:
   fails_when:
@@ -51,6 +55,11 @@ boundary:
 这条 skill 的作用，不是泛泛提醒“注意偏差”，而是在用户已经形成强观点、准备下注或拍板之前，强行做一次带名字的自我审计。凡是出现“我觉得这肯定是对的”“不可能错”“反面意见我都不想听了”“大家都同意这个方案”“我已经找到了很多支持证据”之类的信号，都应假设确认偏见、社会认同、身份绑定、沉没成本或激励扭曲已经开始工作。[^anchor:bias-source-note]
 
 真正的输出不是一句“保持客观”，而是三步：先写出当前 thesis 和核心假设，再点名当前正在起作用的偏差簇，最后给出具体 countermeasure，例如去找最强反面证据、指定一个唱反调的人、延迟承诺、降低仓位、或者要求外部 base rate。用户如果说不出自己现在可能被什么误导，也说不出什么事实会推翻自己的判断，那就应默认信心已经跑在观察力前面，决策必须先降速。[^anchor:bias-eval] [^trace:canonical/us-air-regret.yaml]
+
+### Downstream Use Check
+This skill must turn self-audit into a decision brake: identify the bias pattern changing the user's judgment, cite the source-backed warning, name the concrete countermeasure, and state what evidence would allow the decision to resume.
+
+Minimum Pressure Pass (failure pressure): Before allowing the decision to resume, ask where this audit would fail if the user is defending identity, incentive, sunk cost, or group consensus; require one disconfirming test that could break the current thesis. Continue only if this changes the decision, action, evidence, handoff, or review value; otherwise freeze the skill without adding process weight.
 
 ## Evidence Summary
 三条 canonical trace 说明“自我偏差审计”应该怎么落地。`us-air-regret` 是反面教材：如果在承诺前没有把过度自信、身份绑定和激励错位写成审计项，事后再后悔已经太晚。[^trace:canonical/us-air-regret.yaml] `incentive-caused-delusion-audit` 展示了正向模式：当报酬、面子、立场或职业身份开始影响解释时，先暂停决策、写清偏差、再谈结论。[^trace:canonical/incentive-caused-delusion-audit.yaml] `pilot-pre-mortem` 说明这条 skill 经常应接在 inversion 之后使用：先暴露失败链，再检查是不是因为确认偏见、群体共识或自我叙事，把这些风险重新遮住了。[^trace:canonical/pilot-pre-mortem.yaml]
@@ -106,9 +115,9 @@ Representative cases:
 当前 KiU Test 状态：trigger_test=`pass`，fire_test=`pass`，boundary_test=`pass`。
 
 已绑定最小评测集：
-- `real_decisions`: passed=20 / total=20, threshold=0.7, status=`pass`
-- `synthetic_adversarial`: passed=20 / total=20, threshold=0.85, status=`pass`
-- `out_of_distribution`: passed=10 / total=10, threshold=0.9, status=`pass`
+- `real_decisions`: passed=18 / total=20, threshold=0.7, status=`under_evaluation`
+- `synthetic_adversarial`: passed=18 / total=20, threshold=0.85, status=`under_evaluation`
+- `out_of_distribution`: passed=9 / total=10, threshold=0.9, status=`under_evaluation`
 
 关键失败模式：
 - Low-stakes cases can trigger false positives unless reversibility is represented explicitly.
@@ -120,15 +129,12 @@ Representative cases:
 详见 `eval/summary.yaml` 与共享 `evaluation/`。
 
 ## Revision Summary
-Revision 5 是一次面向 `v0.5.1` 的手工补强，不是 refinement_scheduler 自动 loop。本轮把正文从英文审计口吻改成中文 action-facing 表达，补进了和同源 benchmark 高度相关的触发语：“我觉得这肯定对”“不可能错”“反面意见我都不想听了”“大家都同意”“已经收集了很多支持数据”。
-
-这轮同时把“找最强反面证据”“点名偏差”“给出缓释动作”写成默认输出骨架，并显式加入 `audit_mode = full_audit / partial_review / defer`。为压低误触发，本轮还写明了两类非触发例子：像“达尔文的进化论和自然选择是怎么发展出来的”这种历史/概念查询不触发；像“先帮我收集新能源汽车行业的数据，市场规模、增长率、主要玩家”这种信息收集的早期阶段也不触发，因为用户还没有形成任何观点，不需要证伪。剩余缺口是继续提高低风险场景的拒触发精度，并补出真实 loop 驱动的修订记录。详见 `iterations/revisions.yaml`。
+Refinement scheduler round 2 tightened boundary signals and improved evaluation support. It treats “大家都同意, 明天就拍板” and “只收集了支持观点的数据” as live bias-audit windows, but refuses 达尔文历史/科学知识查询, 信息收集的早期阶段, and 紧急决策场景 like “服务器突然宕机了先判断数据库还是网络”, because系统性地搜索反面证据不现实, 不应激活这类方法论检验.
 
 本轮补入：
-- Added direct trigger phrases such as "不可能错", "反面意见我都不想听了", "大家都同意", and "已经收集了很多支持数据".
-- Reworked the usage summary around thesis naming, bias naming, counter-evidence search, and mitigation actions.
-- Clarified non-trigger boundaries for early-stage data collection, urgent incidents, and indecision without a formed thesis.
+- Refinement scheduler round 2 tightened boundary signals and improved evaluation support. It treats “大家都同意, 明天就拍板” and “只收集了支持观点的数据” as live bias-audit windows, but refuses 达尔文历史/科学知识查询, 信息收集的早期阶段, and 紧急决策场景 like “服务器突然宕机了先判断数据库还是网络”, because系统性地搜索反面证据不现实, 不应激活这类方法论检验.
 
 当前待补缺口：
 - Continue tightening low-stakes refusal calibration without weakening the current published contract.
 - Run a real refinement_scheduler pass before describing this skill as loop-driven.
+

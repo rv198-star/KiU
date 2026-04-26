@@ -107,6 +107,31 @@ class RepositoryStructureTests(unittest.TestCase):
             self.assertTrue((book_root / "sources").exists(), book["id"])
             self.assertTrue((book_root / "generated-skills").exists(), book["id"])
 
+    def test_current_review_pack_skills_use_value_gain_pressure_chain(self) -> None:
+        skill_paths = sorted((ROOT / "review-pack" / "current" / "books").glob("*/generated-skills/*/SKILL.md"))
+        self.assertEqual(len(skill_paths), 21)
+
+        forbidden_external_method_names = (
+            "模块价值增益法",
+            "thinking-value-gain",
+            "Premature Exit Check",
+        )
+        required_markers = (
+            "value_gain_decision",
+            "value_gain_evidence",
+            "value_gain_risk_boundary",
+            "value_gain_next_handoff",
+            "Downstream Use Check",
+            "Minimum Pressure Pass",
+        )
+        for skill_path in skill_paths:
+            content = skill_path.read_text(encoding="utf-8")
+            with self.subTest(skill=skill_path.relative_to(ROOT).as_posix()):
+                for marker in required_markers:
+                    self.assertIn(marker, content)
+                for forbidden in forbidden_external_method_names:
+                    self.assertNotIn(forbidden, content)
+
 
 if __name__ == "__main__":
     unittest.main()

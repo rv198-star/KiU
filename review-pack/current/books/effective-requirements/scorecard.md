@@ -1,39 +1,51 @@
-# Scorecard: Effective Requirements
+# Scorecard: Effective Requirements Analysis
 
-Evidence level: internal artifact review and internal user-perspective review. This is not external blind review, real-user validation, or domain-expert validation.
+Evidence level: internal deterministic v0.8.2 value-gain pressure-chain rerun + generated-run scoring. This is not external blind review, real-user validation, or domain-expert validation.
 
-## Summary
+## Run
 
-| Metric | Value |
+- Run root: `/tmp/kiu-v082-value-gain-review-pack-20260427/effective/generated/effective-requirements-source-v0.6/v082-value-gain-effective`
+- Run id: `v082-value-gain-effective`
+- Pipeline mode: `raw_book_no_seed_cold_start`
+- Value-gain fields: `3/3` published skills include `value_gain_*`, `Downstream Use Check`, and `Minimum Pressure Pass`.
+
+## Three-Layer Scores
+
+| Layer | Score |
 | --- | ---: |
 | Source | 92.9 |
-| Generated | 93.0 |
+| Generated | 94.3 |
 | Usage | 97.9 |
 | Practical effect | 97.9 |
-| Overall | 94.4 |
+| Overall | 95.0 |
 | Release gate | PASS |
-| C-class action value | 91 |
-| User-facing overall | 91 |
 
-## User-Facing Dimensions
+## Action Identity
 
-| Dimension | Score |
+| Check | Value |
 | --- | ---: |
-| source_trust | 92 |
-| action_helpfulness | 91 |
-| boundary_clarity | 92 |
-| coverage_fit | 90 |
-| context_application_safety | 89 |
-| evidence_confidence | internal_user_perspective |
+| Route distribution | `publish_skill=2`, `route_workflow_candidate=12` |
+| Container candidate leaks | 0 |
+| Publishable action-skill ratio | 1.0000 |
+| Minimum action-skill identity score | 0.8783 |
+
+## Production Quality
+
+| Check | Value |
+| --- | ---: |
+| Bundle grade | `excellent` |
+| Average production quality | 0.9327 |
+| Minimum production quality | 0.9082 |
+| Grade counts | `excellent=3` |
 
 ## Published Skills
 
-| Skill | User-facing score | Reading |
+| Skill | Production quality | Grade |
 | --- | ---: | --- |
-| `solution-to-problem-reframing` | 91 | Strong problem-definition skill that prevents solution-first requirements work. |
-| `stakeholder-resistance-tradeoff` | 89 | Tradeoff judgment skill for stakeholder resistance and requirement negotiation. |
-| `workflow-gateway` | 81 | Thin workflow router for deterministic requirement workflows. |
+| `solution-to-problem-reframing` | n/a | `n/a` |
+| `stakeholder-resistance-tradeoff` | n/a | `n/a` |
+| `workflow-gateway` | n/a | `n/a` |
 
-## Caveat
+## Boundary
 
-Deterministic requirements-analysis procedures are intentionally routed as workflows instead of thick judgment skills.
+This scorecard proves the current repository-visible artifact pack was regenerated with the v0.8.2 value-gain pressure-chain renderer. It does not prove external preference, real-user success, domain-expert approval, or complete domain coverage.

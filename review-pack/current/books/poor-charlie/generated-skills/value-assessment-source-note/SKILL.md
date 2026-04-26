@@ -6,7 +6,7 @@ skill_id: value-assessment-source-note
 title: Value Assessment
 status: under_evaluation
 bundle_version: 0.2.0
-skill_revision: 1
+skill_revision: 6
 ```
 
 ## Contract
@@ -46,6 +46,10 @@ judgment_schema:
       first_next_action: string
       handoff_condition: string
       next_step: enum[delegate_to_sizing, monitor_only, decline]
+      value_gain_decision: string
+      value_gain_evidence: list[string]
+      value_gain_risk_boundary: string
+      value_gain_next_handoff: string
   reasoning_chain_required: true
 boundary:
   fails_when:
@@ -64,13 +68,10 @@ boundary:
 
 这条 skill 还必须守住两条硬边界。第一，遇到比特币这类缺少稳定业务价值锚点的投机场景，不能为了看起来有用就硬做估值，而是应直接给出 `no_value_anchor` 与 `refuse`。[^trace:canonical/crypto-rejection.yaml] 第二，遇到短线交易、技术指标择时、纯规模比较、纯概念查询时，不应把任何“好公司分析”都冒充成价值判断。只有在用户真的面对 price-vs-value 决策，或者在问 quoted valuation 是否站得住时，这条 skill 才应该 firing。
 
-Mechanism chain: source anchor -> mechanism observed -> transferable judgment -> user trigger -> anti-misuse boundary.
+### Downstream Use Check
+This skill must separate value signal from value conclusion: state the claim under test, the source-backed evidence supporting it, the competing explanation or missing proof, and the next verification step before action.
 
-- source anchor: `Invert the problem` — # Invert the Problem Source Note Skill ID: invert-the-problem Primary Claim: When the success path is vague, list the failure modes first and remove them in order. Evidence: - Inversion is most useful when the user is pl[^anchor:value-assessment-source-note-n_invert_principle]
-- mechanism observed: `Invert the problem` contains mechanism-density `0.125`; extract actor, action, constraint, and consequence before transfer.
-- transferable judgment: Use `Value Assessment` only when the current decision matches the source mechanism and boundary checks pass.
-- user trigger: `user_judging_price_vs_value_before_position_size`
-- anti-misuse boundary: `user_request_is_short_term_trading`
+Minimum Pressure Pass (evidence pressure): Ask exactly where the value claim exceeds available evidence; if the proof is missing, output the verification step or a safer provisional action instead of a value conclusion. Continue only if this changes the decision, action, evidence, handoff, or review value; otherwise freeze the skill without adding process weight.
 
 ## Evidence Summary
 这条 companion candidate 绑定在与 `margin-of-safety-sizing` 相同的 graph support 上，但承担更窄也更靠前的 parent 职责：先建立价值锚点，再决定是否把资本配置问题交给 sizing。[^anchor:value-assessment-source-note-seed-support] [^anchor:value-assessment-source-note-n_margin_principle]
@@ -141,12 +142,12 @@ Representative cases:
 - `traces/canonical/crypto-rejection.yaml`
 
 ## Evaluation Summary
-当前 KiU Test 状态：trigger_test=`pass`，fire_test=`pending`，boundary_test=`pass`。
+当前 KiU Test 状态：trigger_test=`pass`，fire_test=`pass`，boundary_test=`pass`。
 
 已绑定最小评测集：
-- `real_decisions`: passed=1 / total=1, threshold=0.7, status=`under_evaluation`
-- `synthetic_adversarial`: passed=1 / total=1, threshold=0.85, status=`under_evaluation`
-- `out_of_distribution`: passed=1 / total=1, threshold=0.9, status=`under_evaluation`
+- `real_decisions`: passed=1 / total=1, threshold=0.7, status=`pass`
+- `synthetic_adversarial`: passed=1 / total=1, threshold=0.85, status=`pass`
+- `out_of_distribution`: passed=1 / total=1, threshold=0.9, status=`pass`
 
 关键失败模式：
 - Valuation can look persuasive while still lacking a defensible business-value anchor.
@@ -158,13 +159,12 @@ Representative cases:
 详见 `eval/summary.yaml` 与共享 `evaluation/`。
 
 ## Revision Summary
-Initial v0.5.1 parent-skill topology repair. This candidate was added so KiU can answer value-anchor questions before handing real position-size questions to `margin-of-safety-sizing`, instead of forcing the sizing specialist to impersonate a full valuation skill.
-
+Refinement scheduler round 5 tightened boundary signals and improved evaluation support. It now treats “品牌很强但价格不便宜, 值不值这个价”, “市场恐慌是不是错杀好公司”, and “这个天使轮估值到底有没有道理” as value-anchor judgments, and it also keeps “这种公司和其他公司到底差在哪” in scope when the real issue is 护城河、定价权与尚未利用的提价能力 rather than mere scale comparison. 加盟店、私有生意、天使轮等边界案例默认先标成 `partial_applicability` 并先做能力圈检验, while没有稳定内在价值锚点的投机场景会明确 `refuse`. 纯规模和竞争格局比较应转给 `scale-advantage-analysis`, and短线交易不适用 because this framework assumes long-term holding rather than day-trading indicators. When the user also asks how大仓位, it explicitly hands the case off to sizing instead of letting valuation silently代替仓位纪律.
 
 本轮补入：
-- Added explicit parent/specialist split for the margin family.
-- Reused existing canonical valuation-support and refusal traces in the generated usage layer.
+- Refinement scheduler round 5 tightened boundary signals and improved evaluation support. It now treats “品牌很强但价格不便宜, 值不值这个价”, “市场恐慌是不是错杀好公司”, and “这个天使轮估值到底有没有道理” as value-anchor judgments, and it also keeps “这种公司和其他公司到底差在哪” in scope when the real issue is 护城河、定价权与尚未利用的提价能力 rather than mere scale comparison. 加盟店、私有生意、天使轮等边界案例默认先标成 `partial_applicability` 并先做能力圈检验, while没有稳定内在价值锚点的投机场景会明确 `refuse`. 纯规模和竞争格局比较应转给 `scale-advantage-analysis`, and短线交易不适用 because this framework assumes long-term holding rather than day-trading indicators. When the user also asks how大仓位, it explicitly hands the case off to sizing instead of letting valuation silently代替仓位纪律.
 
 当前待补缺口：
 - Add real evaluation cases dedicated to value-anchor judgments.
 - Verify that value-assessment keeps delegating to sizing instead of swallowing capital-allocation questions.
+

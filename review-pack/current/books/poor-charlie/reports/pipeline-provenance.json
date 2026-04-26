@@ -1,0 +1,15 @@
+{
+  "schema_version": "kiu.pipeline-provenance/v0.1",
+  "pipeline_mode": "source_bundle_regeneration",
+  "raw_book_no_seed_cold_start": false,
+  "input_kind": "source_bundle",
+  "source_bundle_root": "bundles/poor-charlies-almanack-v0.1",
+  "run_root": "/tmp/kiu-v082-value-gain-review-pack-20260427/poor/poor-charlies-almanack-v0.1/v082-value-gain-poor-charlie",
+  "source_bundle_id": "poor-charlies-almanack-v0.1",
+  "source_bundle_skill_count": 5,
+  "uses_existing_source_skills": true,
+  "uses_reference_pack_as_generation_input": false,
+  "manual_generated_artifact_patch_allowed": false,
+  "entrypoint": "build_candidates.py",
+  "claim_boundary": "This run regenerates candidates from an existing source bundle. It must not be described as raw-book no-seed cold start."
+}

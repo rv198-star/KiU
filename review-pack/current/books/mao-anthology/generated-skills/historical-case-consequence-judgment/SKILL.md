@@ -51,6 +51,10 @@ judgment_schema:
       decision_warning: string
       next_action: string
       confidence: enum[low|medium|high]
+      value_gain_decision: string
+      value_gain_evidence: list[string]
+      value_gain_risk_boundary: string
+      value_gain_next_handoff: string
   reasoning_chain_required: true
 boundary:
   fails_when:
@@ -77,6 +81,11 @@ Mechanism chain: source anchor -> mechanism observed -> transferable judgment ->
 - transferable judgment: Use `Historical Case Consequence Judgment` only when the current decision matches the source mechanism and boundary checks pass.
 - user trigger: `user_applying_historical_case_to_current_judgment`
 - anti-misuse boundary: `history_summary_only`
+
+### Downstream Use Check
+This skill must make `Historical Case Consequence Judgment` safe to transfer by naming the source mechanism, the current mechanism, and the boundary that would make the analogy invalid.
+
+Minimum Pressure Pass (evidence pressure): Check whether the shared mechanism is evidenced or merely story-similar; if only names, roles, or outcomes match, return do_not_apply or demand more context. Continue only if this changes the decision, action, evidence, handoff, or review value; otherwise freeze the skill without adding process weight.
 
 ## Evidence Summary
 `Historical Case Consequence Judgment` is anchored to historical case evidence beginning with "（一九二五年十二月一日） > 毛泽东此文是为反对当时党内存在着的两种倾向而写的。当时党内的第一种倾向，以陈独秀为代表，只注意同国民党合作，忘记了农民，这是右倾机会主义。第二种倾向，以张国焘为代表，只注意工人运动，同样忘记了农民，这是“左”倾机会主义。这两种机会主义都感觉自己力量不足，而不知道到何处去寻找力量，到何处去取得广大的同盟军。毛泽东指出中国无产阶级的最广大和最忠实的同盟军是农民，这样就解决了中国革命中的最主要的同盟军问题。毛泽东"[^anchor:historical-case-consequence-judgment-narrative-pattern::historical-case-consequence-judgment].

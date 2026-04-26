@@ -369,8 +369,8 @@ gateway_provenance:
   - evidence::financial-statement-0178
   - evidence::financial-statement-0256
   boundary: thin_gateway_only_not_cangjie_thick_skill
-artifact_quality: 0.8641
+artifact_quality: 0.8421
 artifact_grade: good
-production_quality: 0.9082
-quality_grade: excellent
+production_quality: 0.8939
+quality_grade: good
 release_ready: true

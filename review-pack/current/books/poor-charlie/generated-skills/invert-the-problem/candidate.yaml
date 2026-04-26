@@ -19,8 +19,8 @@ disposition: skill_candidate
 gold_match_hint: invert-the-problem
 drafting_mode: deterministic
 loop_mode: refinement_scheduler
-current_round: 0
-terminal_state: pending
+current_round: 2
+terminal_state: ready_for_review
 human_gate: skipped
 routing_evidence:
   inference_mode: manual_override
@@ -159,3 +159,16 @@ distillation_contract:
   - source_pattern_matches_current_decision_mechanism
   anti_conditions:
   - material_context_difference_not_checked
+boundary_quality: 0.99
+eval_aggregate: 0.9167
+cross_subset_stability: 0.9
+nearest_skill_id: invert-the-problem
+overall_quality: 0.9463
+delta_vs_nearest: 0.0955
+delta_vs_bundle: 0.0955
+net_positive_value: 0.1355
+artifact_quality: 0.9748
+artifact_grade: excellent
+production_quality: 0.9648
+quality_grade: excellent
+release_ready: true
