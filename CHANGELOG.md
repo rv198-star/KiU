@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [0.8.0] - 2026-04-26
 
 ### Added
 - Added v0.8 architecture language design for `学以致用`, defining the public flow: 读准原书、提炼判断、生成技能、分流流程、校准应用、验证行动价值.
