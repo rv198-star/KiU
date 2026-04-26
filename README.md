@@ -2,52 +2,52 @@
 
 [![CI](https://github.com/rv198-star/rv198-start/actions/workflows/ci.yml/badge.svg)](https://github.com/rv198-star/rv198-start/actions/workflows/ci.yml)
 
-KiU (`学以致用`) turns source knowledge into executable action capacity.
+KiU（`学以致用`）把原书知识转化为可执行的行动力。
 
-It is not a summary engine, quote database, translator, or generic RAG notebook. KiU preserves what the source says, then turns it into bounded skills that help users notice signals, define problems, judge tradeoffs, choose actions, refuse misuse, and recalibrate from feedback.
+它不是摘要器、摘录库、翻译器，也不是通用 RAG 笔记系统。KiU 先保留原书说了什么，再把其中的思想转化为有边界、可触发、能拒绝误用、能指导复盘的技能。
 
-Two rules define the project:
+两个核心表达：
 
-- `技能不是摘要`: a skill must create action capacity, not a compressed chapter summary.
-- `学到最后要能用`: learning is not complete until the source can improve concrete judgment, choice, action, refusal, or feedback.
+- `技能不是摘要`：技能必须产生行动力，而不是压缩版章节总结。
+- `学到最后要能用`：学习的终点不是“知道”，而是能改善具体判断、选择、行动、拒绝和复盘。
 
-## Architecture
+## 架构
 
 ```text
-Book -> Read Accurately -> Distill Judgment -> Skill or Workflow -> Calibrate Use -> Verify Action Value
+原书 -> 读准原书 -> 提炼判断 -> 生成技能 / 分流流程 -> 校准应用 -> 验证行动价值
 ```
 
-| Step | What it means |
+| 步骤 | 含义 |
 | --- | --- |
-| 读准原书 | Preserve source passages, claims, structure, anchors, and provenance. |
-| 提炼判断 | Distill transferable judgment from the source without reducing the book to notes. |
-| 生成技能 | Publish only skills that help users judge, choose, refuse, act, or recalibrate. |
-| 分流流程 | Keep deterministic procedures as workflows instead of inflating them into skills. |
-| 校准应用 | Add isolated context, current-fact checks, caveats, and safety gates when needed without rewriting the source skill. |
-| 验证行动价值 | Evaluate whether outputs create action value at the stated evidence level. |
+| 读准原书 | 保留原书段落、观点、结构、锚点和来源。 |
+| 提炼判断 | 从原书中提炼可迁移的判断，而不是把书压缩成笔记。 |
+| 生成技能 | 只发布能帮助用户判断、取舍、行动、拒绝或复盘的技能。 |
+| 分流流程 | 确定性流程保留为流程工件，不膨胀成技能。 |
+| 校准应用 | 按需加入现实语境、当前事实核验、风险提示，但不改写原书技能。 |
+| 验证行动价值 | 验证产物是否在明确证据等级下产生行动价值。 |
 
-## Start Here
+## 从这里开始
 
-- [Project Architecture Narrative](docs/project-architecture-narrative.md)
-- [Concept Language Glossary](docs/concept-language-glossary.md)
-- [User-Facing Evaluation Guide](docs/user-facing-evaluation-guide.md)
-- [Usage Guide](docs/usage-guide.md)
-- [Backlog Board](backlog/board.yaml)
-- [KiU Skill Spec v0.6](docs/kiu-skill-spec-v0.6.md)
-- [Reference Bundle](bundles/poor-charlies-almanack-v0.1/manifest.yaml)
-- [Engineering Reference Bundle](bundles/engineering-postmortem-v0.1/manifest.yaml)
+- [项目架构叙事](docs/project-architecture-narrative.md)
+- [概念语言对照表](docs/concept-language-glossary.md)
+- [用户侧评分指南](docs/user-facing-evaluation-guide.md)
+- [使用指南](docs/usage-guide.md)
+- [Backlog 看板](backlog/board.yaml)
+- [KiU 技能规范 v0.6](docs/kiu-skill-spec-v0.6.md)
+- [参考 bundle](bundles/poor-charlies-almanack-v0.1/manifest.yaml)
+- [工程参考 bundle](bundles/engineering-postmortem-v0.1/manifest.yaml)
 
-## Current Evidence Boundary
+## 当前证据边界
 
-The current project has strong internal generation, routing, and evaluation evidence. External blind review, real-user validation, and domain-expert validation remain separate evidence levels and should not be inferred from internal scores.
+当前项目已经有较强的内部生成、路由和评估证据。但外部盲评、真实用户验证、领域专家验证仍是独立证据等级，不能从内部评分中自动推导出来。
 
-Install locally:
+本地安装：
 
 ```bash
 python3 -m pip install -e .
 ```
 
-Validate locally:
+本地验证：
 
 ```bash
 python3 scripts/validate_bundle.py bundles/poor-charlies-almanack-v0.1
@@ -56,11 +56,11 @@ python3 scripts/show_backlog.py --version v0.6.0
 python3 -m unittest tests/test_validator.py
 ```
 
-If validation returns an error such as
+如果验证返回类似错误：
 `circle-of-competence: rationale_below_density_threshold (...)`,
-the published skill text is below the domain profile's hard density floor and must be revised before release.
+说明已发布技能文本低于领域配置的硬密度门槛，发布前必须修订。
 
-Build a refinement-scheduled candidate bundle:
+构建带 refinement 调度的候选 bundle：
 
 ```bash
 python3 scripts/build_candidates.py \
@@ -68,7 +68,7 @@ python3 scripts/build_candidates.py \
   --run-id phase2-smoke
 ```
 
-Review a generated run across source bundle, generated bundle, and usage outputs:
+从来源 bundle、生成 bundle 和使用输出三层审查生成结果：
 
 ```bash
 python3 scripts/review_generated_run.py \
@@ -76,11 +76,10 @@ python3 scripts/review_generated_run.py \
   --source-bundle bundles/poor-charlies-almanack-v0.1
 ```
 
-By default, pipeline output is written outside the repo to `/tmp/kiu-local-artifacts/generated/`.
-Set `KIU_LOCAL_OUTPUT_ROOT=/your/path` to override the fixed local root, or pass
-`--output-root` if you intentionally want another location such as `generated/`.
+默认情况下，pipeline 输出写到仓库外的 `/tmp/kiu-local-artifacts/generated/`。
+可以设置 `KIU_LOCAL_OUTPUT_ROOT=/your/path` 覆盖默认位置；如果确实想写到其他目录，例如 `generated/`，可以传入 `--output-root`。
 
-Generate deterministic seed bundles only:
+只生成确定性 seed bundle：
 
 ```bash
 python3 scripts/generate_candidates.py \
@@ -89,7 +88,7 @@ python3 scripts/generate_candidates.py \
   --drafting-mode deterministic
 ```
 
-Run one `llm-assisted` drafting pass with a mock provider:
+用 mock provider 跑一次 `llm-assisted` 起草：
 
 ```bash
 KIU_LLM_PROVIDER=mock \

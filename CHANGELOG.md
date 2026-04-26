@@ -3,12 +3,12 @@
 ## Unreleased
 
 ### Added
-- Added v0.8 architecture language design for `学以致用`, defining the public flow: 读准原书, 提炼判断, 生成技能, 分流流程, 校准应用, and 验证行动价值.
-- Added first-time-reader project architecture narrative, historical concept glossary, and user-facing evaluation guide.
+- Added v0.8 architecture language design for `学以致用`, defining the public flow: 读准原书、提炼判断、生成技能、分流流程、校准应用、验证行动价值.
+- Added first-time-reader project architecture narrative, historical concept glossary, and user-facing evaluation guide with Chinese-first prose.
 
 ### Changed
-- Refreshed README to lead with the v0.8 architecture language instead of release-history or reference-project terminology.
-- Added governance for historical-term traceability: old terms remain in archived evidence and mapping docs, while new mainline docs use v0.8 language first.
+- Refreshed README to lead with Chinese-first v0.8 architecture language instead of release-history or reference-project terminology.
+- Added governance for historical-term traceability: old terms remain in archived evidence and mapping docs, while new mainline docs use v0.8 language first and avoid unnecessary mixed Chinese/English prose.
 - Added a v0.7.4 documentation addendum that projects internal A/B/C metrics into user-facing dimensions: source trust, action helpfulness, boundary clarity, coverage fit, context application safety, and evidence confidence.
 - Recorded post-v0.7.4 project optimization directions for v0.8: unified architecture language, user-facing evaluation guide, standard scorecard consolidation, and later usage feedback loops.
 - Added an internal user-perspective five-book skill review for v0.7.4 that scores visible generated skills against user-facing dimensions and reconciles the result with C-class engineering scores.

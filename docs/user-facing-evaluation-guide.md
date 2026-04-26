@@ -1,49 +1,62 @@
-# User-Facing Evaluation Guide
+# 用户侧评分指南
 
-KiU has many internal checks, but users usually care about six questions.
+KiU 内部有很多检查项，但用户通常关心六个问题。
 
-| User-facing dimension | User question | Related internal evidence |
+| 用户侧维度 | 用户真正关心的问题 | 相关内部证据 |
 | --- | --- | --- |
-| Source trust | Did the skill stay faithful to the source? | Source fidelity, anchors, source pollution checks, extraction kind. |
-| Action helpfulness | Does the skill help me judge, choose, refuse, act, or recalibrate? | Action-value evaluation, usage review, action-skill identity. |
-| Boundary clarity | Does the skill know when not to fire? | Anti-conditions, misuse checks, should-not-trigger scenarios. |
-| Coverage fit | Does the visible output cover the book's useful value? | Coverage readiness, skill/workflow routing, source-value routes. |
-| Context application safety | Does application context help without rewriting the source? | Application calibration, current-fact checks, source pollution checks. |
-| Evidence confidence | What kind of proof supports the claim? | Internal review, scenario checks, same-book comparison, blind review, real-user evidence. |
+| 来源可信度 | 这个技能有没有忠于原书？ | 来源忠实、锚点、来源污染检查、抽取类型。 |
+| 行动帮助度 | 它能不能帮我判断、取舍、拒绝、行动或复盘？ | 行动价值评估、使用场景审查、行动技能身份。 |
+| 边界清晰度 | 它知不知道什么时候不该触发？ | 反用条件、误用检查、should-not-trigger 场景。 |
+| 覆盖匹配度 | 可见产物有没有覆盖这本书最有用的价值？ | 覆盖就绪度、技能/流程分流、来源价值路由。 |
+| 应用安全度 | 应用语境有没有帮忙，而不是改写原书？ | 校准应用、当前事实核验、来源污染检查。 |
+| 证据可信度 | 这个分数背后是什么等级的证据？ | 内部审查、场景校验、同书参照、盲评、真实用户证据。 |
 
-## Evidence Confidence Levels
+## 证据可信度等级
 
-| Level | Meaning | Claim allowed |
+| 等级 | 含义 | 允许声称什么 |
 | --- | --- | --- |
-| Internal artifact review | Project team reviewed generated artifacts. | Internal quality signal. |
-| Internal scenario check | Synthetic or scripted scenarios passed. | Regression and pressure evidence. |
-| Same-book reference comparison | KiU compared against a separate reference on the same book where possible. | Comparative signal, not final preference proof. |
-| External blind review | Outside reviewer chooses without attribution leakage. | External preference evidence. |
-| Real-user validation | Real users apply skills in real decisions. | Usage-value evidence. |
-| Domain-expert review | Qualified expert reviews source fidelity and action safety. | Expert confidence evidence. |
+| 内部产物审查 | 项目内部阅读并审查生成产物。 | 内部质量信号。 |
+| 内部场景校验 | 合成或脚本化场景通过。 | 回归和压力证据。 |
+| 同书参照对比 | 尽可能在同一本书上与独立参照产物比较。 | 比较信号，不是最终偏好证明。 |
+| 外部盲评 | 外部评审在不暴露归属的情况下选择。 | 外部偏好证据。 |
+| 真实用户验证 | 真实用户在真实决策中使用技能。 | 使用价值证据。 |
+| 领域专家审查 | 合格专家审查来源忠实度和行动安全性。 | 专家置信证据。 |
 
-## Reading A Scorecard
+## 如何阅读分数
 
-A high score means the current evidence supports the claim at the stated evidence level. It does not automatically upgrade internal evidence into external validation.
+高分表示：在当前证据等级下，这个声称有足够支持。它不会自动把内部证据升级成外部验证。
 
-For example, a score of `94` under internal artifact review means the generated artifact reads strongly to the project team. It does not mean real users prefer it until real-user or external blind evidence exists.
+例如，一个技能在“内部产物审查”下拿到 `94`，只能说明项目内部认为它读起来很强；它不等于真实用户已经偏好这个技能，除非有真实用户或外部盲评证据。
 
-## Relationship To The v0.8 Architecture
+## 与 v0.8 架构的关系
 
-| v0.8 step | User-facing dimensions most affected |
+| v0.8 步骤 | 主要影响的用户侧维度 |
 | --- | --- |
-| 读准原书 | Source trust, evidence confidence. |
-| 提炼判断 | Action helpfulness, coverage fit. |
-| 生成技能 | Action helpfulness, boundary clarity. |
-| 分流流程 | Boundary clarity, coverage fit. |
-| 校准应用 | Context application safety, source trust. |
-| 验证行动价值 | Evidence confidence, action helpfulness. |
+| 读准原书 | 来源可信度、证据可信度。 |
+| 提炼判断 | 行动帮助度、覆盖匹配度。 |
+| 生成技能 | 行动帮助度、边界清晰度。 |
+| 分流流程 | 边界清晰度、覆盖匹配度。 |
+| 校准应用 | 应用安全度、来源可信度。 |
+| 验证行动价值 | 证据可信度、行动帮助度。 |
 
-## Claim Discipline
+## 声称纪律
 
-- Internal review can justify continued development and release readiness.
-- Internal review cannot claim real-user success.
-- Scenario checks can catch regressions and misuse risks.
-- Scenario checks cannot replace external blind review.
-- Same-book reference comparisons can reveal relative strengths and gaps.
-- Same-book reference comparisons cannot prove general superiority.
+- 内部审查可以支持继续开发和发布就绪判断。
+- 内部审查不能声称真实用户成功。
+- 场景校验可以捕捉回归和误用风险。
+- 场景校验不能替代外部盲评。
+- 同书参照对比可以揭示相对优势和缺口。
+- 同书参照对比不能证明普遍优越。
+
+## 字段别名
+
+报告中可能仍出现以下英文字段名，它们是机器可读或历史兼容字段，不是公共叙事主词。
+
+| 字段名 | 中文含义 |
+| --- | --- |
+| `source_trust` | 来源可信度 |
+| `action_helpfulness` | 行动帮助度 |
+| `boundary_clarity` | 边界清晰度 |
+| `coverage_fit` | 覆盖匹配度 |
+| `context_application_safety` | 应用安全度 |
+| `evidence_confidence` | 证据可信度 |

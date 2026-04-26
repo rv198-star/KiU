@@ -1,78 +1,72 @@
-# Project Architecture Narrative
+# 项目架构叙事
 
-KiU (`学以致用`) turns source knowledge into executable action capacity.
+KiU（`学以致用`）把原书知识转化为可执行的行动力。
 
-It is not a summary engine, quote database, translator, or generic RAG notebook. Those systems help users retrieve or restate knowledge. KiU tries to answer a harder question: when should knowledge change what a user notices, judges, chooses, refuses, does, or recalibrates?
+它不是摘要器、摘录库、翻译器，也不是通用 RAG 笔记系统。那些系统帮助用户检索或复述知识。KiU 要回答更进一步的问题：什么时候一本书里的知识应该改变用户看见什么、如何判断、如何选择、如何拒绝、如何行动、如何复盘？
 
-## The Short Version
-
-```text
-Book -> Read Accurately -> Distill Judgment -> Skill or Workflow -> Calibrate Use -> Verify Action Value
-```
-
-In Chinese public language:
+## 一句话版本
 
 ```text
 原书 -> 读准原书 -> 提炼判断 -> 生成技能 / 分流流程 -> 校准应用 -> 验证行动价值
 ```
 
-The project keeps these steps separate because each step has a different failure mode.
+这些步骤必须分开，因为每一步都有不同的失败方式。
 
 ## 1. 读准原书
 
-KiU first preserves what the source says: passages, claims, structure, anchors, and provenance. This step can support summaries and lookup, but it is not the final product.
+KiU 首先保留原书说了什么：段落、观点、结构、锚点和来源。这个步骤可以支持摘要和查询，但它还不是最终产品。
 
-Failure to avoid: treating book material as action guidance before it carries action-ready judgment.
+要避免的失败：还没有形成可行动判断，就把原书材料当作行动建议。
 
 ## 2. 提炼判断
 
-KiU then asks what transferable judgment the source supports. This is where usable thinking separates from notes, quotes, and chapter summaries.
+KiU 接着追问：原书支持什么可迁移的判断？这一步把可使用的思想从笔记、摘录和章节总结中分离出来。
 
-The key rule is: `技能不是摘要`.
+核心表达：`技能不是摘要`。
 
-Failure to avoid: compressing a book into fluent prose that does not help a user decide anything.
+要避免的失败：把一本书压缩成流畅文字，但用户仍不知道怎么判断和行动。
 
 ## 3. 生成技能
 
-KiU publishes a skill only when the artifact can help a user notice signals, define problems, judge tradeoffs, choose actions, refuse misuse, or recalibrate. A published skill must know when it should fire and when it should not.
+KiU 只在产物能帮助用户发现信号、定义问题、判断取舍、选择行动、拒绝误用或复盘校准时，才发布为技能。一个已发布技能必须知道自己什么时候应该触发，什么时候不应该触发。
 
-The public goal is: `学到最后要能用`.
+公共目标：`学到最后要能用`。
 
-Failure to avoid: publishing chapter headings, exercises, concepts, or source containers as if they were installable skills.
+要避免的失败：把章节标题、练习题、概念说明或材料容器发布成可安装技能。
 
 ## 4. 分流流程
 
-Some useful source material is deterministic procedure. KiU keeps that material as workflow output instead of pretending it is a judgment skill.
+有些有用材料本质上是确定性步骤。KiU 会把这些材料保留为流程工件，而不是假装它们是判断技能。
 
-Failure to avoid: inflating a checklist into a thick skill, or collapsing a judgment-rich skill into a checklist.
+要避免的失败：把清单膨胀成厚技能，或把需要判断的技能压成清单。
 
 ## 5. 校准应用
 
-Application context can matter. Current facts, market conditions, user constraints, or risk level may change whether a skill should be applied.
+应用语境会影响技能是否应该使用。当前事实、市场情况、用户约束、风险等级，都可能改变技能的使用方式。
 
-The boundary principle is: `用而不染`. Application context may gate or caveat use, but it must not rewrite the source-derived skill.
+边界原则：`用而不染`。应用语境可以加使用门、风险提示或使用限制，但不能改写原书技能。
 
-Failure to avoid: blending current-world assumptions into a source-faithful skill so that users can no longer tell what came from the book.
+要避免的失败：把现实假设混进原书技能，让用户分不清哪些来自原书，哪些来自应用语境。
 
 ## 6. 验证行动价值
 
-KiU evaluates whether generated outputs help users in four action layers:
+KiU 会检查生成产物是否在四个行动层面帮助用户：
 
-- Discover signals.
-- Define problems.
-- Resolve actions.
-- Calibrate feedback.
+- 发现信号。
+- 定义问题。
+- 解决行动。
+- 复盘校准。
 
-Evidence levels remain explicit. Internal scenario checks are not real-user validation, and same-book reference comparisons are not external preference proof.
+证据等级必须明确。内部场景校验不等于真实用户验证；同书参照对比也不等于外部偏好证明。
 
-Failure to avoid: using internal scores to claim external validation.
+要避免的失败：用内部评分冒充外部验证。
 
-## Why This Architecture Exists
+## 为什么要这样分层
 
-Without separation, a system tends to confuse five things: what the book said, what the book implies, what action a user should take, which deterministic workflow applies, and whether current facts make the action safe.
+如果不分层，一个系统很容易混淆五件事：原书说了什么、原书暗示了什么、用户应该采取什么行动、是否存在确定性流程、当前事实是否让这个行动安全。
 
-KiU keeps those apart so that knowledge can be used without losing its source boundary.
+KiU 把这些步骤拆开，是为了让知识真正被使用，同时不丢失来源边界。
 
-## One-Sentence Description
+## 一句话描述
 
-KiU reads a source accurately, distills action-ready judgment, publishes bounded skills, routes deterministic workflows separately, calibrates application without polluting the source, and verifies whether the result creates action value at an explicit evidence level.
+KiU 先读准原书，再提炼可行动判断，发布有边界的技能，单独分流确定性流程，隔离地校准应用语境，并在明确证据等级下验证产物是否产生行动价值。

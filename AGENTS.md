@@ -16,30 +16,24 @@ Required rules:
 - Do not rename historical release evidence retroactively; older artifacts may remain
   under `Knowledge in Use` / `KiU` wording for provenance clarity.
 
-## v0.8 Language Migration Boundary
+## v0.8 语言迁移边界
 
-Starting with v0.8, new mainline project documents should explain KiU through
-the `学以致用` architecture language before using historical release or
-reference-project terminology.
+从 v0.8 开始，新的主线项目文档应先使用 `学以致用` 架构语言解释
+KiU，再讨论历史版本术语或外部参照项目术语。
 
 Required rules:
 
-- Do not rewrite historical reports, release evidence, old plans, or attribution
-  records just to rename terms.
-- Keep historical terms available in `docs/concept-language-glossary.md` for
-  traceability.
-- New public-facing docs should lead with: 读准原书, 提炼判断, 生成技能,
-  分流流程, 校准应用, and 验证行动价值.
-- Historical terms such as Graphify absorption, cangjie methodology absorption,
-  RIA-TV++, C-class, and world alignment may appear in new docs only when
-  explicitly labeled as historical/internal terminology or when required for
-  attribution.
-- Use `技能不是摘要` and `学到最后要能用` as the two preferred public phrases.
-  Keep `用而不染` as the application-calibration boundary principle.
-  Do not introduce additional branded terminology unless it removes more
-  confusion than it adds.
-- README and release notes should lead with the new architecture language, not
-  release-history vocabulary.
+- 不要为了改名而重写历史报告、release evidence、旧计划或 attribution 记录。
+- 历史术语保留在 `docs/concept-language-glossary.md` 中，用于追溯。
+- 新的公共文档应优先使用：读准原书、提炼判断、生成技能、分流流程、
+  校准应用、验证行动价值。
+- Graphify absorption、cangjie methodology absorption、RIA-TV++、C-class、
+  world alignment 等历史术语，只能在明确标注为历史/内部术语，或 attribution
+  必须要求时出现在新文档中。
+- `技能不是摘要` 和 `学到最后要能用` 是两个优先公共表达；`用而不染`
+  保留为校准应用的边界原则。除非能显著减少理解成本，否则不要继续引入
+  新的品牌化术语。
+- README 和 release note 应先使用新架构语言，而不是版本史语言。
 
 ## World Alignment Isolation Boundary
 
