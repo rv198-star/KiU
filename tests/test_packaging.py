@@ -39,6 +39,24 @@ class PackagingMetadataTests(unittest.TestCase):
             "CHANGELOG.md must record the v0.4.2 release section.",
         )
 
+    def test_v081_repository_structure_indexes_exist(self) -> None:
+        self.assertTrue((ROOT / "docs" / "README.md").exists())
+        self.assertTrue((ROOT / "evidence" / "README.md").exists())
+        self.assertTrue((ROOT / "review-pack" / "README.md").exists())
+        self.assertTrue((ROOT / "bundles" / "README.md").exists())
+
+        docs_readme = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+        self.assertIn("public", docs_readme)
+        self.assertIn("engineering", docs_readme)
+        self.assertIn("release-history", docs_readme)
+
+        evidence_readme = (ROOT / "evidence" / "README.md").read_text(encoding="utf-8")
+        self.assertIn("current", evidence_readme)
+        self.assertIn("archive", evidence_readme)
+
+        review_pack_readme = (ROOT / "review-pack" / "README.md").read_text(encoding="utf-8")
+        self.assertIn("current", review_pack_readme)
+
     def test_notice_and_third_party_attribution_document_v06_references(self) -> None:
         notice = (ROOT / "NOTICE").read_text(encoding="utf-8")
         attribution = (ROOT / "docs" / "third-party-attribution.md").read_text(encoding="utf-8")
