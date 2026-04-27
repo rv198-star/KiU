@@ -13,6 +13,30 @@ KiU 是 `Knowledge in Use` 的缩写，中文名是 `学以致用`。
 - `技能不是摘要`：技能必须产生行动力，而不是压缩版章节总结。
 - `学到最后要能用`：学习的终点不是“知道”，而是能改善具体判断、选择、行动、拒绝和复盘。
 
+## 安装 Skills
+
+安装 KiU 项目 Skill，让 Codex/Agent 知道如何使用 KiU 生成、评审、导出和安装书籍 Skills：
+
+```text
+$skill-installer install https://github.com/rv198-star/KiU/tree/master/skills/kiu
+```
+
+安装 KiU 生成的单个 Skill：
+
+```text
+$skill-installer install https://github.com/rv198-star/KiU/tree/master/installable-skills/<skill-name>
+```
+
+可安装生成物位于 `installable-skills/`。例如：
+
+```text
+$skill-installer install https://github.com/rv198-star/KiU/tree/master/installable-skills/kiu-poor-charlie-circle-of-competence
+```
+
+正式发布后，也可以把 URL 中的 `master` 替换为具体版本标签，例如 `v0.8.3`，以固定安装版本。
+
+`review-pack/current` 是审查包，不是安装包。
+
 ## 架构
 
 ```text
@@ -41,22 +65,6 @@ KiU 是 `Knowledge in Use` 的缩写，中文名是 `学以致用`。
 - [KiU 技能规范 v0.6](docs/engineering/skill-specs/kiu-skill-spec-v0.6.md)
 - [参考 bundle](bundles/poor-charlies-almanack-v0.1/manifest.yaml)
 - [工程参考 bundle](bundles/engineering-postmortem-v0.1/manifest.yaml)
-
-## 安装 Skills
-
-安装 KiU 项目 Skill：
-
-```text
-$skill-installer install https://github.com/rv198-star/KiU/tree/v0.8.3/skills/kiu
-```
-
-安装 KiU 生成的单个 Skill：
-
-```text
-$skill-installer install https://github.com/rv198-star/KiU/tree/v0.8.3/installable-skills/<skill-name>
-```
-
-`review-pack/current` 是审查包，不是安装包。可安装生成物位于 `installable-skills/`。
 
 ## 当前证据边界
 
